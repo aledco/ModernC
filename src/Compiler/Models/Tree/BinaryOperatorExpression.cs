@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    internal class BinaryOperatorExpression : Expression
+    public class BinaryOperatorExpression : Expression
     {
         public string Operator { get; }
         public Expression LeftOperand { get; }

@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    internal class IntTypeNode : PrimitiveTypeNode
+    public class IntTypeNode : PrimitiveTypeNode
     {
         public IntTypeNode(Span span) : base(span)
         {

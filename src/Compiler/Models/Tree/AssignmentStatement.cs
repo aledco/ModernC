@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    internal class AssignmentStatement : Statement
+    public class AssignmentStatement : Statement
     {
         public Expression Left { get; set; }
         public Expression Right { get; set; }

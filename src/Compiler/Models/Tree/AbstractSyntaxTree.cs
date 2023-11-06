@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    internal abstract class AbstractSyntaxTree
+    public abstract class AbstractSyntaxTree
     {
         public Span Span { get; }
 

@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Input
 {
-    internal interface IReader
+    public interface IReader
     {
         string Read();
     }

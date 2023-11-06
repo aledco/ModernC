@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    internal class VariableDefinitionAndAssignmentStatement : Statement
+    public class VariableDefinitionAndAssignmentStatement : Statement
     {
         public TypeNode Type { get; }
         public IdNode Id { get; }

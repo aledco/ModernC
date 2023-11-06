@@ -2,7 +2,7 @@
 
 namespace Compiler.Models.Tree
 {
-    internal class IdExpression : Expression
+    public class IdExpression : Expression
     {
         public IdNode Id { get; }
 

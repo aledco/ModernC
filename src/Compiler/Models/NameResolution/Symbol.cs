@@ -2,7 +2,7 @@
 
 namespace Compiler.Models.Symbols
 {
-    internal class Symbol
+    public class Symbol
     {
         public string Name { get; }
         public Scope EnclosingScope { get; }

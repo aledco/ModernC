@@ -2,7 +2,7 @@
 
 namespace Compiler.Models.Tree
 {
-    internal class ParameterList : AbstractSyntaxTree, IEnumerable<Parameter>
+    public class ParameterList : AbstractSyntaxTree, IEnumerable<Parameter>
     {
         public IEnumerable<Parameter> Parameters { get; }
 

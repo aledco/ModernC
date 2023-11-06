@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    internal class PrintStatement : Statement
+    public class PrintStatement : Statement
     {
         public Expression Expression { get; set; }
 

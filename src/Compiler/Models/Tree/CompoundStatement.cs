@@ -2,7 +2,7 @@
 
 namespace Compiler.Models.Tree
 {
-    internal class CompoundStatement : Statement
+    public class CompoundStatement : Statement
     {
         public IEnumerable<Statement> Statements { get; }
 

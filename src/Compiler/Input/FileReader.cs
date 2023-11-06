@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Input
 {
-    internal class FileReader : IReader
+    public class FileReader : IReader
     {
         private readonly string _path;
         public FileReader(string path) 

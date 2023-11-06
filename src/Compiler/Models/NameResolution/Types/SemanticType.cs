@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
-    internal abstract class SemanticType
+    public abstract class SemanticType
     {
         /// <summary>
         /// Two semantic types are equal if their types are equal. This needs to be overridden in complex types

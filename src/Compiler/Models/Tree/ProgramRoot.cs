@@ -2,7 +2,7 @@
 
 namespace Compiler.Models.Tree
 {
-    internal class ProgramRoot : AbstractSyntaxTree
+    public class ProgramRoot : AbstractSyntaxTree
     {
         public IEnumerable<FunctionDefinition> FunctionDefinitions { get; }
         public Scope? GlobalScope { get; set; }

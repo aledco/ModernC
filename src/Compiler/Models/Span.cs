@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models
 {
-    internal class Span
+    public class Span
     {
         public Position Start { get; }
         public Position End { get; }

@@ -9,7 +9,7 @@ using Compiler.TreeWalking;
  */
 namespace Compiler
 {
-    internal class Program
+    public class Program
     {
         private static void Main(string[] args)
         {
@@ -33,7 +33,8 @@ namespace Compiler
         {
             return new IWalker[]
             {
-                new TopLevelTypeChecker()
+                new TopLevelTypeChecker(),
+                new LocalTypeChecker(),
             };
         }
 

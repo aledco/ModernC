@@ -2,7 +2,7 @@
 
 namespace Compiler.Models.Tree
 {
-    internal class IdNode : AbstractSyntaxTree
+    public class IdNode : AbstractSyntaxTree
     {
         public string Value { get; }
 

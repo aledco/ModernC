@@ -3,7 +3,7 @@ using Compiler.Models.Tree;
 
 namespace Compiler.Models.Symbols
 {
-    internal class Scope
+    public class Scope
     {
         private readonly Dictionary<string, Symbol> _table = new();
 

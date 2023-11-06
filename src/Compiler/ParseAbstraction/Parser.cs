@@ -3,7 +3,7 @@ using Compiler.Models.Tree;
 
 namespace Compiler.ParseAbstraction
 {
-    internal class Parser
+    public class Parser
     {
         /// <summary>
         /// Parses the input and returns an abstract syntax tree.
@@ -14,20 +14,20 @@ namespace Compiler.ParseAbstraction
         public static ProgramRoot Parse(string input)
         {
             // Lex
-            AntlrInputStream inputStream = new AntlrInputStream(input);
-            ModernCLexer speakLexer = new ModernCLexer(inputStream);
-            CommonTokenStream commonTokenStream = new CommonTokenStream(speakLexer);
+            var inputStream = new AntlrInputStream(input);
+            var speakLexer = new ModernCLexer(inputStream);
+            var commonTokenStream = new CommonTokenStream(speakLexer);
 
             // Parse
-            ModernCParser modernCParser = new ModernCParser(commonTokenStream);
-            ModernCParser.ProgramContext programContext = modernCParser.program();
+            var modernCParser = new ModernCParser(commonTokenStream);
+            var programContext = modernCParser.program();
 
             // Abstract
-            ParseAbstractionVisitor visitor = new ParseAbstractionVisitor();
+            var visitor = new ParseAbstractionVisitor();
             var tree = visitor.Visit(programContext);
             if (tree is ProgramRoot program)
             {
-                Console.WriteLine(program);
+                return program;
             }
 
             throw new Exception($"Tried to parse {tree.GetType()} as program");

@@ -2,7 +2,7 @@
 
 namespace Compiler.Input
 {
-    internal class ConsoleReader : IReader
+    public class ConsoleReader : IReader
     {
         public string Read()
         {

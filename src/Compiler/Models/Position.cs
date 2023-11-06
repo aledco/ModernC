@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models
 {
-    internal class Position
+    public class Position
     {
         public int Line { get; }
         public int Column { get; }

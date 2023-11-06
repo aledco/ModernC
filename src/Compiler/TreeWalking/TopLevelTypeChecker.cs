@@ -8,7 +8,7 @@ namespace Compiler.TreeWalking
     /// Does the first pass of name resolution, filling the global and function scopes.
     /// This allows function to be defined in any order but still be visable.
     /// </summary>
-    internal class TopLevelTypeChecker : IWalker
+    public class TopLevelTypeChecker : IWalker
     {
         public void Walk(ProgramRoot program)
         {

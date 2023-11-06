@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
-    internal class FunctionType : SemanticType
+    public class FunctionType : SemanticType
     {
         public SemanticType ReturnType { get; }
         public IEnumerable<SemanticType> Parameters { get; }

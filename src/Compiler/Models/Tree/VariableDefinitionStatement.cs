@@ -2,7 +2,7 @@
 
 namespace Compiler.Models.Tree
 {
-    internal class VariableDefinitionStatement : Statement
+    public class VariableDefinitionStatement : Statement
     {
         public TypeNode Type { get; }
         public IdNode Id { get; }

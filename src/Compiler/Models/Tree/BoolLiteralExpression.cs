@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    internal class BoolLiteralExpression : Expression
+    public class BoolLiteralExpression : Expression
     {
         public bool Value { get; } 
 

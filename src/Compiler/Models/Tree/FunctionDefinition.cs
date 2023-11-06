@@ -2,7 +2,7 @@
 
 namespace Compiler.Models.Tree
 {
-    internal class FunctionDefinition : AbstractSyntaxTree
+    public class FunctionDefinition : AbstractSyntaxTree
     {
         public TypeNode ReturnType { get; }
         public IdNode Id { get; }

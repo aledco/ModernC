@@ -2,7 +2,7 @@
 
 namespace Compiler.Models.Tree
 {
-    internal abstract class TypeNode : AbstractSyntaxTree
+    public abstract class TypeNode : AbstractSyntaxTree
     {
         protected TypeNode(Span span) : base(span)
         {

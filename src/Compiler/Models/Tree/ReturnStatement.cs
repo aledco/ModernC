@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    internal class ReturnStatement : Statement
+    public class ReturnStatement : Statement
     {
         public Expression? Expression { get; }
 

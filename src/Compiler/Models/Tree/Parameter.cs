@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    internal class Parameter : AbstractSyntaxTree
+    public class Parameter : AbstractSyntaxTree
     {
         public TypeNode Type { get; }
         public IdNode Id { get; }

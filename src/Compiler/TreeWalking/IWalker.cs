@@ -2,7 +2,7 @@
 
 namespace Compiler.TreeWalking
 {
-    internal interface IWalker
+    public interface IWalker
     {
         void Walk(ProgramRoot program);
     }

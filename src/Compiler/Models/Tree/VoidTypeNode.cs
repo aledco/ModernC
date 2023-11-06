@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    internal class VoidTypeNode : TypeNode
+    public class VoidTypeNode : TypeNode
     {
         public VoidTypeNode(Span span) : base(span)
         {

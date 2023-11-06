@@ -2,7 +2,7 @@
 
 namespace Compiler.Models.Tree
 {
-    internal abstract class Expression : AbstractSyntaxTree
+    public abstract class Expression : AbstractSyntaxTree
     {
         public SemanticType? Type { get; set; }
 

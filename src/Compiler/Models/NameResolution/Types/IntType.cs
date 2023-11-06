@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
-    internal class IntType : SemanticType
+    public class IntType : SemanticType
     {
         public override bool Equals(object? obj)
         {
