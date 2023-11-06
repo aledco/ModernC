@@ -11,18 +11,5 @@ namespace Compiler.Models.Tree
         {
             FunctionDefinitions = functionDefinitions;
         }
-
-        public override string ToString()
-        {
-            var functionDefinitions = "[";
-            foreach (var functionDefinition in FunctionDefinitions)
-            {
-                functionDefinitions += functionDefinition.ToString() + ", ";
-            }
-
-
-            functionDefinitions += "]";
-            return $"ProgramRoot(Span={Span}, FunctionDefinitions={functionDefinitions})";
-        }
     }
 }

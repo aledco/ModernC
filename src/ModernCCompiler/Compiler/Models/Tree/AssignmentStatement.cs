@@ -10,10 +10,5 @@
             Left = left;
             Right = right;
         }
-
-        public override string ToString()
-        {
-            return $"AssignmentStatement(Span={Span}, Left={Left}, Right={Right})";
-        }
     }
 }

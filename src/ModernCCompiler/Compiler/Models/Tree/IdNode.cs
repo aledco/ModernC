@@ -12,10 +12,5 @@ namespace Compiler.Models.Tree
         {
             Value = value;
         }
-
-        public override string ToString()
-        {
-            return $"IdNode(Span={Span}, Value={Value}, Symbol={Symbol})"; 
-        }
     }
 }

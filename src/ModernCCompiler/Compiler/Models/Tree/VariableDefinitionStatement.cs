@@ -12,10 +12,5 @@ namespace Compiler.Models.Tree
             Type = type;
             Id = id;
         }
-
-        public override string ToString()
-        {
-            return $"VariableDefinition(Span={Span}, Type={Type}, Id={Id})";
-        }
     }
 }

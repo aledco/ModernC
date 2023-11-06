@@ -5,10 +5,5 @@
         public VoidTypeNode(Span span) : base(span)
         {
         }
-
-        public override string ToString()
-        {
-            return $"VoidType(Span={Span})";
-        }
     }
 }

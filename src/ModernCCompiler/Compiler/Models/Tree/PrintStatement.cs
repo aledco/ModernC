@@ -8,10 +8,5 @@
         {
             Expression = expression;
         }
-
-        public override string ToString()
-        {
-            return $"PrintStatement(Span={Span}, Expression={Expression})";
-        }
     }
 }

@@ -12,10 +12,5 @@
             Id = id;
             Expression = expression;
         }
-
-        public override string ToString()
-        {
-            return $"VariableDefinitionAndAssignmentStatement(Span={Span}, Type={Type}, Id={Id}, Expression={Expression})";
-        }
     }
 }

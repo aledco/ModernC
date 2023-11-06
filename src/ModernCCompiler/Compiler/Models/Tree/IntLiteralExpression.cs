@@ -7,10 +7,5 @@
         {
             Value = value;
         }
-
-        public override string ToString()
-        {
-            return $"IntLiteralExpression(Span={Span}, Value={Value})";
-        }
     }
 }

@@ -10,10 +10,5 @@ namespace Compiler.Models.Tree
         {
             Id = id;
         }
-
-        public override string ToString()
-        {
-            return $"IdExpression(Span={Span}, Id={Id})";
-        }
     }
 }

@@ -1,34 +1,27 @@
 using Compiler.ParseAbstraction;
+using System.Text.Json;
 
 namespace CompilerTests;
 
 [TestClass]
 public class ParserTest
 {
-    private static TestContext? _testContext;
-
-    [ClassInitialize]
-    public static void SetupTests(TestContext testContext)
-    {
-        _testContext = testContext;
-    }
+    private readonly string _outputType = "Parser";
 
     [TestMethod]
-    public void Test001()
+    public void TestAllInputs()
     {
-        var input = GetTestInput();
-        var tree = Parser.Parse(input);
-        Assert.IsNotNull(tree);
-    }
-
-    private static string GetTestInput()
-    {
-        if (_testContext == null)
+        foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput())
         {
-            throw new Exception("Test contex is null");
-        }
+            var tree = Parser.Parse(Contents);
+            Assert.IsNotNull(tree);
 
-        var testNumber = _testContext.TestName.Replace("Test", "");
-        return TestFileManager.ReadTestInput(testNumber);
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            var treeJson = JsonSerializer.Serialize(tree, options: options);
+            TestFileManager.WriteTestOutput(_outputType, Id, treeJson);
+        }
     }
 }

@@ -10,10 +10,5 @@
             Operator = op;
             Operand = operand;
         }
-
-        public override string ToString()
-        {
-            return $"UnaryOperatorExpression(Span={Span}, Operator={Operator}, Expression={Operand})";
-        }
     }
 }

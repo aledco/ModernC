@@ -10,10 +10,5 @@
             this.Type = type;
             this.Id = id;
         }
-
-        public override string ToString()
-        {
-            return $"Parameter(Span={Span}, Type={Type}, Id={Id})";
-        }
     }
 }

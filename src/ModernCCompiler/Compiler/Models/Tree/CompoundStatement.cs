@@ -13,18 +13,5 @@ namespace Compiler.Models.Tree
         {
             Statements = statements;
         }
-
-        public override string ToString()
-        {
-            var statements = "[";
-            foreach (var statement in Statements)
-            {
-                statements += statement.ToString() + ", ";
-            }
-
-            statements += "]";
-
-            return $"CompoundStatement(Span={Span}, Statements={statements}, LocalScope={LocalScope})";
-        }
     }
 }

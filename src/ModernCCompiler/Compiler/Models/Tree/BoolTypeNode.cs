@@ -5,10 +5,5 @@
         public BoolTypeNode(Span span) : base(span)
         {
         }
-
-        public override string ToString()
-        {
-            return $"BoolTypeNode(Span={Span})";
-        }
     }
 }

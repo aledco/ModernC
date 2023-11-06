@@ -18,10 +18,5 @@ namespace Compiler.Models.Tree
             ParameterList = parameterList;
             Body = body;
         }
-
-        public override string ToString()
-        {
-            return $"FunctionDefinition(Span={Span}, ReturnType={ReturnType}, Id={Id}, ParameterList={ParameterList}, CompoundStatement={Body})";
-        }
     }
 }

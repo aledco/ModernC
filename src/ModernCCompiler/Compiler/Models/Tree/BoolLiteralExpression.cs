@@ -8,10 +8,5 @@
         {
             Value = value;
         }
-
-        public override string ToString()
-        {
-            return $"BoolLiteralExpression(Span={Span}, Value={Value})";
-        }
     }
 }

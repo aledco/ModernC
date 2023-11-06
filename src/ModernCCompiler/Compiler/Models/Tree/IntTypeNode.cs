@@ -5,10 +5,5 @@
         public IntTypeNode(Span span) : base(span)
         {
         }
-
-        public override string ToString()
-        {
-            return $"IntTypeNode(Span={Span})";
-        }
     }
 }

@@ -12,10 +12,5 @@
             LeftOperand = left;
             RightOperand = right;
         }
-
-        public override string ToString()
-        {
-            return $"BinaryOperatorExpression(Span={Span}, Operator={Operator}, LeftOperand={LeftOperand}, RightOperand={RightOperand})";
-        }
     }
 }

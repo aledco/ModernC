@@ -11,18 +11,6 @@ namespace Compiler.Models.Tree
             Parameters = parameters;
         }
 
-        public override string ToString()
-        {
-            var parameters = "[";
-            foreach (var parameter in Parameters)
-            {
-                parameters += parameter.ToString() + ", ";
-            }
-
-            parameters += "]";
-            return $"ParameterList(Span={Span}, Parameters={parameters})";
-        }
-
         public IEnumerator<Parameter> GetEnumerator()
         {
             return Parameters.GetEnumerator();
