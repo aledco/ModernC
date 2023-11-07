@@ -9,14 +9,14 @@
         /// <param name="type">The first type to compare.</param>
         /// <param name="other">The other type to compare.</param>
         /// <returns>True if they are the same type.</returns>
-        public static bool operator ==(SemanticType type, SemanticType other)
+        public static bool operator ==(SemanticType? type, SemanticType? other)
         {
-            return type.GetType() == other.GetType();
+            return type?.GetType() == other?.GetType();
         }
 
-        public static bool operator !=(SemanticType type, SemanticType other)
+        public static bool operator !=(SemanticType? type, SemanticType? other)
         {
-            return type.GetType() != other.GetType();
+            return type?.GetType() != other?.GetType();
         }
 
         public override bool Equals(object? obj)

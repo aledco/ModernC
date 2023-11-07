@@ -9,12 +9,14 @@ namespace Compiler.TreeWalking
     /// </summary>
     public class LocalTypeChecker : IWalker
     {
+        private FunctionDefinition? _currentFunction;
+
         public void Walk(ProgramRoot program)
         {
             VisitProgramRoot(program);
         }
 
-        private static void VisitProgramRoot(ProgramRoot program)
+        private void VisitProgramRoot(ProgramRoot program)
         {
             foreach (var functionDefinition in program.FunctionDefinitions)
             {
@@ -22,12 +24,13 @@ namespace Compiler.TreeWalking
             }
         }
 
-        private static void VisitFunctionDefinition(FunctionDefinition functionDefinition)
+        private void VisitFunctionDefinition(FunctionDefinition functionDefinition)
         {
+            _currentFunction = functionDefinition;
             VisitCompoundStatement(functionDefinition.Body);
         }
 
-        private static void VisitCompoundStatement(CompoundStatement body)
+        private void VisitCompoundStatement(CompoundStatement body)
         {
             body.LocalScope = new Scope();
             foreach (var statement in  body.Statements)
@@ -36,7 +39,7 @@ namespace Compiler.TreeWalking
             }
         }
 
-        private static void VisitStatement(Statement statement, Scope scope)
+        private void VisitStatement(Statement statement, Scope scope)
         {
             switch (statement)
             {
@@ -52,12 +55,44 @@ namespace Compiler.TreeWalking
                 case VariableDefinitionAndAssignmentStatement s:
                     VisitVariableDefinitionAndAssignmentStatement(s, scope);
                     break;
+                case ReturnStatement s:
+                    VisitReturnStatement(s, scope);
+                    break;
                 default:
                     throw new NotImplementedException($"Unknown statement {statement}");
             }
         }
 
-        private static void VisitPrintStatement(PrintStatement statement, Scope scope)
+        private void VisitReturnStatement(ReturnStatement statement, Scope scope)
+        {
+            if (_currentFunction?.Id.Symbol != null && _currentFunction.Id.Symbol.Type is FunctionType functionType)
+            {
+                if (functionType.ReturnType is VoidType && statement.Expression != null)
+                {
+                    throw new Exception($"Function has a return type of void and cannot return a value: {statement.Span}");
+                }
+                else if (functionType.ReturnType is not VoidType && statement.Expression == null)
+                {
+                    throw new Exception($"Function cannot have an empty return: {statement.Span}");
+                }
+
+                if (statement.Expression != null)
+                {
+                    var expressionType = VisitExpression(statement.Expression, scope);
+                    if (functionType.ReturnType is not VoidType && expressionType != functionType.ReturnType)
+                    {
+                        throw new Exception($"Function return type does not match return value: {statement.Span}");
+                    }
+                }
+                
+            }
+            else
+            {
+                throw new Exception("_currentFunction is null");
+            }       
+        }
+
+        private void VisitPrintStatement(PrintStatement statement, Scope scope)
         {
             var type = VisitExpression(statement.Expression, scope);
             if (type.GetType() ==  typeof(VoidType))
@@ -66,14 +101,14 @@ namespace Compiler.TreeWalking
             }
         }
 
-        private static void VisitVariableDefinitionStatement(VariableDefinitionStatement statement, Scope scope)
+        private void VisitVariableDefinitionStatement(VariableDefinitionStatement statement, Scope scope)
         {
             var type = statement.Type.ToSemanticType();
             scope.Add(statement.Id, type);
             VisitIdNode(statement.Id, scope);
         }
 
-        private static void VisitAssignmentStatement(AssignmentStatement statement, Scope scope)
+        private void VisitAssignmentStatement(AssignmentStatement statement, Scope scope)
         {
             var leftType = VisitExpression(statement.Left, scope);
             var rightType = VisitExpression(statement.Right, scope);
@@ -83,7 +118,7 @@ namespace Compiler.TreeWalking
             }
         }
 
-        private static void VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement statement, Scope scope)
+        private void VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement statement, Scope scope)
         {
             var type = statement.Type.ToSemanticType();
             var expressionType = VisitExpression(statement.Expression, scope);
@@ -96,7 +131,7 @@ namespace Compiler.TreeWalking
             VisitIdNode(statement.Id, scope);
         }
 
-        private static SemanticType VisitExpression(Expression expression, Scope scope)
+        private SemanticType VisitExpression(Expression expression, Scope scope)
         {
             return expression switch
             {
@@ -109,7 +144,7 @@ namespace Compiler.TreeWalking
             };
         }
 
-        private static SemanticType VisitBinaryOperatorExpression(BinaryOperatorExpression e, Scope scope)
+        private SemanticType VisitBinaryOperatorExpression(BinaryOperatorExpression e, Scope scope)
         {
             var leftType = VisitExpression(e.LeftOperand, scope);
             var rightType = VisitExpression(e.RightOperand, scope);
@@ -121,27 +156,27 @@ namespace Compiler.TreeWalking
             return leftType;
         }
 
-        private static SemanticType VisitUnaryOperatorExpression(UnaryOperatorExpression e, Scope scope)
+        private SemanticType VisitUnaryOperatorExpression(UnaryOperatorExpression e, Scope scope)
         {
             return VisitExpression(e.Operand, scope);
         }
 
-        private static SemanticType VisitIntLiteralExpression(IntLiteralExpression e, Scope scope)
+        private SemanticType VisitIntLiteralExpression(IntLiteralExpression e, Scope scope)
         {
             return new IntType();
         }
 
-        private static SemanticType VisitBoolLiteralExpression(BoolLiteralExpression e, Scope scope)
+        private SemanticType VisitBoolLiteralExpression(BoolLiteralExpression e, Scope scope)
         {
             return new BoolType();
         }
 
-        private static SemanticType VisitIdExpression(IdExpression e, Scope scope)
+        private SemanticType VisitIdExpression(IdExpression e, Scope scope)
         {
             return VisitIdNode(e.Id, scope);
         }
 
-        private static SemanticType VisitIdNode(IdNode id, Scope scope)
+        private SemanticType VisitIdNode(IdNode id, Scope scope)
         {
             id.Symbol = scope.Get(id);
             return id.Symbol.Type;
