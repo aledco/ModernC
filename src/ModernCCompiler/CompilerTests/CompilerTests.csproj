@@ -31,9 +31,4 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="TestFiles\In\TypeErrors\" />
-    <Folder Include="TestFiles\In\ParseErrors\" />
-  </ItemGroup>
-
 </Project>

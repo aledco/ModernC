@@ -30,7 +30,8 @@ statement
     : printStatement
     | variableDefinitionStatement
     | assignmentStatement
-    | variableDefinitionAndAssignmentStatement;
+    | variableDefinitionAndAssignmentStatement
+    | compoundStatement;
 
 printStatement
     : 'print' expression ';';

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from c:/LocalFiles/ModernC/src/Compiler/AntlrParsing/ModernC.g4 by ANTLR 4.13.1
+// Generated from c:/LocalFiles/ModernC/src/ModernCCompiler/Compiler/AntlrParsing/ModernC.g4 by ANTLR 4.13.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -466,7 +466,7 @@ public partial class ModernCParser : Parser {
 			State = 81;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & 16713794L) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & 16713810L) != 0)) {
 				{
 				{
 				State = 78;
@@ -515,6 +515,9 @@ public partial class ModernCParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public VariableDefinitionAndAssignmentStatementContext variableDefinitionAndAssignmentStatement() {
 			return GetRuleContext<VariableDefinitionAndAssignmentStatementContext>(0);
 		}
+		[System.Diagnostics.DebuggerNonUserCode] public CompoundStatementContext compoundStatement() {
+			return GetRuleContext<CompoundStatementContext>(0);
+		}
 		public StatementContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
@@ -533,7 +536,7 @@ public partial class ModernCParser : Parser {
 		StatementContext _localctx = new StatementContext(Context, State);
 		EnterRule(_localctx, 14, RULE_statement);
 		try {
-			State = 93;
+			State = 94;
 			ErrorHandler.Sync(this);
 			switch ( Interpreter.AdaptivePredict(TokenStream,6,Context) ) {
 			case 1:
@@ -562,6 +565,13 @@ public partial class ModernCParser : Parser {
 				{
 				State = 92;
 				variableDefinitionAndAssignmentStatement();
+				}
+				break;
+			case 5:
+				EnterOuterAlt(_localctx, 5);
+				{
+				State = 93;
+				compoundStatement();
 				}
 				break;
 			}
@@ -601,11 +611,11 @@ public partial class ModernCParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 95;
-			Match(T__5);
 			State = 96;
-			expression(0);
+			Match(T__5);
 			State = 97;
+			expression(0);
+			State = 98;
 			Match(T__6);
 			}
 		}
@@ -647,11 +657,11 @@ public partial class ModernCParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 99;
-			type();
 			State = 100;
-			id();
+			type();
 			State = 101;
+			id();
+			State = 102;
 			Match(T__6);
 			}
 		}
@@ -696,15 +706,15 @@ public partial class ModernCParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 103;
-			type();
 			State = 104;
-			id();
+			type();
 			State = 105;
-			Match(T__7);
+			id();
 			State = 106;
-			expression(0);
+			Match(T__7);
 			State = 107;
+			expression(0);
+			State = 108;
 			Match(T__6);
 			}
 		}
@@ -746,13 +756,13 @@ public partial class ModernCParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 109;
-			expression(0);
 			State = 110;
-			Match(T__7);
-			State = 111;
 			expression(0);
+			State = 111;
+			Match(T__7);
 			State = 112;
+			expression(0);
+			State = 113;
 			Match(T__6);
 			}
 		}
@@ -792,19 +802,19 @@ public partial class ModernCParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 114;
+			State = 115;
 			Match(T__8);
-			State = 116;
+			State = 117;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 15796226L) != 0)) {
 				{
-				State = 115;
+				State = 116;
 				expression(0);
 				}
 			}
 
-			State = 118;
+			State = 119;
 			Match(T__6);
 			}
 		}
@@ -857,11 +867,11 @@ public partial class ModernCParser : Parser {
 			EnterOuterAlt(_localctx, 1);
 			{
 			{
-			State = 121;
+			State = 122;
 			term(0);
 			}
 			Context.Stop = TokenStream.LT(-1);
-			State = 128;
+			State = 129;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,8,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
@@ -873,9 +883,9 @@ public partial class ModernCParser : Parser {
 					{
 					_localctx = new ExpressionContext(_parentctx, _parentState);
 					PushNewRecursionContext(_localctx, _startState, RULE_expression);
-					State = 123;
-					if (!(Precpred(Context, 2))) throw new FailedPredicateException(this, "Precpred(Context, 2)");
 					State = 124;
+					if (!(Precpred(Context, 2))) throw new FailedPredicateException(this, "Precpred(Context, 2)");
+					State = 125;
 					_la = TokenStream.LA(1);
 					if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 7168L) != 0)) ) {
 					ErrorHandler.RecoverInline(this);
@@ -884,12 +894,12 @@ public partial class ModernCParser : Parser {
 						ErrorHandler.ReportMatch(this);
 					    Consume();
 					}
-					State = 125;
+					State = 126;
 					term(0);
 					}
 					} 
 				}
-				State = 130;
+				State = 131;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,8,Context);
 			}
@@ -944,11 +954,11 @@ public partial class ModernCParser : Parser {
 			EnterOuterAlt(_localctx, 1);
 			{
 			{
-			State = 132;
+			State = 133;
 			factor();
 			}
 			Context.Stop = TokenStream.LT(-1);
-			State = 139;
+			State = 140;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,9,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
@@ -960,9 +970,9 @@ public partial class ModernCParser : Parser {
 					{
 					_localctx = new TermContext(_parentctx, _parentState);
 					PushNewRecursionContext(_localctx, _startState, RULE_term);
-					State = 134;
-					if (!(Precpred(Context, 2))) throw new FailedPredicateException(this, "Precpred(Context, 2)");
 					State = 135;
+					if (!(Precpred(Context, 2))) throw new FailedPredicateException(this, "Precpred(Context, 2)");
+					State = 136;
 					_la = TokenStream.LA(1);
 					if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 57344L) != 0)) ) {
 					ErrorHandler.RecoverInline(this);
@@ -971,12 +981,12 @@ public partial class ModernCParser : Parser {
 						ErrorHandler.ReportMatch(this);
 					    Consume();
 					}
-					State = 136;
+					State = 137;
 					factor();
 					}
 					} 
 				}
-				State = 141;
+				State = 142;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,9,Context);
 			}
@@ -1027,21 +1037,21 @@ public partial class ModernCParser : Parser {
 		FactorContext _localctx = new FactorContext(Context, State);
 		EnterRule(_localctx, 30, RULE_factor);
 		try {
-			State = 150;
+			State = 151;
 			ErrorHandler.Sync(this);
 			switch (TokenStream.LA(1)) {
 			case T__10:
 			case T__15:
 				EnterOuterAlt(_localctx, 1);
 				{
-				State = 142;
+				State = 143;
 				unaryExpression();
 				}
 				break;
 			case INT:
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 143;
+				State = 144;
 				intLiteral();
 				}
 				break;
@@ -1049,25 +1059,25 @@ public partial class ModernCParser : Parser {
 			case FALSE:
 				EnterOuterAlt(_localctx, 3);
 				{
-				State = 144;
+				State = 145;
 				boolLiteral();
 				}
 				break;
 			case ID:
 				EnterOuterAlt(_localctx, 4);
 				{
-				State = 145;
+				State = 146;
 				idExpression();
 				}
 				break;
 			case T__0:
 				EnterOuterAlt(_localctx, 5);
 				{
-				State = 146;
-				Match(T__0);
 				State = 147;
-				expression(0);
+				Match(T__0);
 				State = 148;
+				expression(0);
+				State = 149;
 				Match(T__1);
 				}
 				break;
@@ -1111,7 +1121,7 @@ public partial class ModernCParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 152;
+			State = 153;
 			_la = TokenStream.LA(1);
 			if ( !(_la==T__10 || _la==T__15) ) {
 			ErrorHandler.RecoverInline(this);
@@ -1120,7 +1130,7 @@ public partial class ModernCParser : Parser {
 				ErrorHandler.ReportMatch(this);
 			    Consume();
 			}
-			State = 153;
+			State = 154;
 			factor();
 			}
 		}
@@ -1157,7 +1167,7 @@ public partial class ModernCParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 155;
+			State = 156;
 			Match(INT);
 			}
 		}
@@ -1196,7 +1206,7 @@ public partial class ModernCParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 157;
+			State = 158;
 			_la = TokenStream.LA(1);
 			if ( !(_la==TRUE || _la==FALSE) ) {
 			ErrorHandler.RecoverInline(this);
@@ -1242,7 +1252,7 @@ public partial class ModernCParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 159;
+			State = 160;
 			id();
 			}
 		}
@@ -1279,7 +1289,7 @@ public partial class ModernCParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 161;
+			State = 162;
 			Match(ID);
 			}
 		}
@@ -1315,54 +1325,55 @@ public partial class ModernCParser : Parser {
 	}
 
 	private static int[] _serializedATN = {
-		4,1,25,164,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,
+		4,1,25,165,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,
 		7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,
 		2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,20,7,20,1,0,1,0,5,
 		0,45,8,0,10,0,12,0,48,9,0,1,0,1,0,1,1,1,1,1,1,1,1,3,1,56,8,1,1,1,1,1,1,
 		1,1,2,1,2,1,2,5,2,64,8,2,10,2,12,2,67,9,2,1,3,1,3,1,3,1,4,1,4,3,4,74,8,
 		4,1,5,1,5,1,6,1,6,5,6,80,8,6,10,6,12,6,83,9,6,1,6,3,6,86,8,6,1,6,1,6,1,
-		7,1,7,1,7,1,7,3,7,94,8,7,1,8,1,8,1,8,1,8,1,9,1,9,1,9,1,9,1,10,1,10,1,10,
-		1,10,1,10,1,10,1,11,1,11,1,11,1,11,1,11,1,12,1,12,3,12,117,8,12,1,12,1,
-		12,1,13,1,13,1,13,1,13,1,13,1,13,5,13,127,8,13,10,13,12,13,130,9,13,1,
-		14,1,14,1,14,1,14,1,14,1,14,5,14,138,8,14,10,14,12,14,141,9,14,1,15,1,
-		15,1,15,1,15,1,15,1,15,1,15,1,15,3,15,151,8,15,1,16,1,16,1,16,1,17,1,17,
-		1,18,1,18,1,19,1,19,1,20,1,20,1,20,0,2,26,28,21,0,2,4,6,8,10,12,14,16,
-		18,20,22,24,26,28,30,32,34,36,38,40,0,5,1,0,18,19,1,0,10,12,1,0,13,15,
-		2,0,11,11,16,16,1,0,20,21,158,0,42,1,0,0,0,2,51,1,0,0,0,4,60,1,0,0,0,6,
-		68,1,0,0,0,8,73,1,0,0,0,10,75,1,0,0,0,12,77,1,0,0,0,14,93,1,0,0,0,16,95,
-		1,0,0,0,18,99,1,0,0,0,20,103,1,0,0,0,22,109,1,0,0,0,24,114,1,0,0,0,26,
-		120,1,0,0,0,28,131,1,0,0,0,30,150,1,0,0,0,32,152,1,0,0,0,34,155,1,0,0,
-		0,36,157,1,0,0,0,38,159,1,0,0,0,40,161,1,0,0,0,42,46,3,2,1,0,43,45,3,2,
-		1,0,44,43,1,0,0,0,45,48,1,0,0,0,46,44,1,0,0,0,46,47,1,0,0,0,47,49,1,0,
-		0,0,48,46,1,0,0,0,49,50,5,0,0,1,50,1,1,0,0,0,51,52,3,8,4,0,52,53,3,40,
-		20,0,53,55,5,1,0,0,54,56,3,4,2,0,55,54,1,0,0,0,55,56,1,0,0,0,56,57,1,0,
-		0,0,57,58,5,2,0,0,58,59,3,12,6,0,59,3,1,0,0,0,60,65,3,6,3,0,61,62,5,3,
-		0,0,62,64,3,6,3,0,63,61,1,0,0,0,64,67,1,0,0,0,65,63,1,0,0,0,65,66,1,0,
-		0,0,66,5,1,0,0,0,67,65,1,0,0,0,68,69,3,8,4,0,69,70,3,40,20,0,70,7,1,0,
-		0,0,71,74,5,17,0,0,72,74,3,10,5,0,73,71,1,0,0,0,73,72,1,0,0,0,74,9,1,0,
-		0,0,75,76,7,0,0,0,76,11,1,0,0,0,77,81,5,4,0,0,78,80,3,14,7,0,79,78,1,0,
-		0,0,80,83,1,0,0,0,81,79,1,0,0,0,81,82,1,0,0,0,82,85,1,0,0,0,83,81,1,0,
-		0,0,84,86,3,24,12,0,85,84,1,0,0,0,85,86,1,0,0,0,86,87,1,0,0,0,87,88,5,
-		5,0,0,88,13,1,0,0,0,89,94,3,16,8,0,90,94,3,18,9,0,91,94,3,22,11,0,92,94,
-		3,20,10,0,93,89,1,0,0,0,93,90,1,0,0,0,93,91,1,0,0,0,93,92,1,0,0,0,94,15,
-		1,0,0,0,95,96,5,6,0,0,96,97,3,26,13,0,97,98,5,7,0,0,98,17,1,0,0,0,99,100,
-		3,8,4,0,100,101,3,40,20,0,101,102,5,7,0,0,102,19,1,0,0,0,103,104,3,8,4,
-		0,104,105,3,40,20,0,105,106,5,8,0,0,106,107,3,26,13,0,107,108,5,7,0,0,
-		108,21,1,0,0,0,109,110,3,26,13,0,110,111,5,8,0,0,111,112,3,26,13,0,112,
-		113,5,7,0,0,113,23,1,0,0,0,114,116,5,9,0,0,115,117,3,26,13,0,116,115,1,
-		0,0,0,116,117,1,0,0,0,117,118,1,0,0,0,118,119,5,7,0,0,119,25,1,0,0,0,120,
-		121,6,13,-1,0,121,122,3,28,14,0,122,128,1,0,0,0,123,124,10,2,0,0,124,125,
-		7,1,0,0,125,127,3,28,14,0,126,123,1,0,0,0,127,130,1,0,0,0,128,126,1,0,
-		0,0,128,129,1,0,0,0,129,27,1,0,0,0,130,128,1,0,0,0,131,132,6,14,-1,0,132,
-		133,3,30,15,0,133,139,1,0,0,0,134,135,10,2,0,0,135,136,7,2,0,0,136,138,
-		3,30,15,0,137,134,1,0,0,0,138,141,1,0,0,0,139,137,1,0,0,0,139,140,1,0,
-		0,0,140,29,1,0,0,0,141,139,1,0,0,0,142,151,3,32,16,0,143,151,3,34,17,0,
-		144,151,3,36,18,0,145,151,3,38,19,0,146,147,5,1,0,0,147,148,3,26,13,0,
-		148,149,5,2,0,0,149,151,1,0,0,0,150,142,1,0,0,0,150,143,1,0,0,0,150,144,
-		1,0,0,0,150,145,1,0,0,0,150,146,1,0,0,0,151,31,1,0,0,0,152,153,7,3,0,0,
-		153,154,3,30,15,0,154,33,1,0,0,0,155,156,5,22,0,0,156,35,1,0,0,0,157,158,
-		7,4,0,0,158,37,1,0,0,0,159,160,3,40,20,0,160,39,1,0,0,0,161,162,5,23,0,
-		0,162,41,1,0,0,0,11,46,55,65,73,81,85,93,116,128,139,150
+		7,1,7,1,7,1,7,1,7,3,7,95,8,7,1,8,1,8,1,8,1,8,1,9,1,9,1,9,1,9,1,10,1,10,
+		1,10,1,10,1,10,1,10,1,11,1,11,1,11,1,11,1,11,1,12,1,12,3,12,118,8,12,1,
+		12,1,12,1,13,1,13,1,13,1,13,1,13,1,13,5,13,128,8,13,10,13,12,13,131,9,
+		13,1,14,1,14,1,14,1,14,1,14,1,14,5,14,139,8,14,10,14,12,14,142,9,14,1,
+		15,1,15,1,15,1,15,1,15,1,15,1,15,1,15,3,15,152,8,15,1,16,1,16,1,16,1,17,
+		1,17,1,18,1,18,1,19,1,19,1,20,1,20,1,20,0,2,26,28,21,0,2,4,6,8,10,12,14,
+		16,18,20,22,24,26,28,30,32,34,36,38,40,0,5,1,0,18,19,1,0,10,12,1,0,13,
+		15,2,0,11,11,16,16,1,0,20,21,160,0,42,1,0,0,0,2,51,1,0,0,0,4,60,1,0,0,
+		0,6,68,1,0,0,0,8,73,1,0,0,0,10,75,1,0,0,0,12,77,1,0,0,0,14,94,1,0,0,0,
+		16,96,1,0,0,0,18,100,1,0,0,0,20,104,1,0,0,0,22,110,1,0,0,0,24,115,1,0,
+		0,0,26,121,1,0,0,0,28,132,1,0,0,0,30,151,1,0,0,0,32,153,1,0,0,0,34,156,
+		1,0,0,0,36,158,1,0,0,0,38,160,1,0,0,0,40,162,1,0,0,0,42,46,3,2,1,0,43,
+		45,3,2,1,0,44,43,1,0,0,0,45,48,1,0,0,0,46,44,1,0,0,0,46,47,1,0,0,0,47,
+		49,1,0,0,0,48,46,1,0,0,0,49,50,5,0,0,1,50,1,1,0,0,0,51,52,3,8,4,0,52,53,
+		3,40,20,0,53,55,5,1,0,0,54,56,3,4,2,0,55,54,1,0,0,0,55,56,1,0,0,0,56,57,
+		1,0,0,0,57,58,5,2,0,0,58,59,3,12,6,0,59,3,1,0,0,0,60,65,3,6,3,0,61,62,
+		5,3,0,0,62,64,3,6,3,0,63,61,1,0,0,0,64,67,1,0,0,0,65,63,1,0,0,0,65,66,
+		1,0,0,0,66,5,1,0,0,0,67,65,1,0,0,0,68,69,3,8,4,0,69,70,3,40,20,0,70,7,
+		1,0,0,0,71,74,5,17,0,0,72,74,3,10,5,0,73,71,1,0,0,0,73,72,1,0,0,0,74,9,
+		1,0,0,0,75,76,7,0,0,0,76,11,1,0,0,0,77,81,5,4,0,0,78,80,3,14,7,0,79,78,
+		1,0,0,0,80,83,1,0,0,0,81,79,1,0,0,0,81,82,1,0,0,0,82,85,1,0,0,0,83,81,
+		1,0,0,0,84,86,3,24,12,0,85,84,1,0,0,0,85,86,1,0,0,0,86,87,1,0,0,0,87,88,
+		5,5,0,0,88,13,1,0,0,0,89,95,3,16,8,0,90,95,3,18,9,0,91,95,3,22,11,0,92,
+		95,3,20,10,0,93,95,3,12,6,0,94,89,1,0,0,0,94,90,1,0,0,0,94,91,1,0,0,0,
+		94,92,1,0,0,0,94,93,1,0,0,0,95,15,1,0,0,0,96,97,5,6,0,0,97,98,3,26,13,
+		0,98,99,5,7,0,0,99,17,1,0,0,0,100,101,3,8,4,0,101,102,3,40,20,0,102,103,
+		5,7,0,0,103,19,1,0,0,0,104,105,3,8,4,0,105,106,3,40,20,0,106,107,5,8,0,
+		0,107,108,3,26,13,0,108,109,5,7,0,0,109,21,1,0,0,0,110,111,3,26,13,0,111,
+		112,5,8,0,0,112,113,3,26,13,0,113,114,5,7,0,0,114,23,1,0,0,0,115,117,5,
+		9,0,0,116,118,3,26,13,0,117,116,1,0,0,0,117,118,1,0,0,0,118,119,1,0,0,
+		0,119,120,5,7,0,0,120,25,1,0,0,0,121,122,6,13,-1,0,122,123,3,28,14,0,123,
+		129,1,0,0,0,124,125,10,2,0,0,125,126,7,1,0,0,126,128,3,28,14,0,127,124,
+		1,0,0,0,128,131,1,0,0,0,129,127,1,0,0,0,129,130,1,0,0,0,130,27,1,0,0,0,
+		131,129,1,0,0,0,132,133,6,14,-1,0,133,134,3,30,15,0,134,140,1,0,0,0,135,
+		136,10,2,0,0,136,137,7,2,0,0,137,139,3,30,15,0,138,135,1,0,0,0,139,142,
+		1,0,0,0,140,138,1,0,0,0,140,141,1,0,0,0,141,29,1,0,0,0,142,140,1,0,0,0,
+		143,152,3,32,16,0,144,152,3,34,17,0,145,152,3,36,18,0,146,152,3,38,19,
+		0,147,148,5,1,0,0,148,149,3,26,13,0,149,150,5,2,0,0,150,152,1,0,0,0,151,
+		143,1,0,0,0,151,144,1,0,0,0,151,145,1,0,0,0,151,146,1,0,0,0,151,147,1,
+		0,0,0,152,31,1,0,0,0,153,154,7,3,0,0,154,155,3,30,15,0,155,33,1,0,0,0,
+		156,157,5,22,0,0,157,35,1,0,0,0,158,159,7,4,0,0,159,37,1,0,0,0,160,161,
+		3,40,20,0,161,39,1,0,0,0,162,163,5,23,0,0,163,41,1,0,0,0,11,46,55,65,73,
+		81,85,94,117,129,140,151
 	};
 
 	public static readonly ATN _ATN =

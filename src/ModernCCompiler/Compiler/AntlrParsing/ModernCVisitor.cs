@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from c:/LocalFiles/ModernC/src/Compiler/AntlrParsing/ModernC.g4 by ANTLR 4.13.1
+// Generated from c:/LocalFiles/ModernC/src/ModernCCompiler/Compiler/AntlrParsing/ModernC.g4 by ANTLR 4.13.1
 
 // Unreachable code detected
 #pragma warning disable 0162

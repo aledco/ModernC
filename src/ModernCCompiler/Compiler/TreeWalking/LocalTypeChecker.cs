@@ -55,6 +55,9 @@ namespace Compiler.TreeWalking
                 case ReturnStatement s:
                     VisitReturnStatement(s, functionDefiniton, scope);
                     break;
+                case CompoundStatement s:
+                    VisitCompoundStatement(s, functionDefiniton);
+                    break;
                 default:
                     throw new NotImplementedException($"Unknown statement {statement}");
             }
