@@ -4,8 +4,7 @@ using Compiler.TreeWalking;
 
 /*
  * TODO:
- * - Add a test project, test parsing, test tree walking, etc
- * - Make GitHub repo for project
+ * - Add better error handling
  */
 namespace Compiler
 {
@@ -22,7 +21,7 @@ namespace Compiler
                 walker.Walk(tree);
             }
 
-            // TODO generate intermediate code
+            // TODO generate intermediate code or (LLVM)
 
             // TODO generate actual assembly or interpret intermediate code
 
@@ -35,6 +34,8 @@ namespace Compiler
             {
                 new TopLevelTypeChecker(),
                 new LocalTypeChecker(),
+                // TODO calculate offsets and assign registers
+                // TODO generate LLVM code
             };
         }
 

@@ -1,5 +1,5 @@
-﻿using Compiler.Models.NameResolution.Types;
-using Compiler.Models.Symbols;
+﻿using Compiler.Models.NameResolution;
+using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Tree;
 
 namespace Compiler.TreeWalking
@@ -9,8 +9,6 @@ namespace Compiler.TreeWalking
     /// </summary>
     public class LocalTypeChecker : IWalker
     {
-        private FunctionDefinition? _currentFunction;
-
         public void Walk(ProgramRoot program)
         {
             VisitProgramRoot(program);
@@ -26,20 +24,19 @@ namespace Compiler.TreeWalking
 
         private void VisitFunctionDefinition(FunctionDefinition functionDefinition)
         {
-            _currentFunction = functionDefinition;
-            VisitCompoundStatement(functionDefinition.Body);
+            VisitCompoundStatement(functionDefinition.Body, functionDefinition);
         }
 
-        private void VisitCompoundStatement(CompoundStatement body)
+        private void VisitCompoundStatement(CompoundStatement body, FunctionDefinition functionDefiniton)
         {
-            body.LocalScope = new Scope();
+            body.LocalScope = new Scope(functionDefiniton.FunctionScope);
             foreach (var statement in  body.Statements)
             {
-                VisitStatement(statement, body.LocalScope);
+                VisitStatement(statement, functionDefiniton, body.LocalScope);
             }
         }
 
-        private void VisitStatement(Statement statement, Scope scope)
+        private void VisitStatement(Statement statement, FunctionDefinition functionDefiniton, Scope scope)
         {
             switch (statement)
             {
@@ -56,16 +53,16 @@ namespace Compiler.TreeWalking
                     VisitVariableDefinitionAndAssignmentStatement(s, scope);
                     break;
                 case ReturnStatement s:
-                    VisitReturnStatement(s, scope);
+                    VisitReturnStatement(s, functionDefiniton, scope);
                     break;
                 default:
                     throw new NotImplementedException($"Unknown statement {statement}");
             }
         }
 
-        private void VisitReturnStatement(ReturnStatement statement, Scope scope)
+        private void VisitReturnStatement(ReturnStatement statement, FunctionDefinition functionDefiniton, Scope scope)
         {
-            if (_currentFunction?.Id.Symbol != null && _currentFunction.Id.Symbol.Type is FunctionType functionType)
+            if (functionDefiniton.Id?.Symbol?.Type is FunctionType functionType)
             {
                 if (functionType.ReturnType is VoidType && statement.Expression != null)
                 {
@@ -137,8 +134,8 @@ namespace Compiler.TreeWalking
             {
                 BinaryOperatorExpression e => VisitBinaryOperatorExpression(e, scope),
                 UnaryOperatorExpression e => VisitUnaryOperatorExpression(e, scope),
-                IntLiteralExpression e => VisitIntLiteralExpression(e, scope),
-                BoolLiteralExpression e => VisitBoolLiteralExpression(e, scope),
+                IntLiteralExpression => VisitIntLiteralExpression(),
+                BoolLiteralExpression => VisitBoolLiteralExpression(),
                 IdExpression e => VisitIdExpression(e, scope),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
             };
@@ -161,12 +158,12 @@ namespace Compiler.TreeWalking
             return VisitExpression(e.Operand, scope);
         }
 
-        private SemanticType VisitIntLiteralExpression(IntLiteralExpression e, Scope scope)
+        private SemanticType VisitIntLiteralExpression()
         {
             return new IntType();
         }
 
-        private SemanticType VisitBoolLiteralExpression(BoolLiteralExpression e, Scope scope)
+        private SemanticType VisitBoolLiteralExpression()
         {
             return new BoolType();
         }
@@ -178,7 +175,7 @@ namespace Compiler.TreeWalking
 
         private SemanticType VisitIdNode(IdNode id, Scope scope)
         {
-            id.Symbol = scope.Get(id);
+            id.Symbol = scope.Lookup(id);
             return id.Symbol.Type;
         }
     }

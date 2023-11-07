@@ -1,5 +1,5 @@
-﻿using Compiler.Models.NameResolution.Types;
-using Compiler.Models.Symbols;
+﻿using Compiler.Models.NameResolution;
+using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Tree;
 
 namespace Compiler.TreeWalking
@@ -15,7 +15,7 @@ namespace Compiler.TreeWalking
             VisitProgramRoot(program);
         }
 
-        private static void VisitProgramRoot(ProgramRoot program)
+        private void VisitProgramRoot(ProgramRoot program)
         {
             program.GlobalScope = new Scope();
             foreach (var functionDefinition in program.FunctionDefinitions)
@@ -24,7 +24,7 @@ namespace Compiler.TreeWalking
             }
         }
 
-        private static void VisitFunctionDefinition(FunctionDefinition functionDefinition, Scope scope)
+        private void VisitFunctionDefinition(FunctionDefinition functionDefinition, Scope scope)
         {
             functionDefinition.FunctionScope = new Scope();
             var returnType = functionDefinition.ReturnType.ToSemanticType();
@@ -33,7 +33,7 @@ namespace Compiler.TreeWalking
             VisitIdNode(functionDefinition.Id, scope);
         }
 
-        private static IEnumerable<SemanticType> VisitParameterList(ParameterList parameterList, Scope functionScope)
+        private IEnumerable<SemanticType> VisitParameterList(ParameterList parameterList, Scope functionScope)
         {
             var parameterTypes = new List<SemanticType>();
             foreach (var parameter in parameterList)
@@ -47,9 +47,9 @@ namespace Compiler.TreeWalking
             return parameterTypes;
         }
 
-        private static void VisitIdNode(IdNode id, Scope scope)
+        private void VisitIdNode(IdNode id, Scope scope)
         {
-            id.Symbol = scope.Get(id);
+            id.Symbol = scope.Lookup(id);
         }
     }
 }

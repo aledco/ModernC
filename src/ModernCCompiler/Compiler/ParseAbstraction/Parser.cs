@@ -21,6 +21,10 @@ namespace Compiler.ParseAbstraction
             // Parse
             var modernCParser = new ModernCParser(commonTokenStream);
             var programContext = modernCParser.program();
+            if (modernCParser.NumberOfSyntaxErrors > 0)
+            {
+                throw new Exception("Syntax error");
+            }
 
             // Abstract
             var visitor = new ParseAbstractionVisitor();

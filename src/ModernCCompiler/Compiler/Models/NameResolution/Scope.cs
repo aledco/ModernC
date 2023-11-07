@@ -1,11 +1,23 @@
 ﻿using Compiler.Models.NameResolution.Types;
+using Compiler.Models.Symbols;
 using Compiler.Models.Tree;
 
-namespace Compiler.Models.Symbols
+namespace Compiler.Models.NameResolution
 {
     public class Scope
     {
         private readonly Dictionary<string, Symbol> _table = new();
+        private readonly Scope? _parent;
+
+        public Scope()
+        {
+            _parent = null;
+        }
+
+        public Scope(Scope? parent)
+        {
+            _parent = parent;
+        }
 
         public void Add(IdNode id, SemanticType type)
         {
@@ -17,17 +29,22 @@ namespace Compiler.Models.Symbols
             _table[id.Value] = new Symbol(id.Value, this, type);
         }
 
-        public Symbol Get(IdNode id) 
+        public Symbol Lookup(IdNode id)
         {
             if (!_table.ContainsKey(id.Value))
             {
+                if (_parent != null)
+                {
+                    return _parent.Lookup(id);
+                }
+
                 throw new NotDefinedException(id);
             }
 
             return _table[id.Value];
         }
 
-        private class AlreadyDefinedException : Exception 
+        private class AlreadyDefinedException : Exception
         {
             public AlreadyDefinedException(IdNode id) : base($"{id.Value} has already been defined: {id.Span}")
             {

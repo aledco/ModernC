@@ -1,4 +1,5 @@
-﻿using Compiler.Models.NameResolution.Types;
+﻿using Compiler.Models.NameResolution;
+using Compiler.Models.NameResolution.Types;
 
 namespace Compiler.Models.Symbols
 {

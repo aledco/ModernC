@@ -15,23 +15,23 @@
             return Path.Combine(baseDir, "TestFiles");
         }
 
-        public static string GetTestInputDir()
+        public static string GetTestInputDir(string testType)
         {
             var testDir = GetTestDir();
-            return Path.Combine(testDir, "In");
+            return Path.Combine(testDir, "In", testType);
         }
 
-        public static string ReadTestInput(string id)
+        public static string ReadTestInput(string testType, string id)
         {
-            var testInputDir = GetTestInputDir();
+            var testInputDir = GetTestInputDir(testType);
             var filePath = Path.Combine(testInputDir, $"test{id}.mc");
             return File.ReadAllText(filePath);
         }
 
 
-        public static IEnumerable<(string Id, string Contents)> EnumerateTestInput()
+        public static IEnumerable<(string Id, string Contents)> EnumerateTestInput(string testType)
         {
-            var inputDir = GetTestInputDir();
+            var inputDir = GetTestInputDir(testType);
             foreach (var file in Directory.EnumerateFiles(inputDir))
             {
                 var id = Path.GetFileName(file).Replace("test", "").Replace(".mc", "");
@@ -39,7 +39,7 @@
             }
         }
 
-        public static string GetTestOutputDir(string testType)
+        public static string GetTestOutputDir(string testType, string component)
         {
             var testDir = GetTestDir();
             var outputDir = Path.Combine(testDir, "Out");
@@ -54,12 +54,18 @@
                 Directory.CreateDirectory(testTypeDir);
             }
 
-            return testTypeDir;
+            var componentDir = Path.Combine(testTypeDir, component);
+            if (!Directory.Exists(componentDir))
+            {
+                Directory.CreateDirectory(componentDir);
+            }
+
+            return componentDir;
         }
 
-        public static void WriteTestOutput(string testType, string id, string output)
+        public static void WriteTestOutput(string testType, string component, string id, string output)
         {
-            var testOutputDir = GetTestOutputDir(testType);
+            var testOutputDir = GetTestOutputDir(testType, component);
             var filePath = Path.Combine(testOutputDir, $"test{id}.out");
             File.WriteAllText(filePath, output);
         }

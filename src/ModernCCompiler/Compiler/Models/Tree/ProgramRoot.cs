@@ -1,4 +1,4 @@
-﻿using Compiler.Models.Symbols;
+﻿using Compiler.Models.NameResolution;
 
 namespace Compiler.Models.Tree
 {

@@ -192,6 +192,10 @@ namespace Compiler.ParseAbstraction
             {
                 return VisitIntLiteral(context.intLiteral());
             }
+            else if (context.boolLiteral() != null)
+            {
+                return VisitBoolLiteral(context.boolLiteral());
+            }
             else if (context.expression() != null)
             {
                 return VisitExpression(context.expression());
@@ -212,7 +216,7 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             var text = context.GetText();
-            if (int.TryParse(text, out int value))
+            if (int.TryParse(text, out var value))
             {
                 return new IntLiteralExpression(span, value);  
             }
@@ -224,7 +228,7 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             var text = context.GetText();
-            if (bool.TryParse(text, out bool value))
+            if (bool.TryParse(text, out var value))
             {
                 return new BoolLiteralExpression(span, value);
             }

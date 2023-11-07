@@ -23,12 +23,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="TestFiles\In\test001.mc">
+    <None Update="TestFiles\In\Passing\test001.mc">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="TestFiles\In\test002.mc">
+    <None Update="TestFiles\In\Passing\test002.mc">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="TestFiles\In\TypeErrors\" />
+    <Folder Include="TestFiles\In\ParseErrors\" />
   </ItemGroup>
 
 </Project>
