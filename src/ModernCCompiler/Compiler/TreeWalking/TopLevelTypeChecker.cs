@@ -1,6 +1,7 @@
 ﻿using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Tree;
+using System.Diagnostics;
 
 namespace Compiler.TreeWalking
 {
@@ -26,7 +27,7 @@ namespace Compiler.TreeWalking
 
         private void VisitFunctionDefinition(FunctionDefinition functionDefinition, Scope scope)
         {
-            functionDefinition.FunctionScope = new Scope();
+            functionDefinition.FunctionScope = new Scope(scope);
             var returnType = functionDefinition.ReturnType.ToSemanticType();
             var parameterTypes = VisitParameterList(functionDefinition.ParameterList, functionDefinition.FunctionScope);
             scope.Add(functionDefinition.Id, new FunctionType(returnType, parameterTypes));
@@ -36,7 +37,7 @@ namespace Compiler.TreeWalking
         private IEnumerable<SemanticType> VisitParameterList(ParameterList parameterList, Scope functionScope)
         {
             var parameterTypes = new List<SemanticType>();
-            foreach (var parameter in parameterList)
+            foreach (var parameter in parameterList.Parameters)
             {
                 var type = parameter.Type.ToSemanticType();
                 functionScope.Add(parameter.Id, type);

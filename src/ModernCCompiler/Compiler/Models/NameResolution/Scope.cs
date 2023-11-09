@@ -23,7 +23,7 @@ namespace Compiler.Models.NameResolution
         {
             if (_table.ContainsKey(id.Value))
             {
-                throw new AlreadyDefinedException(id); // TODO need to get the span in here
+                throw new AlreadyDefinedException(id);
             }
 
             _table[id.Value] = new Symbol(id.Value, this, type);

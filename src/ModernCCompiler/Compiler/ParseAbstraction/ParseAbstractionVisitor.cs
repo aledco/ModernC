@@ -16,7 +16,8 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             var functionDefinitions = context.functionDefinition()
-                .Select(c => VisitFunctionDefinition(c));
+                .Select(c => VisitFunctionDefinition(c))
+                .ToList();
             return new ProgramRoot(span, functionDefinitions);
         }
 
@@ -25,7 +26,7 @@ namespace Compiler.ParseAbstraction
             var span = GetSpanOfContext(context);
             var returnType = VisitType(context.type());
             var id = VisitId(context.id());
-            var parameters = context.parameterList() != null ? VisitParameterList(context.parameterList()) : null;
+            var parameters = context.parameterList() != null ? VisitParameterList(context.parameterList()) : new ParameterList();
             var body = VisitCompoundStatement(context.compoundStatement());
             return new FunctionDefinition(span, returnType, id, parameters, body);
         }
@@ -65,7 +66,8 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             var parameters = context.parameter()
-                .Select(c => VisitParameter(c));
+                .Select(c => VisitParameter(c))
+                .ToList();
             return new ParameterList(span, parameters);
         }
 
@@ -81,7 +83,8 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             var statements = context.statement()
-                .Select(c => VisitStatement(c)).ToList();
+                .Select(c => VisitStatement(c))
+                .ToList();
 
             if (context.returnStatement() != null)
             {
