@@ -24,12 +24,17 @@ namespace Compiler.TreeWalking
 
         private void VisitFunctionDefinition(FunctionDefinition functionDefinition)
         {
-            VisitCompoundStatement(functionDefinition.Body, functionDefinition);
+            if (functionDefinition.FunctionScope == null)
+            {
+                throw new Exception("Function scope was null");
+            }
+
+            VisitCompoundStatement(functionDefinition.Body, functionDefinition, functionDefinition.FunctionScope);
         }
 
-        private void VisitCompoundStatement(CompoundStatement body, FunctionDefinition functionDefiniton)
+        private void VisitCompoundStatement(CompoundStatement body, FunctionDefinition functionDefiniton, Scope scope)
         {
-            body.LocalScope = new Scope(functionDefiniton.FunctionScope);
+            body.LocalScope = new Scope(scope);
             foreach (var statement in  body.Statements)
             {
                 VisitStatement(statement, functionDefiniton, body.LocalScope);
@@ -56,7 +61,7 @@ namespace Compiler.TreeWalking
                     VisitReturnStatement(s, functionDefiniton, scope);
                     break;
                 case CompoundStatement s:
-                    VisitCompoundStatement(s, functionDefiniton);
+                    VisitCompoundStatement(s, functionDefiniton, scope);
                     break;
                 default:
                     throw new NotImplementedException($"Unknown statement {statement}");

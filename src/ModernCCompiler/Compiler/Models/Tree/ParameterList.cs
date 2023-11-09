@@ -2,23 +2,18 @@
 
 namespace Compiler.Models.Tree
 {
-    public class ParameterList : AbstractSyntaxTree, IEnumerable<Parameter>
+    public class ParameterList : AbstractSyntaxTree
     {
-        public IEnumerable<Parameter> Parameters { get; }
+        public IList<Parameter> Parameters { get; }
 
-        public ParameterList(Span span, IEnumerable<Parameter> parameters) : base(span)
+        public ParameterList(Span span, IList<Parameter> parameters) : base(span)
         {
             Parameters = parameters;
         }
 
-        public IEnumerator<Parameter> GetEnumerator()
+        public ParameterList() : base(new Span(0, 0, 0, 0))
         {
-            return Parameters.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return Parameters.GetEnumerator();
+            Parameters = new List<Parameter>();
         }
     }
 }
