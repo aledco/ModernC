@@ -22,8 +22,7 @@ public class TopLevelTypeCheckTest
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
-            var topLevelTypeChecker = new TopLevelTypeChecker();
-            topLevelTypeChecker.Walk(tree);
+            TopLevelTypeChecker.Walk(tree);
             Assert.IsNotNull(tree.GlobalScope);
             foreach (var functionDefinition in tree.FunctionDefinitions)
             {
@@ -51,11 +50,9 @@ public class TopLevelTypeCheckTest
         foreach (var (_, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
-
-            var topLevelTypeChecker = new TopLevelTypeChecker();
             try
             {
-                topLevelTypeChecker.Walk(tree);
+                TopLevelTypeChecker.Walk(tree);
                 Assert.Fail();
             }
             catch
@@ -75,8 +72,7 @@ public class TopLevelTypeCheckTest
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
-            var topLevelTypeChecker = new TopLevelTypeChecker();
-            topLevelTypeChecker.Walk(tree);
+            TopLevelTypeChecker.Walk(tree);
             Assert.IsNotNull(tree.GlobalScope);
             foreach (var functionDefinition in tree.FunctionDefinitions)
             {

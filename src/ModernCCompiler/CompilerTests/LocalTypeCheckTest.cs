@@ -2,6 +2,7 @@ using Compiler.Models.Tree;
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace CompilerTests;
 
@@ -13,48 +14,6 @@ public class LocalTypeCheckTest
 {
     private readonly string _component = "LocalTypeCheck";
 
-    private void TestExpression(Expression expression)
-    {
-        if (expression is IdExpression idExpression)
-        {
-            Assert.IsNotNull(idExpression.Id.Symbol);
-        }
-        else if (expression is BinaryOperatorExpression binaryOperatorExpression)
-        {
-            TestExpression(binaryOperatorExpression.LeftOperand);
-            TestExpression(binaryOperatorExpression.RightOperand);
-        }
-        if (expression is UnaryOperatorExpression unaryOperatorExpression)
-        {
-            TestExpression(unaryOperatorExpression.Operand);
-        }
-    }
-
-    private void TestCompoundStatement(CompoundStatement compoundStatement)
-    {
-        Assert.IsNotNull(compoundStatement.LocalScope);
-        foreach (var statement in compoundStatement.Statements)
-        {
-            if (statement is CompoundStatement compoundStatement2) 
-            {
-                TestCompoundStatement(compoundStatement2);
-            }
-            else if (statement is VariableDefinitionStatement variableDefinitionStatement)
-            {
-                Assert.IsNotNull(variableDefinitionStatement.Id.Symbol);
-            }
-            else if (statement is AssignmentStatement assignmentStatement)
-            {
-                TestExpression(assignmentStatement.Left);
-                TestExpression(assignmentStatement.Right);
-            }
-            else if (statement is VariableDefinitionAndAssignmentStatement variableDefinitionAndAssignmentStatement)
-            {
-                Assert.IsNotNull(variableDefinitionAndAssignmentStatement.Id.Symbol);
-            }
-        }
-    }
-
     /// <summary>
     /// Passing tests should produce type decorated trees.
     /// </summary>
@@ -65,10 +24,8 @@ public class LocalTypeCheckTest
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
-            var topLevelTypeChecker = new TopLevelTypeChecker();
-            topLevelTypeChecker.Walk(tree);
-            var localTypeChecker = new LocalTypeChecker();
-            localTypeChecker.Walk(tree);
+            TopLevelTypeChecker.Walk(tree);
+            LocalTypeChecker.Walk(tree);
             foreach (var functionDefinition in tree.FunctionDefinitions)
             {
                 TestCompoundStatement(functionDefinition.Body);
@@ -93,13 +50,10 @@ public class LocalTypeCheckTest
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
-            var topLevelTypeChecker = new TopLevelTypeChecker();
-            topLevelTypeChecker.Walk(tree);
-            var localTypeChecker = new LocalTypeChecker();
-            topLevelTypeChecker.Walk(tree);
+            TopLevelTypeChecker.Walk(tree);
             try
             {
-                localTypeChecker.Walk(tree);
+                LocalTypeChecker.Walk(tree);
                 Assert.Fail();
             }
             catch
@@ -115,4 +69,47 @@ public class LocalTypeCheckTest
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
         }
     }
+
+    private void TestExpression(Expression expression)
+    {
+        if (expression is IdExpression idExpression)
+        {
+            Assert.IsNotNull(idExpression.Id.Symbol);
+        }
+        else if (expression is BinaryOperatorExpression binaryOperatorExpression)
+        {
+            TestExpression(binaryOperatorExpression.LeftOperand);
+            TestExpression(binaryOperatorExpression.RightOperand);
+        }
+        if (expression is UnaryOperatorExpression unaryOperatorExpression)
+        {
+            TestExpression(unaryOperatorExpression.Operand);
+        }
+    }
+
+    private void TestCompoundStatement(CompoundStatement compoundStatement)
+    {
+        Assert.IsNotNull(compoundStatement.LocalScope);
+        foreach (var statement in compoundStatement.Statements)
+        {
+            if (statement is CompoundStatement compoundStatement2)
+            {
+                TestCompoundStatement(compoundStatement2);
+            }
+            else if (statement is VariableDefinitionStatement variableDefinitionStatement)
+            {
+                Assert.IsNotNull(variableDefinitionStatement.Id.Symbol);
+            }
+            else if (statement is AssignmentStatement assignmentStatement)
+            {
+                TestExpression(assignmentStatement.Left);
+                TestExpression(assignmentStatement.Right);
+            }
+            else if (statement is VariableDefinitionAndAssignmentStatement variableDefinitionAndAssignmentStatement)
+            {
+                Assert.IsNotNull(variableDefinitionAndAssignmentStatement.Id.Symbol);
+            }
+        }
+    }
+
 }

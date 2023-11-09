@@ -1,4 +1,5 @@
 ﻿using Compiler.Input;
+using Compiler.Models.Tree;
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking;
 
@@ -15,11 +16,7 @@ namespace Compiler
             var reader = GetReader(args);
             var input = reader.Read();
             var tree = Parser.Parse(input);
-            var walkers = GetWalkers();
-            foreach (var walker in walkers)
-            {
-                walker.Walk(tree);
-            }
+            Annotate(tree);
 
             // TODO generate intermediate code or (LLVM)
 
@@ -28,15 +25,11 @@ namespace Compiler
             // TODO assemble and link
         }
 
-        private static IEnumerable<IWalker> GetWalkers()
+        private static void Annotate(ProgramRoot tree)
         {
-            return new IWalker[]
-            {
-                new TopLevelTypeChecker(),
-                new LocalTypeChecker(),
-                // TODO calculate offsets and assign registers
-                // TODO generate LLVM code
-            };
+            TopLevelTypeChecker.Walk(tree);
+            LocalTypeChecker.Walk(tree);
+            // TODO add additional walkers
         }
 
         private static IReader GetReader(string[] args)

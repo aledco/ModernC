@@ -4,6 +4,6 @@ namespace Compiler.TreeWalking
 {
     public interface IWalker
     {
-        void Walk(ProgramRoot program);
+        static void Walk(ProgramRoot program) => throw new NotImplementedException();
     }
 }
