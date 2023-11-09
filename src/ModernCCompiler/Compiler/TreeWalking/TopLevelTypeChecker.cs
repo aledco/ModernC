@@ -1,7 +1,6 @@
 ﻿using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Tree;
-using System.Diagnostics;
 
 namespace Compiler.TreeWalking
 {
@@ -11,21 +10,22 @@ namespace Compiler.TreeWalking
     /// </summary>
     public class TopLevelTypeChecker : IWalker
     {
-        public void Walk(ProgramRoot program)
+
+        public static void Walk(ProgramRoot program)
         {
-            VisitProgramRoot(program);
+            VisitProgramRoot(program, new Scope());
         }
 
-        private void VisitProgramRoot(ProgramRoot program)
+        private static void VisitProgramRoot(ProgramRoot program, Scope scope)
         {
-            program.GlobalScope = new Scope();
+            program.GlobalScope = scope;
             foreach (var functionDefinition in program.FunctionDefinitions)
             {
-                VisitFunctionDefinition(functionDefinition, program.GlobalScope);
+                VisitFunctionDefinition(functionDefinition, scope);
             }
         }
 
-        private void VisitFunctionDefinition(FunctionDefinition functionDefinition, Scope scope)
+        private static void VisitFunctionDefinition(FunctionDefinition functionDefinition, Scope scope)
         {
             functionDefinition.FunctionScope = new Scope(scope);
             var returnType = functionDefinition.ReturnType.ToSemanticType();
@@ -34,21 +34,21 @@ namespace Compiler.TreeWalking
             VisitIdNode(functionDefinition.Id, scope);
         }
 
-        private IEnumerable<SemanticType> VisitParameterList(ParameterList parameterList, Scope functionScope)
+        private static IEnumerable<SemanticType> VisitParameterList(ParameterList parameterList, Scope scope)
         {
             var parameterTypes = new List<SemanticType>();
             foreach (var parameter in parameterList.Parameters)
             {
                 var type = parameter.Type.ToSemanticType();
-                functionScope.Add(parameter.Id, type);
-                VisitIdNode(parameter.Id, functionScope);
+                scope.Add(parameter.Id, type);
+                VisitIdNode(parameter.Id, scope);
                 parameterTypes.Add(type);
             }
 
             return parameterTypes;
         }
 
-        private void VisitIdNode(IdNode id, Scope scope)
+        private static void VisitIdNode(IdNode id, Scope scope)
         {
             id.Symbol = scope.Lookup(id);
         }
