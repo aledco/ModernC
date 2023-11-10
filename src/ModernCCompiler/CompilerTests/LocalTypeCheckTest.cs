@@ -1,8 +1,7 @@
 using Compiler.Models.Tree;
 using Compiler.ParseAbstraction;
-using Compiler.TreeWalking;
+using Compiler.TreeWalking.TypeCheck;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace CompilerTests;
 

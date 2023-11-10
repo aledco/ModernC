@@ -1,7 +1,7 @@
 ﻿using Compiler.Input;
 using Compiler.Models.Tree;
 using Compiler.ParseAbstraction;
-using Compiler.TreeWalking;
+using Compiler.TreeWalking.TypeCheck;
 
 /*
  * TODO:
