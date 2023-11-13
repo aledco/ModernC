@@ -8,7 +8,7 @@ namespace Compiler.VirtualMachine
         public static void Run(IList<IInstruction> instructions)
         {
             var memory = new Memory();
-            var registry = new Registry();
+            var registers = new Registers();
             var labels = new Dictionary<string, int>();
             for (var i = 0; i < instructions.Count; i++)
             {
@@ -18,9 +18,10 @@ namespace Compiler.VirtualMachine
                 }
             }
 
-            foreach(var instruction in instructions)
+            while (registers[Registers.ProgramCounter] < instructions.Count) 
             {
-                instruction.Execute(memory, registry, labels);
+                instructions[registers[Registers.ProgramCounter]].Execute(memory, registers, labels);
+                registers[Registers.ProgramCounter]++;
             }
         }
 

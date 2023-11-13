@@ -1,21 +1,22 @@
 ﻿namespace Compiler.VirtualMachine.Instructions
 {
-    public class Label : IInstruction
+    public class Print : IInstruction
     {
-        public string LabelName { get; }
+        private readonly string _src;
 
-        public Label(string label) 
-        { 
-            LabelName = label;
+        public Print(string src) 
+        {
+            _src = src;
         }
-
+        
         public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels)
         {
+            Console.Write(registers[_src]);
         }
 
         public string ToCode()
         {
-            return $"{LabelName}:";
+            return $"p {_src}";
         }
     }
 }

@@ -7,7 +7,7 @@ namespace Compiler.TreeWalking.TypeCheck
     /// <summary>
     /// Does local type checking for compound statements.
     /// </summary>
-    public class LocalTypeChecker : IWalker
+    public static class LocalTypeChecker
     {
         private class Context
         {

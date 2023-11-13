@@ -11,12 +11,16 @@ namespace Compiler.Models.Tree
 
         public Scope? FunctionScope { get; set; }
 
+        public int Size { get; set; }
+        public List<string> RegisterPool { get; set; }
+
         public FunctionDefinition(Span span, TypeNode returnType, IdNode id, ParameterList parameterList, CompoundStatement body) : base(span)
         {
             ReturnType = returnType;
             Id = id;
             ParameterList = parameterList;
             Body = body;
+            RegisterPool = new List<string>();
         }
     }
 }

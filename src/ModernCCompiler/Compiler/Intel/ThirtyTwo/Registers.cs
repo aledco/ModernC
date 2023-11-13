@@ -1,4 +1,4 @@
-﻿namespace Compiler.x86
+﻿namespace Compiler.Intel.ThirtyTwo
 {
     public static class Registers
     {

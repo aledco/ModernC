@@ -1,24 +1,22 @@
 ﻿namespace Compiler.VirtualMachine.Instructions
 {
-    public class Move : IInstruction
+    public class JumpIndirect : IInstruction
     {
-        private readonly string _dst;
         private readonly string _src;
 
-        public Move(string dst, string src)
+        public JumpIndirect(string src)
         {
-            _dst = dst;
             _src = src;
         }
 
         public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels)
         {
-            registers[_dst] = registers[_src];
+            registers[Registers.ProgramCounter] = registers[_src];
         }
 
         public string ToCode()
         {
-            return $"mov {_dst} {_src}";
+            return $"ji {_src}";
         }
     }
 }

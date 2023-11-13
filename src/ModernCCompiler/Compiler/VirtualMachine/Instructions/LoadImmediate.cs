@@ -1,24 +1,24 @@
 ﻿namespace Compiler.VirtualMachine.Instructions
 {
-    public class Move : IInstruction
+    public class LoadImmediate : IInstruction
     {
         private readonly string _dst;
-        private readonly string _src;
+        private readonly int _val;
 
-        public Move(string dst, string src)
+        public LoadImmediate(string dst, int val)
         {
             _dst = dst;
-            _src = src;
+            _val = val;
         }
 
         public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels)
         {
-            registers[_dst] = registers[_src];
+            registers[_dst] = _val;
         }
 
         public string ToCode()
         {
-            return $"mov {_dst} {_src}";
+            return $"li {_dst} {_val}";
         }
     }
 }
