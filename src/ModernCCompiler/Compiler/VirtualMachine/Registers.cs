@@ -17,15 +17,24 @@ namespace Compiler.VirtualMachine
             _registers = new()
             {
                 [ProgramCounter] = 0,
-                [FramePointer] = 0,
-                [StackPointer] = 0,
+                [FramePointer] = 1,
+                [StackPointer] = 1,
                 [ReturnAddress] = 0,
+                [Temporary] = 0
             };
         }
 
         public int this[string register]
         {
-            get => _registers[register];
+            get 
+            {
+                if (!_registers.ContainsKey(register))
+                {
+                    _registers[register] = 0;
+                }
+
+                return _registers[register];
+            }
             set => _registers[register] = value;
         }
 

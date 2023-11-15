@@ -9,7 +9,7 @@
             _label = label;
         }
 
-        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels)
+        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextWriter outStream)
         {
             registers[Registers.ReturnAddress] = registers[Registers.ProgramCounter];
             registers[Registers.ProgramCounter] = labels[_label];

@@ -8,6 +8,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
     {
         public static List<IInstruction> Walk(ProgramRoot program)
         {
+            AssignRegistersAndOffsets.Walk(program);
             return VisitProgramRoot(program);
         }
 
@@ -26,15 +27,10 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> VisitFunctionDefinition(FunctionDefinition function)
         {
-            if (function.Id.Symbol == null)
-            {
-                throw new Exception("Symbol was null");
-            }
-
             // function prologue
             var instructions = new List<IInstruction>()
             {
-                new Label(function.Id.Symbol.Name),
+                new Label(function.EnterLabel),
                 new Store(Registers.StackPointer, Registers.ReturnAddress, 0),
                 new Store(Registers.StackPointer, Registers.FramePointer, 1),
                 new Store(Registers.StackPointer, Registers.StackPointer, 2),
@@ -51,21 +47,25 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             // emit code for function body
             instructions.AddRange(VisitCompoundStatement(function.Body));
 
+
+            // function epilogue
+            instructions.Add(new Label(function.ReturnLabel));
+
             // restore callees registers
             for (var i = 0; i < function.RegisterPool.Count; i++)
             {
                 instructions.Add(new Load(function.RegisterPool[i], Registers.StackPointer, -i - 1));
             }
 
-            // function epilogue
+            // restore SP, FP, RA
             instructions.AddRange(new IInstruction[]
             {
-                new Label($"{function.Id.Symbol.Name}_return"),
                 new Load(Registers.StackPointer, Registers.FramePointer, 2),
                 new Load(Registers.FramePointer, Registers.FramePointer, 1),
                 new Load(Registers.ReturnAddress, Registers.StackPointer, 0),
                 new JumpIndirect(Registers.ReturnAddress)
             });
+
             return instructions;
         }
 
@@ -102,26 +102,39 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> VisitAssignmentStatement(AssignmentStatement s)
         {
-            // TODO evaluate expression and store
-            return new List<IInstruction>();
+            var instructions = ExpressionRValue(s.Right);
+            instructions.AddRange(ExpressionLValue(s.Left));
+            instructions.Add(new Store(s.Left.Register, s.Right.Register));
+            return instructions;
         }
 
         private static List<IInstruction> VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement s)
         {
-            // TODO evaluate expression and store
-            return new List<IInstruction>();
+            if (s.Id.Symbol == null)
+            {
+                throw new Exception("Symbol was null");
+            }
+
+            var instructions = ExpressionRValue(s.Expression);
+            instructions.Add(new Store("FP", s.Expression.Register, s.Id.Symbol.Offset));
+            return instructions;
         }
 
         private static List<IInstruction> VisitReturnStatement(ReturnStatement s)
         {
+            if (s.EnclosingFunction == null)
+            {
+                throw new Exception("EnclosingFunction was null");
+            }
+
             var instructions = new List<IInstruction>();
             if (s.Expression != null)
             {
                 instructions.AddRange(ExpressionRValue(s.Expression));
-                // TODO store on stack
+                instructions.Add(new Store("FP", s.Expression.Register, -1));
             }
 
-            // TODO jump to return label
+            instructions.Add(new Jump(s.EnclosingFunction.ReturnLabel));
             return instructions;
         }
 
@@ -141,7 +154,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> BinaryOperatorExpressionRValue(BinaryOperatorExpression e)
         {
             var instructions = ExpressionRValue(e.LeftOperand);
-            
             switch (e.Operator) 
             {
                 case "+":
@@ -187,8 +199,16 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> IdExpressionRValue(IdExpression e)
         {
-            var instructions = IdExpressionLValue(e);
-            instructions.Add(new Load(e.Register, e.Register));
+            if (e.Id.Symbol == null)
+            {
+                throw new Exception("Symbol was null");
+            }
+
+            var instructions = new List<IInstruction>
+            {
+                new Load(e.Register, Registers.FramePointer, e.Id.Symbol.Offset),
+            };
+
             return instructions;
         }
 

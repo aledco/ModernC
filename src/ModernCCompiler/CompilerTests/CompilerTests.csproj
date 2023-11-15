@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <Folder Include="TestFiles\In\TopLevelSemanticErrors\" />
+    <Folder Include="TestFiles\Ref\Passing\" />
   </ItemGroup>
 
 </Project>

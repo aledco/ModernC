@@ -13,7 +13,7 @@
             _val = val;
         }
 
-        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels)
+        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextWriter outStream)
         {
             registers[_dst] = registers[_src] + _val;
         }

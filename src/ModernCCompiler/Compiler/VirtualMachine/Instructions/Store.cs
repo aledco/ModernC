@@ -13,14 +13,14 @@
             _offset = offset;
         }
 
-        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels)
+        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextWriter outStream)
         {
             memory[registers[_addr] + _offset] = registers[_src];
         }
 
         public string ToCode()
         {
-            return $"st {_addr} {_src}";
+            return $"st {_offset}({_addr}) {_src}";
         }
     }
 }

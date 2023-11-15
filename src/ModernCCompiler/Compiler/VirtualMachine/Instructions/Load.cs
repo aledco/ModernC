@@ -19,14 +19,14 @@ namespace Compiler.VirtualMachine.Instructions
             _offset = offset;
         }
 
-        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels)
+        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextWriter outStream)
         {
             registers[_dst] = memory[registers[_addr] + _offset];
         }
 
         public string ToCode()
         {
-            return $"ld {_dst} {_addr}";
+            return $"ld {_dst} {_offset}({_addr})";
         }
     }
 }

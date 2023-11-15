@@ -9,7 +9,7 @@
             _src = src;
         }
 
-        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels)
+        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextWriter outStream)
         {
             registers[Registers.ProgramCounter] = registers[_src];
         }
