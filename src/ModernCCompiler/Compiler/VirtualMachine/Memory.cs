@@ -1,6 +1,4 @@
-﻿using LLVMSharp;
-
-namespace Compiler.VirtualMachine
+﻿namespace Compiler.VirtualMachine
 {
     public class Memory
     {
