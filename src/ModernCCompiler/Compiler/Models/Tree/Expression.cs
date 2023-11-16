@@ -12,8 +12,11 @@ namespace Compiler.Models.Tree
     {
         public SemanticType? Type { get; set; }
 
+        public string Register { get; set; }
+
         protected Expression(Span span) : base(span)
         {
+            Register = string.Empty;
         }
     }
 }

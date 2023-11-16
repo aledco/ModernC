@@ -69,5 +69,23 @@
             var filePath = Path.Combine(testOutputDir, $"test{id}.out");
             File.WriteAllText(filePath, output);
         }
+
+        public static string GetTestReferenceDir(string testType)
+        {
+            var testDir = GetTestDir();
+            return Path.Combine(testDir, "Ref", testType);
+        }
+
+        public static string? GetTestReference(string testType, string id)
+        {
+            var refDir = GetTestReferenceDir(testType);
+            var refFile = Path.Combine(refDir, $"test{id}.ref");
+            if (Path.Exists(refFile))
+            {
+                return File.ReadAllText(refFile);
+            }
+
+            return null;
+        }
     }
 }

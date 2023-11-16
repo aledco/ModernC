@@ -9,6 +9,8 @@ namespace Compiler.Models.Symbols
         public Scope EnclosingScope { get; }
         public SemanticType Type { get; }
 
+        public int Offset { get; set; }
+
         public Symbol(string name, Scope enclosingScope, SemanticType type)
         {
             Name = name;

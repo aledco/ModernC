@@ -2,12 +2,12 @@
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Tree;
 
-namespace Compiler.TreeWalking
+namespace Compiler.TreeWalking.TypeCheck
 {
     /// <summary>
     /// Does local type checking for compound statements.
     /// </summary>
-    public class LocalTypeChecker : IWalker
+    public static class LocalTypeChecker
     {
         private class Context
         {
@@ -35,7 +35,7 @@ namespace Compiler.TreeWalking
             {
                 throw new Exception("Function scope was null");
             }
-            
+
             context.Scope = functionDefinition.FunctionScope;
             context.EnclosingFunction = functionDefinition;
             VisitCompoundStatement(functionDefinition.Body, context);
@@ -45,7 +45,7 @@ namespace Compiler.TreeWalking
         {
             body.LocalScope = new Scope(context.Scope);
             context.Scope = body.LocalScope;
-            foreach (var statement in  body.Statements)
+            foreach (var statement in body.Statements)
             {
                 VisitStatement(statement, context);
             }
@@ -56,7 +56,7 @@ namespace Compiler.TreeWalking
             switch (statement)
             {
                 case PrintStatement s:
-                    VisitPrintStatement(s, context); 
+                    VisitPrintStatement(s, context);
                     break;
                 case VariableDefinitionStatement s:
                     VisitVariableDefinitionStatement(s, context);
@@ -101,18 +101,18 @@ namespace Compiler.TreeWalking
                 }
 
                 statement.EnclosingFunction = context.EnclosingFunction;
-                
+
             }
             else
             {
                 throw new Exception("Enclosing function is null");
-            }       
+            }
         }
 
         private static void VisitPrintStatement(PrintStatement statement, Context context)
         {
             var type = VisitExpression(statement.Expression, context);
-            if (type.GetType() ==  typeof(VoidType))
+            if (type.GetType() == typeof(VoidType))
             {
                 throw new Exception($"Expressions can not have a type of void: {statement.Span}");
             }
@@ -186,11 +186,11 @@ namespace Compiler.TreeWalking
         private static SemanticType VisitIdNode(IdNode id, Context context)
         {
             id.Symbol = context?.Scope?.Lookup(id);
-            if (id.Symbol == null) 
+            if (id.Symbol == null)
             {
                 throw new Exception("Symbol is null");
             }
-            
+
             return id.Symbol.Type;
         }
     }

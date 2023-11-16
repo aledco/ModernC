@@ -2,13 +2,13 @@
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Tree;
 
-namespace Compiler.TreeWalking
+namespace Compiler.TreeWalking.TypeCheck
 {
     /// <summary>
     /// Does the first pass of name resolution, filling the global and function scopes.
     /// This allows function to be defined in any order but still be visable.
     /// </summary>
-    public class TopLevelTypeChecker : IWalker
+    public static class TopLevelTypeChecker
     {
 
         public static void Walk(ProgramRoot program)

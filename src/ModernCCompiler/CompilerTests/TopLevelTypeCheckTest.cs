@@ -1,5 +1,5 @@
 using Compiler.ParseAbstraction;
-using Compiler.TreeWalking;
+using Compiler.TreeWalking.TypeCheck;
 using System.Text.Json;
 
 namespace CompilerTests;
