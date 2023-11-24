@@ -6,7 +6,22 @@ using Compiler.VirtualMachine;
 
 /*
  * TODO:
- * - Add better error handling
+ * - compound operators
+ * - char, float
+ * - read input
+ * - arrays
+ * - strings
+ * - pointers
+ * - structs
+ * - lambda expressions
+ * - if expressions
+ * - file inclusion
+ * - optimization unit
+ * - smarter callee saved registers
+ * - std library
+ * - casting
+ * - compile to llvm or x86
+ * - switch/goto
  */
 namespace Compiler
 {
@@ -22,12 +37,6 @@ namespace Compiler
             var instructions = CodeGenerator.Walk(tree);
             //Console.WriteLine(Machine.ToCode(instructions));
             Machine.Run(instructions, Console.Out);
-
-            // TODO generate intermediate code or (LLVM)
-
-            // TODO generate actual assembly or interpret intermediate code
-
-            // TODO assemble and link
         }
 
         private static IReader GetReader(string[] args)

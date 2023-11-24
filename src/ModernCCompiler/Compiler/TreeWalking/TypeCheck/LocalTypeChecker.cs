@@ -77,6 +77,12 @@ namespace Compiler.TreeWalking.TypeCheck
                 case IfStatement s:
                     VisitIfStatement(s, context);
                     break;
+                case WhileStatement s:
+                    VisitWhileStatement(s, context);
+                    break;
+                case ForStatement s:
+                    VisitForStatement(s, context);
+                    break;
                 case ReturnStatement s:
                     VisitReturnStatement(s, context);
                     break;
@@ -166,6 +172,30 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 VisitCompoundStatement(s.ElseBody, context);
             }
+        }
+
+        private static void VisitWhileStatement(WhileStatement s, Context context)
+        {
+            var expressionType = VisitExpression(s.Expression, context);
+            if (expressionType is not BoolType)
+            {
+                ErrorHandler.Throw("While loop expression must be of type boolean", s);
+            }
+
+            VisitCompoundStatement(s.Body, context);
+        }
+        
+        private static void VisitForStatement(ForStatement s, Context context)
+        {
+            VisitStatement(s.InitialStatement, context);
+            var expressionType = VisitExpression(s.Expression, context);
+            if (expressionType is not BoolType)
+            {
+                ErrorHandler.Throw("For loop expression must be of type boolean", s);
+            }
+
+            VisitStatement(s.UpdateStatement, context);
+            VisitCompoundStatement(s.Body, context);
         }
 
         private static void VisitReturnStatement(ReturnStatement statement, Context context)

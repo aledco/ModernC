@@ -34,28 +34,33 @@ compoundStatement
     : '{' statement* returnStatement? '}';
 
 statement
+    : simpleStatement ';'
+    | ifStatement
+    | whileStatement
+    | forStatement
+    | compoundStatement;
+
+simpleStatement
     : printStatement
     | variableDefinitionStatement
     | assignmentStatement
     | variableDefinitionAndAssignmentStatement
-    | callStatement
-    | ifStatement
-    | compoundStatement;
+    | callStatement;
 
 printStatement
-    : 'print' expression ';';
+    : 'print' expression;
 
 variableDefinitionStatement
-    : type id ';';
+    : type id;
 
 variableDefinitionAndAssignmentStatement
-    : type id '=' expression ';';
+    : type id '=' expression;
 
 assignmentStatement
-    : expression '=' expression ';';
+    : expression '=' expression;
 
 callStatement
-    : callExpression ';';
+    : callExpression;
 
 ifStatement
     : 'if' expression compoundStatement elifPart* elsePart?;
@@ -65,6 +70,12 @@ elifPart
 
 elsePart
     : 'else' compoundStatement;
+
+whileStatement
+    : 'while' expression compoundStatement;
+
+forStatement
+    : 'for' simpleStatement ';' expression ';' simpleStatement compoundStatement;
 
 returnStatement
     : 'return' expression? ';';

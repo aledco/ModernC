@@ -110,7 +110,23 @@ namespace Compiler.ParseAbstraction
 
         public override Statement VisitStatement([NotNull] StatementContext context)
         {
+            if (context.simpleStatement() != null)
+            {
+                return VisitSimpleStatement(context.simpleStatement());
+            }
+
             var ast = base.VisitStatement(context);
+            if (ast is Statement statement)
+            {
+                return statement;
+            }
+
+            throw new Exception($"Tried to parse {ast.GetType()} as a statement, something is wrong with the compiler");
+        }
+
+        public override Statement VisitSimpleStatement([NotNull] SimpleStatementContext context)
+        {
+            var ast = base.VisitSimpleStatement(context);
             if (ast is Statement statement)
             {
                 return statement;
@@ -183,6 +199,25 @@ namespace Compiler.ParseAbstraction
             return new IfStatement(span, ifExpression, ifBody, elifExpressions, elifBodies, elseBody);
         }
 
+
+        public override WhileStatement VisitWhileStatement([NotNull] WhileStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var expression = VisitExpression(context.expression());
+            var body = VisitCompoundStatement(context.compoundStatement());
+            return new WhileStatement(span, expression, body);
+        }
+
+        public override ForStatement VisitForStatement([NotNull] ForStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var initialStatement = VisitSimpleStatement(context.simpleStatement()[0]);
+            var expression = VisitExpression(context.expression());
+            var updateStatement = VisitSimpleStatement(context.simpleStatement()[1]);
+            var body = VisitCompoundStatement(context.compoundStatement());
+            return new ForStatement(span, initialStatement, expression, updateStatement, body);
+        }
+        
         public override ReturnStatement VisitReturnStatement([NotNull] ReturnStatementContext context)
         {
             var span = GetSpanOfContext(context);

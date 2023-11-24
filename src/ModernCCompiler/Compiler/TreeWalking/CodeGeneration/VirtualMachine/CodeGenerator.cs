@@ -94,6 +94,8 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 VariableDefinitionAndAssignmentStatement s => VisitVariableDefinitionAndAssignmentStatement(s),
                 CallStatement s => VisitCallStatement(s),
                 IfStatement s => VisitIfStatement(s),
+                WhileStatement s => VisitWhileStatement(s),
+                ForStatement s => VisitForStatement(s),
                 ReturnStatement s => VisitReturnStatement(s),
                 CompoundStatement s => VisitCompoundStatement(s),
                 _ => throw new NotImplementedException($"Unknown statement {statement}"),
@@ -107,7 +109,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return instructions;
         }
 
-        private static List<IInstruction> VisitVariableDefinitionStatement(VariableDefinitionStatement s)
+        private static List<IInstruction> VisitVariableDefinitionStatement(VariableDefinitionStatement _)
         {
             return new List<IInstruction>();
         }
@@ -172,6 +174,38 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 instructions.AddRange(VisitCompoundStatement(s.IfBody));
             }
 
+            instructions.Add(new Label(exitLabel));
+            return instructions;
+        }
+
+        private static List<IInstruction> VisitWhileStatement(WhileStatement s)
+        {
+            var instructions = new List<IInstruction>();
+            var labelId = GetNextLabelId();
+            var topLabel = $"while_top_{labelId}";
+            var exitLabel = $"while_exit_{labelId}";
+
+            instructions.Add(new Label(topLabel));
+            instructions.AddRange(Flow(s.Expression, exitLabel, false));
+            instructions.AddRange(VisitCompoundStatement(s.Body));
+            instructions.Add(new Jump(topLabel));
+            instructions.Add(new Label(exitLabel));
+            return instructions;
+        }
+
+        private static List<IInstruction> VisitForStatement(ForStatement s)
+        {
+            var instructions = new List<IInstruction>();
+            var labelId = GetNextLabelId();
+            var topLabel = $"for_top_{labelId}";
+            var exitLabel = $"for_exit_{labelId}";
+
+            instructions.AddRange(VisitStatement(s.InitialStatement));
+            instructions.Add(new Label(topLabel));
+            instructions.AddRange(Flow(s.Expression, exitLabel, false));
+            instructions.AddRange(VisitCompoundStatement(s.Body));
+            instructions.AddRange(VisitStatement(s.UpdateStatement));
+            instructions.Add(new Jump(topLabel));
             instructions.Add(new Label(exitLabel));
             return instructions;
         }
@@ -482,11 +516,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 UnaryOperator.Not => Flow(e.Operand, label, !condition),
                 _ => throw new Exception($"Invalid operator for flow: {e.Operator}")
             };
-        }
-
-        private static List<IInstruction> CallExpressionFlow(CallExpression e, string label, bool condition)
-        {
-            throw new NotImplementedException();
         }
 
         private static List<IInstruction> BoolLiteralExpressionFlow(BoolLiteralExpression e, string label, bool condition)
