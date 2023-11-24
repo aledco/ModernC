@@ -1,3 +1,4 @@
+using Compiler.ErrorHandling;
 using Compiler.ParseAbstraction;
 using System.Text.Json;
 
@@ -10,6 +11,12 @@ namespace CompilerTests;
 public class ParserTest
 {
     private readonly string _component = "Parse";
+
+    [TestInitialize]
+    public void Setup()
+    {
+        ErrorHandler.Testing = true;
+    }
 
     /// <summary>
     /// Passing tests should produce non null abstract syntax trees.

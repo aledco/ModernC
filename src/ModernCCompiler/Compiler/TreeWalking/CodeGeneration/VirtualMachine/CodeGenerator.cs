@@ -1,4 +1,5 @@
-﻿using Compiler.Models.NameResolution.Types;
+﻿using Compiler.ErrorHandling;
+using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Tree;
 using Compiler.VirtualMachine;
 using Compiler.VirtualMachine.Instructions;
@@ -275,7 +276,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             };
         }
 
-
         private static List<IInstruction> ExpressionLValue(Expression expression)
         {
             return expression switch
@@ -292,17 +292,20 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> BinaryOperatorExpressionLValue(BinaryOperatorExpression e)
         {
-            throw new Exception("Binary expressions do not have l-values");
+            ErrorHandler.Throw("Binary expressions do not have l-values.", e);
+            throw new Exception("Error handler did not stop execution");
         }
 
         private static List<IInstruction> UnaryOperatorExpressionLValue(UnaryOperatorExpression e)
         {
-            throw new Exception("Unary expressions do not have l-values");
+            ErrorHandler.Throw("Unary expressions do not have l-values.", e);
+            throw new Exception("Error handler did not stop execution");
         }
 
         private static List<IInstruction> CallExpressionLValue(CallExpression e)
         {
-            throw new Exception("Call expressions do not have l-values");
+            ErrorHandler.Throw("Call expressions do not have l-values.", e);
+            throw new Exception("Error handler did not stop execution");
         }
 
 
@@ -321,12 +324,14 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> BoolLiteralExpressionLValue(BoolLiteralExpression e)
         {
-            throw new Exception("Bool literals do not have l-values");
+            ErrorHandler.Throw("Bool literals do not have l-values.", e);
+            throw new Exception("Error handler did not stop execution");
         }
 
         private static List<IInstruction> IntLiteralExpressionLValue(IntLiteralExpression e)
         {
-            throw new Exception("Int literals do not have l-values");
+            ErrorHandler.Throw("Int literals do not have l-values.", e);
+            throw new Exception("Error handler did not stop execution");
         }
     }
 }

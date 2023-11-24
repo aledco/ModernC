@@ -15,7 +15,7 @@
         {
             if (otherType is FunctionType other && 
                 type.ReturnType == other.ReturnType && 
-                type.Parameters.Count() == other.Parameters.Count()) 
+                type.Parameters.Count == other.Parameters.Count) 
             {
                 return type.Parameters.Zip(other.Parameters).All(t => t.First == t.Second);
             }

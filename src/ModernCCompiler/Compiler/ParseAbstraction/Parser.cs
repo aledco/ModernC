@@ -23,7 +23,7 @@ namespace Compiler.ParseAbstraction
             var programContext = modernCParser.program();
             if (modernCParser.NumberOfSyntaxErrors > 0)
             {
-                throw new Exception("Syntax error");
+                Environment.Exit(1);
             }
 
             // Abstract

@@ -16,7 +16,7 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             var functionDefinitions = context.functionDefinition()
-                .Select(c => VisitFunctionDefinition(c))
+                .Select(VisitFunctionDefinition)
                 .ToList();
             return new ProgramRoot(span, functionDefinitions);
         }
@@ -47,7 +47,6 @@ namespace Compiler.ParseAbstraction
                 return VisitFunctionType(context.functionType());
             }
             
-            // TODO add handling of complex types here
             throw new NotImplementedException();
         }
 
@@ -70,7 +69,7 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             var types = context.typeList().type()
-                .Select(t => VisitType(t))
+                .Select(VisitType)
                 .ToList();
             return new FunctionTypeNode(span, types);
         }
@@ -79,7 +78,7 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             var parameters = context.parameter()
-                .Select(c => VisitParameter(c))
+                .Select(VisitParameter)
                 .ToList();
             return new ParameterList(span, parameters);
         }
@@ -96,7 +95,7 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             var statements = context.statement()
-                .Select(c => VisitStatement(c))
+                .Select(VisitStatement)
                 .ToList();
 
             if (context.returnStatement() != null)

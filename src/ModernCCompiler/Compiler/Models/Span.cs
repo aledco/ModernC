@@ -19,7 +19,7 @@
 
         public override string ToString()
         {
-            return $"Span(Start={Start}, End={End})";
+            return Start.ToString();
         }
 
         public static Span operator+(Span span, Span other)
