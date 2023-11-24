@@ -1,4 +1,5 @@
-﻿using Compiler.ParseAbstraction;
+﻿using Compiler.ErrorHandling;
+using Compiler.ParseAbstraction;
 using Compiler.TreeWalking.CodeGeneration.VirtualMachine;
 using Compiler.TreeWalking.TypeCheck;
 using Compiler.VirtualMachine;
@@ -8,6 +9,12 @@ namespace CompilerTests
     [TestClass]
     public class VirtualMachineCodeGenerationTest
     {
+        [TestInitialize]
+        public void Setup()
+        {
+            ErrorHandler.Testing = true;
+        }
+
         [TestMethod]
         public void TestAllPassing()
         {

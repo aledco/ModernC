@@ -1,3 +1,4 @@
+using Compiler.ErrorHandling;
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking.TypeCheck;
 using System.Text.Json;
@@ -11,6 +12,12 @@ namespace CompilerTests;
 public class TopLevelTypeCheckTest
 {
     private readonly string _component = "TopLevelTypeCheck";
+
+    [TestInitialize]
+    public void Setup()
+    {
+        ErrorHandler.Testing = true;
+    }
 
     /// <summary>
     /// Passing tests should produce globally type decorated trees.

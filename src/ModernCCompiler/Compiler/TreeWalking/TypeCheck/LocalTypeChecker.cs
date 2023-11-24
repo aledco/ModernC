@@ -1,4 +1,5 @@
-﻿using Compiler.Models.NameResolution;
+﻿using Compiler.ErrorHandling;
+using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Tree;
 
@@ -88,7 +89,7 @@ namespace Compiler.TreeWalking.TypeCheck
             var type = VisitExpression(statement.Expression, context);
             if (type.GetType() == typeof(VoidType))
             {
-                throw new Exception($"Expressions can not have a type of void: {statement.Span}");
+                ErrorHandler.Throw("Expressions can not have a type of void.", statement);
             }
         }
 
@@ -109,7 +110,7 @@ namespace Compiler.TreeWalking.TypeCheck
 
             if (leftType != rightType)
             {
-                throw new Exception($"Variable assignment must have matching types: {statement.Span}");
+                ErrorHandler.Throw("Variable assignment must have matching types.", statement);
             }
         }
 
@@ -119,7 +120,7 @@ namespace Compiler.TreeWalking.TypeCheck
             var expressionType = VisitExpression(statement.Expression, context);
             if (type != expressionType)
             {
-                throw new Exception($"Variable assignment must have matching types: {statement.Span}");
+                ErrorHandler.Throw("Variable assignment must have matching types.", statement);
             }
 
             context.Scope?.Add(statement.Id, type);
@@ -139,11 +140,11 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 if (functionType.ReturnType is VoidType && statement.Expression != null)
                 {
-                    throw new Exception($"Function has a return type of void and cannot return a value: {statement.Span}");
+                    ErrorHandler.Throw("Function has a return type of void and cannot return a value.", statement);
                 }
                 else if (functionType.ReturnType is not VoidType && statement.Expression == null)
                 {
-                    throw new Exception($"Function cannot have an empty return: {statement.Span}");
+                    ErrorHandler.Throw("Function cannot have an empty return.", statement);
                 }
 
                 if (statement.Expression != null)
@@ -151,7 +152,7 @@ namespace Compiler.TreeWalking.TypeCheck
                     var expressionType = VisitExpression(statement.Expression, context);
                     if (functionType.ReturnType is not VoidType && expressionType != functionType.ReturnType)
                     {
-                        throw new Exception($"Function return type does not match return value: {statement.Span}");
+                        ErrorHandler.Throw("Function return type does not match return value.", statement);
                     }
                 }
 
@@ -187,22 +188,22 @@ namespace Compiler.TreeWalking.TypeCheck
                 var argTypes = VisitArgumentList(e.ArgumentList, context);
                 if (argTypes.Count != functionType.Parameters.Count)
                 {
-                    throw new Exception($"{e.Function.Id.Value} was called with an incorrect number of arguments: {e.Span}");
+                    ErrorHandler.Throw($"{e.Function.Id.Value} was called with an incorrect number of arguments.", e);
                 }
 
                 for (var i = 0; i < argTypes.Count; i++)
                 {
                     if (argTypes[i] != functionType.Parameters[i])
                     {
-                        throw new Exception($"{e.Function.Id.Value} was called with incorrect types: {e.Span}");
+                        ErrorHandler.Throw($"{e.Function.Id.Value} was called with incorrect types.", e);
                     }
                 }
 
                 return functionType.ReturnType;
             }
 
-            throw new Exception($"{e.Function.Id.Value} cannot be called like a function: {e.Span}");
-            
+            ErrorHandler.Throw($"{e.Function.Id.Value} cannot be called like a function.", e);
+            throw new Exception("Error handler did not stop execution");
         }
 
         private static IList<SemanticType> VisitArgumentList(ArgumentList argumentList, Context context)
@@ -218,7 +219,7 @@ namespace Compiler.TreeWalking.TypeCheck
             var rightType = VisitExpression(e.RightOperand, context);
             if (leftType != rightType)
             {
-                throw new Exception($"Variable assignment must have matching types: {e.Span}");
+                ErrorHandler.Throw("Variable assignment must have matching types.", e);
             }
 
             return leftType;

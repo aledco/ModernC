@@ -1,3 +1,4 @@
+using Compiler.ErrorHandling;
 using Compiler.Models.Tree;
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking.TypeCheck;
@@ -12,6 +13,12 @@ namespace CompilerTests;
 public class LocalTypeCheckTest
 {
     private readonly string _component = "LocalTypeCheck";
+
+    [TestInitialize]
+    public void Setup()
+    {
+        ErrorHandler.Testing = true;
+    }
 
     /// <summary>
     /// Passing tests should produce type decorated trees.
