@@ -1,5 +1,6 @@
 ﻿using Compiler.ErrorHandling;
 using Compiler.Models.NameResolution.Types;
+using Compiler.Models.Operators;
 using Compiler.Models.Tree;
 using Compiler.VirtualMachine;
 using Compiler.VirtualMachine.Instructions;
@@ -209,28 +210,57 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> BinaryOperatorExpressionRValue(BinaryOperatorExpression e)
         {
-            var instructions = ExpressionRValue(e.LeftOperand);
+            var instructions = new List<IInstruction>();
             switch (e.Operator) 
             {
-                case "+":
+                case BinaryOperator.Equal:
+                    instructions.AddRange(ExpressionRValue(e.LeftOperand));
+                    instructions.AddRange(ExpressionRValue(e.RightOperand));
+                    instructions.Add(new Equal(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    break;
+                case BinaryOperator.LessThan:
+                    instructions.AddRange(ExpressionRValue(e.LeftOperand));
+                    instructions.AddRange(ExpressionRValue(e.RightOperand));
+                    instructions.Add(new LessThan(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    break;
+                case BinaryOperator.LessThanEqual:
+                    instructions.AddRange(ExpressionRValue(e.LeftOperand));
+                    instructions.AddRange(ExpressionRValue(e.RightOperand));
+                    instructions.Add(new LessThanEqual(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    break;
+                case BinaryOperator.GreaterThan:
+                    instructions.AddRange(ExpressionRValue(e.LeftOperand));
+                    instructions.AddRange(ExpressionRValue(e.RightOperand));
+                    instructions.Add(new GreaterThan(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    break;
+                case BinaryOperator.GreaterThanEqual:
+                    instructions.AddRange(ExpressionRValue(e.LeftOperand));
+                    instructions.AddRange(ExpressionRValue(e.RightOperand));
+                    instructions.Add(new GreaterThanEqual(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    break;
+                case BinaryOperator.Add:
+                    instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new Add(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                     break;
-                case "-":
+                case BinaryOperator.Subtract:
+                    instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new Negate(e.RightOperand.Register, e.RightOperand.Register));
                     instructions.Add(new Add(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                     break;
-                case "*":
+                case BinaryOperator.Multiply:
+                    instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new Multiply(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                     break;
-                case "/":
+                case BinaryOperator.Divide:
+                    instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new Divide(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                     break;
-                case "and":
-                case "or":
+                case BinaryOperator.And:
+                case BinaryOperator.Or:
                     var labelId = GetNextLabelId();
                     var trueLabel = $"bool_op_true_{labelId}";
                     var exitLabel = $"bool_op_exit_{labelId}";
@@ -254,8 +284,8 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             instructions.Add(
                 e.Operator switch
                 {
-                    "-" => new Negate(e.Register, e.Register),
-                    "not" => new Not(e.Register, e.Register),
+                    UnaryOperator.Negate => new Negate(e.Register, e.Register),
+                    UnaryOperator.Not => new Not(e.Register, e.Register),
                     _ => throw new Exception($"Unrecognized unary operator: {e.Operator}")
                 });
             return instructions;
@@ -405,41 +435,41 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> BinaryOperatorExpressionFlow(BinaryOperatorExpression e, string label, bool condition)
         {
             var instructions = new List<IInstruction>();
-            if (e.Operator == "and")
+            switch (e.Operator)
             {
-                if (!condition)
-                {
-                    instructions.AddRange(Flow(e.LeftOperand, label, false));
-                    instructions.AddRange(Flow(e.RightOperand, label, false));
-                }
-                else
-                {
-                    var labelId = GetNextLabelId();
-                    var ftLabel = $"flow_fallthrough_{labelId}";
-                    instructions.AddRange(Flow(e.LeftOperand, ftLabel, false));
-                    instructions.AddRange(Flow(e.RightOperand, label, true));
-                    instructions.Add(new Label(ftLabel));
-                }
-            }
-            else if (e.Operator == "or")
-            {
-                if (condition)
-                {
-                    instructions.AddRange(Flow(e.LeftOperand, label, true));
-                    instructions.AddRange(Flow(e.RightOperand, label, true));
-                }
-                else
-                {
-                    var labelId = GetNextLabelId();
-                    var ftLabel = $"flow_fallthrough_{labelId}";
-                    instructions.AddRange(Flow(e.LeftOperand, ftLabel, true));
-                    instructions.AddRange(Flow(e.RightOperand, label, false));
-                    instructions.Add(new Label(ftLabel));
-                }
-            }
-            else
-            {
-                instructions.AddRange(SimpleFlow(e, label, condition));
+                case BinaryOperator.And:
+                    if (!condition)
+                    {
+                        instructions.AddRange(Flow(e.LeftOperand, label, false));
+                        instructions.AddRange(Flow(e.RightOperand, label, false));
+                    }
+                    else
+                    {
+                        var labelId = GetNextLabelId();
+                        var ftLabel = $"flow_fallthrough_{labelId}";
+                        instructions.AddRange(Flow(e.LeftOperand, ftLabel, false));
+                        instructions.AddRange(Flow(e.RightOperand, label, true));
+                        instructions.Add(new Label(ftLabel));
+                    }
+                    break;
+                case BinaryOperator.Or:
+                    if (condition)
+                    {
+                        instructions.AddRange(Flow(e.LeftOperand, label, true));
+                        instructions.AddRange(Flow(e.RightOperand, label, true));
+                    }
+                    else
+                    {
+                        var labelId = GetNextLabelId();
+                        var ftLabel = $"flow_fallthrough_{labelId}";
+                        instructions.AddRange(Flow(e.LeftOperand, ftLabel, true));
+                        instructions.AddRange(Flow(e.RightOperand, label, false));
+                        instructions.Add(new Label(ftLabel));
+                    }
+                    break;
+                default:
+                    instructions.AddRange(SimpleFlow(e, label, condition));
+                    break;
             }
 
             return instructions;
@@ -449,7 +479,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         {
             return e.Operator switch
             {
-                "not" => Flow(e.Operand, label, !condition),
+                UnaryOperator.Not => Flow(e.Operand, label, !condition),
                 _ => throw new Exception($"Invalid operator for flow: {e.Operator}")
             };
         }

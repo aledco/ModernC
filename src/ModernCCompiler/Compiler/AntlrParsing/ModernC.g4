@@ -70,11 +70,23 @@ returnStatement
     : 'return' expression? ';';
 
 expression
-    : expression ('+'|'-'|'or') term
+    : expression 'or' orExpression
+    | orExpression;
+
+orExpression
+    : orExpression 'and' andExpression
+    | andExpression;
+
+andExpression
+    : andExpression ('=='|'<'|'<='|'>'|'>=') comparison
+    | comparison;
+
+comparison
+    : comparison ('+'|'-') term
     | term;
 
 term
-    : term ('*'|'/'|'and') factor
+    : term ('*'|'/') factor
     | factor;
 
 factor

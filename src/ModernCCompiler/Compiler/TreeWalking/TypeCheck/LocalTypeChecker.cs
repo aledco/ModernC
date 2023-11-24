@@ -1,6 +1,7 @@
 ﻿using Compiler.ErrorHandling;
 using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
+using Compiler.Models.Operators;
 using Compiler.Models.Tree;
 
 namespace Compiler.TreeWalking.TypeCheck
@@ -201,7 +202,7 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static SemanticType VisitExpression(Expression expression, Context context)
         {
-            return expression switch
+            expression.Type = expression switch
             {
                 BinaryOperatorExpression e => VisitBinaryOperatorExpression(e, context),
                 CallExpression e => VisitCallExpression(e, context),
@@ -211,6 +212,8 @@ namespace Compiler.TreeWalking.TypeCheck
                 BoolLiteralExpression => new BoolType(),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
             };
+
+            return expression.Type; 
         }
 
         private static SemanticType VisitCallExpression(CallExpression e, Context context)
@@ -255,7 +258,59 @@ namespace Compiler.TreeWalking.TypeCheck
                 ErrorHandler.Throw("Variable assignment must have matching types.", e);
             }
 
-            return leftType;
+            switch (e.Operator)
+            {
+                case BinaryOperator.Equal:
+                case BinaryOperator.LessThan:
+                case BinaryOperator.LessThanEqual:
+                case BinaryOperator.GreaterThan:
+                case BinaryOperator.GreaterThanEqual:
+                    return new BoolType();
+                case BinaryOperator.Add:
+                    if (leftType is not NumberType)
+                    {
+                        ErrorHandler.Throw("Only numbers can be added", e);
+                    }
+
+                    return leftType;
+                case BinaryOperator.Subtract:
+                    if (leftType is not NumberType)
+                    {
+                        ErrorHandler.Throw("Only numbers can be subtracted", e);
+                    }
+
+                    return leftType;
+                case BinaryOperator.Multiply:
+                    if (leftType is not NumberType)
+                    {
+                        ErrorHandler.Throw("Only numbers can be multiplied", e);
+                    }
+
+                    return leftType; ;
+                case BinaryOperator.Divide:
+                    if (leftType is not NumberType)
+                    {
+                        ErrorHandler.Throw("Only numbers can be divided", e);
+                    }
+
+                    return leftType;
+                case BinaryOperator.And:
+                    if (leftType is not BoolType)
+                    {
+                        ErrorHandler.Throw("Only booleans can be anded", e);
+                    }
+
+                    return leftType;
+                case BinaryOperator.Or:
+                    if (leftType is not BoolType)
+                    {
+                        ErrorHandler.Throw("Only booleans can be ored", e);
+                    }
+
+                    return leftType;
+                default:
+                    return leftType;
+            }
         }
 
         private static SemanticType VisitUnaryOperatorExpression(UnaryOperatorExpression e, Context context)

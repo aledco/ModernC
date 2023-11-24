@@ -1,6 +1,7 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using Compiler.Models;
+using Compiler.Models.Operators;
 using Compiler.Models.Tree;
 using System.Diagnostics;
 using static ModernCParser;
@@ -194,8 +195,56 @@ namespace Compiler.ParseAbstraction
             if (context.ChildCount == 3)
             {
                 var span = GetSpanOfContext(context);
-                var op = context.GetChild(1).GetText();
+                var op = GetBinaryOperator(context.GetChild(1).GetText());
                 var left = VisitExpression(context.expression());
+                var right = VisitOrExpression(context.orExpression());
+                return new BinaryOperatorExpression(span, op, left, right);
+            }
+            else
+            {
+                return VisitOrExpression(context.orExpression());
+            }
+        }
+
+        public override Expression VisitOrExpression([NotNull] OrExpressionContext context)
+        {
+            if (context.ChildCount == 3)
+            {
+                var span = GetSpanOfContext(context);
+                var op = GetBinaryOperator(context.GetChild(1).GetText());
+                var left = VisitOrExpression(context.orExpression());
+                var right = VisitAndExpression(context.andExpression());
+                return new BinaryOperatorExpression(span, op, left, right);
+            }
+            else
+            {
+                return VisitAndExpression(context.andExpression());
+            }
+        }
+
+        public override Expression VisitAndExpression([NotNull] AndExpressionContext context)
+        {
+            if (context.ChildCount == 3)
+            {
+                var span = GetSpanOfContext(context);
+                var op = GetBinaryOperator(context.GetChild(1).GetText());
+                var left = VisitAndExpression(context.andExpression());
+                var right = VisitComparison(context.comparison());
+                return new BinaryOperatorExpression(span, op, left, right);
+            }
+            else
+            {
+                return VisitComparison(context.comparison());
+            }
+        }
+
+        public override Expression VisitComparison([NotNull] ComparisonContext context)
+        {
+            if (context.ChildCount == 3)
+            {
+                var span = GetSpanOfContext(context);
+                var op = GetBinaryOperator(context.GetChild(1).GetText());
+                var left = VisitComparison(context.comparison());
                 var right = VisitTerm(context.term());
                 return new BinaryOperatorExpression(span, op, left, right);
             }
@@ -206,12 +255,11 @@ namespace Compiler.ParseAbstraction
         }
 
         public override Expression VisitTerm([NotNull] TermContext context)
-        {
-            
+        {     
             if (context.ChildCount == 3)
             {
                 var span = GetSpanOfContext(context);
-                var op = context.GetChild(1).GetText();
+                var op = GetBinaryOperator(context.GetChild(1).GetText());
                 var left = VisitTerm(context.term());
                 var right = VisitFactor(context.factor());
                 return new BinaryOperatorExpression(span, op, left, right);
@@ -255,7 +303,7 @@ namespace Compiler.ParseAbstraction
         public override UnaryOperatorExpression VisitUnaryExpression([NotNull] UnaryExpressionContext context)
         {
             var span = GetSpanOfContext(context);
-            var op = context.GetChild(0).GetText();
+            var op = GetUnaryOperator(context.GetChild(0).GetText());
             var expression = VisitFactor(context.factor());
             return new UnaryOperatorExpression(span, op, expression);
         }
@@ -312,6 +360,35 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             return new IdNode(span, context.GetText());
+        }
+
+        private static BinaryOperator GetBinaryOperator(string op)
+        {
+            return op switch
+            {
+                "==" => BinaryOperator.Equal,
+                "<" => BinaryOperator.LessThan,
+                "<=" => BinaryOperator.LessThanEqual,
+                ">" => BinaryOperator.GreaterThan,
+                ">=" => BinaryOperator.GreaterThanEqual,
+                "+" => BinaryOperator.Add,
+                "-" => BinaryOperator.Subtract,
+                "*" => BinaryOperator.Multiply,
+                "/" => BinaryOperator.Divide,
+                "and" => BinaryOperator.And,
+                "or" => BinaryOperator.Or,
+                _ => throw new NotImplementedException()
+            };
+        }
+
+        private static UnaryOperator GetUnaryOperator(string op)
+        {
+            return op switch
+            {
+                "-" => UnaryOperator.Negate,
+                "not" => UnaryOperator.Not,
+                _ => throw new NotImplementedException()
+            };
         }
 
         private static Span GetSpanOfContext(ParserRuleContext context)

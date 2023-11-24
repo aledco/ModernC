@@ -152,6 +152,24 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpression([NotNull] ModernCParser.ExpressionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.orExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitOrExpression([NotNull] ModernCParser.OrExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.andExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAndExpression([NotNull] ModernCParser.AndExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.comparison"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitComparison([NotNull] ModernCParser.ComparisonContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.term"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
