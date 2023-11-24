@@ -8,10 +8,10 @@ namespace Compiler.Input
         {
             string? input;
             var text = new StringBuilder();
-            Console.WriteLine("Enter Program");
+            Console.WriteLine("-----\n");
 
             // type exit to send EOF
-            while ((input = Console.ReadLine()) != "exit")
+            while ((input = Console.ReadLine()) != null && (input.Length == 0 || input[0] != 4))
             {
                 text.AppendLine(input);
             }

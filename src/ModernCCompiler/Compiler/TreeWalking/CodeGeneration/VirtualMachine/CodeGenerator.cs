@@ -1,4 +1,5 @@
-﻿using Compiler.Models.Tree;
+﻿using Compiler.Models.NameResolution.Types;
+using Compiler.Models.Tree;
 using Compiler.VirtualMachine;
 using Compiler.VirtualMachine.Instructions;
 
@@ -82,6 +83,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 VariableDefinitionStatement s => VisitVariableDefinitionStatement(s),
                 AssignmentStatement s => VisitAssignmentStatement(s),
                 VariableDefinitionAndAssignmentStatement s => VisitVariableDefinitionAndAssignmentStatement(s),
+                CallStatement s => VisitCallStatement(s),
                 ReturnStatement s => VisitReturnStatement(s),
                 CompoundStatement s => VisitCompoundStatement(s),
                 _ => throw new NotImplementedException($"Unknown statement {statement}"),
@@ -120,6 +122,11 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return instructions;
         }
 
+        private static List<IInstruction> VisitCallStatement(CallStatement s)
+        {
+            return CallExpressionRValue(s.CallExpression);
+        }
+
         private static List<IInstruction> VisitReturnStatement(ReturnStatement s)
         {
             if (s.EnclosingFunction == null)
@@ -144,6 +151,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             {
                 BinaryOperatorExpression e => BinaryOperatorExpressionRValue(e),
                 UnaryOperatorExpression e => UnaryOperatorExpressionRValue(e),
+                CallExpression e => CallExpressionRValue(e),
                 IdExpression e => IdExpressionRValue(e),
                 IntLiteralExpression e => IntLiteralExpressionRValue(e),
                 BoolLiteralExpression e => BoolLiteralExpressionRValue(e),
@@ -197,6 +205,34 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return instructions;
         }
 
+        private static List<IInstruction> CallExpressionRValue(CallExpression e)
+        {
+            if (e.Function.Id.Symbol?.EnclosingFunction == null)
+            {
+                throw new Exception("EnclosingFunction was null");
+            }
+
+            var instructions = IdExpressionRValue(e.Function);
+            instructions.Add(new AddImmediate(Registers.StackPointer, Registers.StackPointer, e.ArgumentList.Arguments.Count + 1));
+
+            for (var i = 0; i < e.ArgumentList.Arguments.Count; i++)
+            {
+                var arg = e.ArgumentList.Arguments[i];
+                instructions.AddRange(ExpressionRValue(arg));
+                instructions.Add(new Store(Registers.StackPointer, arg.Register, -i - 2));
+            }
+
+            instructions.AddRange(new IInstruction[]
+            {
+                new CallIndirect(e.Function.Register),
+                new Load(e.Register, Registers.StackPointer, -1),
+                new AddImmediate(Registers.StackPointer, Registers.StackPointer, -e.ArgumentList.Arguments.Count - 1)
+            });
+
+            return instructions;
+        }
+
+
         private static List<IInstruction> IdExpressionRValue(IdExpression e)
         {
             if (e.Id.Symbol == null)
@@ -204,12 +240,23 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 throw new Exception("Symbol was null");
             }
 
-            var instructions = new List<IInstruction>
+            if (e.Id.Symbol.Type is FunctionType && e.Id.Symbol.IsGlobal)
+            {
+                if (e.Id.Symbol.EnclosingFunction == null)
+                {
+                    throw new Exception("EnclosingFunction was null");
+                }
+
+                return new List<IInstruction>
+                {
+                    new LoadLabel(e.Register, e.Id.Symbol.EnclosingFunction.EnterLabel)
+                };
+            }
+
+            return new List<IInstruction>
             {
                 new Load(e.Register, Registers.FramePointer, e.Id.Symbol.Offset),
             };
-
-            return instructions;
         }
 
         private static List<IInstruction> BoolLiteralExpressionRValue(BoolLiteralExpression e)
@@ -235,6 +282,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             {
                 BinaryOperatorExpression e => BinaryOperatorExpressionLValue(e),
                 UnaryOperatorExpression e => UnaryOperatorExpressionLValue(e),
+                CallExpression e => CallExpressionLValue(e),
                 IdExpression e => IdExpressionLValue(e),
                 IntLiteralExpression e => IntLiteralExpressionLValue(e),
                 BoolLiteralExpression e => BoolLiteralExpressionLValue(e),
@@ -244,13 +292,19 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> BinaryOperatorExpressionLValue(BinaryOperatorExpression e)
         {
-            throw new Exception("Binary expressions do not have l-values"); // TODO
+            throw new Exception("Binary expressions do not have l-values");
         }
 
         private static List<IInstruction> UnaryOperatorExpressionLValue(UnaryOperatorExpression e)
         {
-            throw new Exception("Unary expressions do not have l-values"); // TODO
+            throw new Exception("Unary expressions do not have l-values");
         }
+
+        private static List<IInstruction> CallExpressionLValue(CallExpression e)
+        {
+            throw new Exception("Call expressions do not have l-values");
+        }
+
 
         private static List<IInstruction> IdExpressionLValue(IdExpression e)
         {
@@ -267,12 +321,12 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> BoolLiteralExpressionLValue(BoolLiteralExpression e)
         {
-            throw new Exception("Bool literals do not have l-values"); // TODO
+            throw new Exception("Bool literals do not have l-values");
         }
 
         private static List<IInstruction> IntLiteralExpressionLValue(IntLiteralExpression e)
         {
-            throw new Exception("Int literals do not have l-values"); // TODO
+            throw new Exception("Int literals do not have l-values");
         }
     }
 }

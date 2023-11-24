@@ -42,6 +42,10 @@ namespace Compiler.ParseAbstraction
             {
                 return VisitPrimitiveType(context.primitiveType());
             }
+            else if (context.functionType() != null)
+            {
+                return VisitFunctionType(context.functionType());
+            }
             
             // TODO add handling of complex types here
             throw new NotImplementedException();
@@ -60,6 +64,15 @@ namespace Compiler.ParseAbstraction
             }
 
             throw new NotImplementedException();
+        }
+
+        public override FunctionTypeNode VisitFunctionType([NotNull] FunctionTypeContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var types = context.typeList().type()
+                .Select(t => VisitType(t))
+                .ToList();
+            return new FunctionTypeNode(span, types);
         }
 
         public override ParameterList VisitParameterList([NotNull] ParameterListContext context)
@@ -141,6 +154,13 @@ namespace Compiler.ParseAbstraction
             return new VariableDefinitionAndAssignmentStatement(span, type, id, expression);
         }
 
+        public override AbstractSyntaxTree VisitCallStatement([NotNull] CallStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var callExpression = VisitCallExpression(context.callExpression());
+            return new CallStatement(span, callExpression);
+        }
+
         public override ReturnStatement VisitReturnStatement([NotNull] ReturnStatementContext context)
         {
             var span = GetSpanOfContext(context);
@@ -187,6 +207,10 @@ namespace Compiler.ParseAbstraction
             {
                 return VisitUnaryExpression(context.unaryExpression());
             }
+            else if (context.callExpression() != null)
+            {
+                return VisitCallExpression(context.callExpression());
+            }
             else if (context.idExpression() != null)
             {
                 return VisitIdExpression(context.idExpression());
@@ -215,6 +239,23 @@ namespace Compiler.ParseAbstraction
             return new UnaryOperatorExpression(span, op, expression);
         }
 
+        public override CallExpression VisitCallExpression([NotNull] CallExpressionContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var function = VisitIdExpression(context.idExpression());
+            var args = context.argumentList() != null ? VisitArgumentList(context.argumentList()) : null;
+            return new CallExpression(span, function, args);
+        }
+
+        public override ArgumentList VisitArgumentList([NotNull] ArgumentListContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var arguments = context.expression()
+                .Select(VisitExpression)
+                .ToList();
+            return new ArgumentList(span, arguments);
+        }
+
         public override IntLiteralExpression VisitIntLiteral([NotNull] IntLiteralContext context)
         {
             var span = GetSpanOfContext(context);
@@ -239,7 +280,7 @@ namespace Compiler.ParseAbstraction
             throw new Exception($"Tried to parse {text} as a bool, something is wrong with the compiler");
         }
 
-        public override Expression VisitIdExpression([NotNull] IdExpressionContext context)
+        public override IdExpression VisitIdExpression([NotNull] IdExpressionContext context)
         {
             var span = GetSpanOfContext(context);
             var id = VisitId(context.id());

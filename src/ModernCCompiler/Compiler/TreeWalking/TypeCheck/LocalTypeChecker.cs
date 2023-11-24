@@ -13,6 +13,8 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             public Scope? Scope { get; set; }
             public FunctionDefinition? EnclosingFunction { get; set; }
+            public bool LValue { get; set; } = false;
+            public FunctionDefinition? RValueFunction { get; set; }
         }
 
         public static void Walk(ProgramRoot program)
@@ -67,6 +69,9 @@ namespace Compiler.TreeWalking.TypeCheck
                 case VariableDefinitionAndAssignmentStatement s:
                     VisitVariableDefinitionAndAssignmentStatement(s, context);
                     break;
+                case CallStatement s:
+                    VisitCallStatement(s, context);
+                    break;
                 case ReturnStatement s:
                     VisitReturnStatement(s, context);
                     break;
@@ -76,6 +81,56 @@ namespace Compiler.TreeWalking.TypeCheck
                 default:
                     throw new NotImplementedException($"Unknown statement {statement}");
             }
+        }
+        
+        private static void VisitPrintStatement(PrintStatement statement, Context context)
+        {
+            var type = VisitExpression(statement.Expression, context);
+            if (type.GetType() == typeof(VoidType))
+            {
+                throw new Exception($"Expressions can not have a type of void: {statement.Span}");
+            }
+        }
+
+        private static void VisitVariableDefinitionStatement(VariableDefinitionStatement statement, Context context)
+        {
+            var type = statement.Type.ToSemanticType();
+            context.Scope?.Add(statement.Id, type);
+            VisitIdNode(statement.Id, context);
+        }
+
+        private static void VisitAssignmentStatement(AssignmentStatement statement, Context context)
+        {
+            var rightType = VisitExpression(statement.Right, context);
+
+            context.LValue = true;
+            var leftType = VisitExpression(statement.Left, context);
+            context.LValue = false;
+
+            if (leftType != rightType)
+            {
+                throw new Exception($"Variable assignment must have matching types: {statement.Span}");
+            }
+        }
+
+        private static void VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement statement, Context context)
+        {
+            var type = statement.Type.ToSemanticType();
+            var expressionType = VisitExpression(statement.Expression, context);
+            if (type != expressionType)
+            {
+                throw new Exception($"Variable assignment must have matching types: {statement.Span}");
+            }
+
+            context.Scope?.Add(statement.Id, type);
+            context.LValue = true;
+            VisitIdNode(statement.Id, context);
+            context.LValue = false;
+        }
+
+        private static void VisitCallStatement(CallStatement s, Context context)
+        {
+            VisitCallExpression(s.CallExpression, context);
         }
 
         private static void VisitReturnStatement(ReturnStatement statement, Context context)
@@ -109,56 +164,52 @@ namespace Compiler.TreeWalking.TypeCheck
             }
         }
 
-        private static void VisitPrintStatement(PrintStatement statement, Context context)
-        {
-            var type = VisitExpression(statement.Expression, context);
-            if (type.GetType() == typeof(VoidType))
-            {
-                throw new Exception($"Expressions can not have a type of void: {statement.Span}");
-            }
-        }
-
-        private static void VisitVariableDefinitionStatement(VariableDefinitionStatement statement, Context context)
-        {
-            var type = statement.Type.ToSemanticType();
-            context.Scope?.Add(statement.Id, type);
-            VisitIdNode(statement.Id, context);
-        }
-
-        private static void VisitAssignmentStatement(AssignmentStatement statement, Context context)
-        {
-            var leftType = VisitExpression(statement.Left, context);
-            var rightType = VisitExpression(statement.Right, context);
-            if (leftType != rightType)
-            {
-                throw new Exception($"Variable assignment must have matching types: {statement.Span}");
-            }
-        }
-
-        private static void VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement statement, Context context)
-        {
-            var type = statement.Type.ToSemanticType();
-            var expressionType = VisitExpression(statement.Expression, context);
-            if (type != expressionType)
-            {
-                throw new Exception($"Variable assignment must have matching types: {statement.Span}");
-            }
-
-            context.Scope?.Add(statement.Id, type);
-            VisitIdNode(statement.Id, context);
-        }
 
         private static SemanticType VisitExpression(Expression expression, Context context)
         {
             return expression switch
             {
                 BinaryOperatorExpression e => VisitBinaryOperatorExpression(e, context),
+                CallExpression e => VisitCallExpression(e, context),
                 UnaryOperatorExpression e => VisitUnaryOperatorExpression(e, context),
                 IdExpression e => VisitIdExpression(e, context),
                 IntLiteralExpression => new IntType(),
                 BoolLiteralExpression => new BoolType(),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
             };
+        }
+
+        private static SemanticType VisitCallExpression(CallExpression e, Context context)
+        {
+            var type = VisitIdExpression(e.Function, context);
+            if (type is FunctionType functionType)
+            {
+                var argTypes = VisitArgumentList(e.ArgumentList, context);
+                if (argTypes.Count != functionType.Parameters.Count)
+                {
+                    throw new Exception($"{e.Function.Id.Value} was called with an incorrect number of arguments: {e.Span}");
+                }
+
+                for (var i = 0; i < argTypes.Count; i++)
+                {
+                    if (argTypes[i] != functionType.Parameters[i])
+                    {
+                        throw new Exception($"{e.Function.Id.Value} was called with incorrect types: {e.Span}");
+                    }
+                }
+
+                return functionType.ReturnType;
+            }
+
+            throw new Exception($"{e.Function.Id.Value} cannot be called like a function: {e.Span}");
+            
+        }
+
+        private static IList<SemanticType> VisitArgumentList(ArgumentList argumentList, Context context)
+        {
+            return argumentList.Arguments
+                .Select(a => VisitExpression(a, context))
+                .ToList();
         }
 
         private static SemanticType VisitBinaryOperatorExpression(BinaryOperatorExpression e, Context context)
@@ -185,10 +236,32 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static SemanticType VisitIdNode(IdNode id, Context context)
         {
-            id.Symbol = context?.Scope?.Lookup(id);
+            id.Symbol = context.Scope?.Lookup(id);
             if (id.Symbol == null)
             {
-                throw new Exception("Symbol is null");
+                throw new Exception("Symbol was null");
+            }
+
+            if (id.Symbol.Type is FunctionType)
+            {
+                if (context.LValue && id.Symbol.EnclosingFunction == null)
+                {
+                    if (context.RValueFunction == null)
+                    {
+                        throw new Exception("RValueFunction was null");
+                    }
+
+                    id.Symbol.EnclosingFunction = context.RValueFunction;
+                }
+                else if (!context.LValue)
+                {
+                    if (id.Symbol.EnclosingFunction == null)
+                    {
+                        id.Symbol.EnclosingFunction = context.Scope?.LookupFunction(id);
+                    }
+                    
+                    context.RValueFunction = id.Symbol.EnclosingFunction;
+                }
             }
 
             return id.Symbol.Type;

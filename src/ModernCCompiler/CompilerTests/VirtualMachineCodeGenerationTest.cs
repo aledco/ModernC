@@ -14,7 +14,7 @@ namespace CompilerTests
             var testType = "Passing";
             foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
             {
-
+                Console.WriteLine(Id);
                 var tree = Parser.Parse(Contents);
                 TopLevelTypeChecker.Walk(tree);
                 LocalTypeChecker.Walk(tree);

@@ -44,6 +44,27 @@ namespace Compiler.Models.NameResolution
             return _table[id.Value];
         }
 
+        public FunctionDefinition LookupFunction(IdNode id)
+        {
+            if (_parent != null) 
+            {
+                return _parent.LookupFunction(id);
+            }
+
+            var symbol = _table[id.Value];
+            if (symbol.EnclosingFunction == null)
+            {
+                throw new Exception("EnclosingFunction was null");
+            }
+
+            return symbol.EnclosingFunction;
+        }
+
+        public bool HasParent()
+        {
+            return _parent != null;
+        }
+
         private class AlreadyDefinedException : Exception
         {
             public AlreadyDefinedException(IdNode id) : base($"{id.Value} has already been defined: {id.Span}")

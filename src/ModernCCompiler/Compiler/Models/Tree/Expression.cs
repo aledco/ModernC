@@ -8,6 +8,7 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(IntLiteralExpression))]
     [JsonDerivedType(typeof(BoolLiteralExpression))]
     [JsonDerivedType(typeof(IdExpression))]
+    [JsonDerivedType(typeof(CallExpression))]
     public abstract class Expression : AbstractSyntaxTree
     {
         public SemanticType? Type { get; set; }
