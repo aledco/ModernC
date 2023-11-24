@@ -6,13 +6,13 @@ using Compiler.VirtualMachine;
 
 /*
  * TODO:
- * - compound operators
+ * - compound operators/bitwise operators
  * - char, float
  * - read input
  * - arrays
  * - strings
  * - pointers
- * - structs
+ * - structs/unions/enums
  * - lambda expressions
  * - if expressions
  * - file inclusion
