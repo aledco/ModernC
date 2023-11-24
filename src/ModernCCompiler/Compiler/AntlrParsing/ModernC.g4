@@ -39,6 +39,7 @@ statement
     | assignmentStatement
     | variableDefinitionAndAssignmentStatement
     | callStatement
+    | ifStatement
     | compoundStatement;
 
 printStatement
@@ -55,6 +56,15 @@ assignmentStatement
 
 callStatement
     : callExpression ';';
+
+ifStatement
+    : 'if' expression compoundStatement elifPart* elsePart?;
+
+elifPart
+    : 'elif' expression compoundStatement;
+
+elsePart
+    : 'else' compoundStatement;
 
 returnStatement
     : 'return' expression? ';';

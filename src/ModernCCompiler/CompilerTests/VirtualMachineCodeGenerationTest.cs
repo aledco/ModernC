@@ -9,6 +9,8 @@ namespace CompilerTests
     [TestClass]
     public class VirtualMachineCodeGenerationTest
     {
+        private readonly string _component = "VirtualMachineCodeGeneration";
+
         [TestInitialize]
         public void Setup()
         {
@@ -26,6 +28,10 @@ namespace CompilerTests
                 TopLevelTypeChecker.Walk(tree);
                 LocalTypeChecker.Walk(tree);
                 var instructions = CodeGenerator.Walk(tree);
+
+                var asmOut = Machine.ToCode(instructions);
+                TestFileManager.WriteTestOutput(_component, testType, Id, asmOut);
+
                 var outStream = new StringWriter();
                 Machine.Run(instructions, outStream);
 

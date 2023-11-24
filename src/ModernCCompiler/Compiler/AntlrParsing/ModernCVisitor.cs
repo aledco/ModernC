@@ -122,6 +122,24 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCallStatement([NotNull] ModernCParser.CallStatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.ifStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIfStatement([NotNull] ModernCParser.IfStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.elifPart"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitElifPart([NotNull] ModernCParser.ElifPartContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.elsePart"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitElsePart([NotNull] ModernCParser.ElsePartContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.returnStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

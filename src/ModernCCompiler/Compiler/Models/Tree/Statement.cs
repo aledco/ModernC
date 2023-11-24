@@ -7,6 +7,7 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(AssignmentStatement))]
     [JsonDerivedType(typeof(VariableDefinitionAndAssignmentStatement))]
     [JsonDerivedType(typeof(CallStatement))]
+    [JsonDerivedType(typeof(IfStatement))]
     [JsonDerivedType(typeof(ReturnStatement))]
     [JsonDerivedType(typeof(CompoundStatement))]
     public abstract class Statement : AbstractSyntaxTree

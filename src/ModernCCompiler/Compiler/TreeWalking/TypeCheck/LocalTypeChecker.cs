@@ -73,6 +73,9 @@ namespace Compiler.TreeWalking.TypeCheck
                 case CallStatement s:
                     VisitCallStatement(s, context);
                     break;
+                case IfStatement s:
+                    VisitIfStatement(s, context);
+                    break;
                 case ReturnStatement s:
                     VisitReturnStatement(s, context);
                     break;
@@ -83,7 +86,7 @@ namespace Compiler.TreeWalking.TypeCheck
                     throw new NotImplementedException($"Unknown statement {statement}");
             }
         }
-        
+
         private static void VisitPrintStatement(PrintStatement statement, Context context)
         {
             var type = VisitExpression(statement.Expression, context);
@@ -132,6 +135,36 @@ namespace Compiler.TreeWalking.TypeCheck
         private static void VisitCallStatement(CallStatement s, Context context)
         {
             VisitCallExpression(s.CallExpression, context);
+        }
+
+        private static void VisitIfStatement(IfStatement s, Context context)
+        {
+            var ifExpressionType = VisitExpression(s.IfExpression, context);
+            if (ifExpressionType is not BoolType)
+            {
+                ErrorHandler.Throw("If expression must be of type boolean", s);
+            }
+
+            VisitCompoundStatement(s.IfBody, context);
+
+            foreach (var e in s.ElifExpressions)
+            {
+                var elifExpressionType = VisitExpression(e, context);
+                if (elifExpressionType is not BoolType)
+                {
+                    ErrorHandler.Throw("If expression must be of type boolean", s);
+                }
+            }
+
+            foreach (var b in s.ElifBodies) 
+            {
+                VisitCompoundStatement(b, context);
+            }
+            
+            if (s.ElseBody != null)
+            {
+                VisitCompoundStatement(s.ElseBody, context);
+            }
         }
 
         private static void VisitReturnStatement(ReturnStatement statement, Context context)

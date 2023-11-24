@@ -8,6 +8,13 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 {
     public static class CodeGenerator
     {
+        private static int _labelId = 0;
+        private static int GetNextLabelId()
+        {
+            _labelId++;
+            return _labelId;
+        }
+
         public static List<IInstruction> Walk(ProgramRoot program)
         {
             AssignRegistersAndOffsets.Walk(program);
@@ -85,6 +92,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 AssignmentStatement s => VisitAssignmentStatement(s),
                 VariableDefinitionAndAssignmentStatement s => VisitVariableDefinitionAndAssignmentStatement(s),
                 CallStatement s => VisitCallStatement(s),
+                IfStatement s => VisitIfStatement(s),
                 ReturnStatement s => VisitReturnStatement(s),
                 CompoundStatement s => VisitCompoundStatement(s),
                 _ => throw new NotImplementedException($"Unknown statement {statement}"),
@@ -126,6 +134,45 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> VisitCallStatement(CallStatement s)
         {
             return CallExpressionRValue(s.CallExpression);
+        }
+
+        private static List<IInstruction> VisitIfStatement(IfStatement s)
+        {
+            var instructions = new List<IInstruction>();
+            var labelId = GetNextLabelId();
+            var exitLabel = $"if_exit_{labelId}";
+
+            if (s.ElifExpressions.Count > 0 || s.ElseBody != null) 
+            {
+                var nextLabel = (int n) => $"elif_{n}_{labelId}";
+                
+                instructions.AddRange(Flow(s.IfExpression, nextLabel(0), false));
+                instructions.AddRange(VisitCompoundStatement(s.IfBody));
+                instructions.Add(new Jump(exitLabel));
+                instructions.Add(new Label(nextLabel(0)));
+                var i = 1;
+                foreach (var (e, b) in s.ElifExpressions.Zip(s.ElifBodies))
+                {
+                    instructions.AddRange(Flow(e, nextLabel(i), false));
+                    instructions.AddRange(VisitCompoundStatement(b));
+                    instructions.Add(new Jump(exitLabel));
+                    instructions.Add(new Label(nextLabel(i)));
+                    i++;
+                }
+
+                if (s.ElseBody != null)
+                {
+                    instructions.AddRange(VisitCompoundStatement(s.ElseBody));
+                }
+            }
+            else
+            {
+                instructions.AddRange(Flow(s.IfExpression, exitLabel, false));
+                instructions.AddRange(VisitCompoundStatement(s.IfBody));
+            }
+
+            instructions.Add(new Label(exitLabel));
+            return instructions;
         }
 
         private static List<IInstruction> VisitReturnStatement(ReturnStatement s)
@@ -183,9 +230,17 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     instructions.Add(new Divide(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                     break;
                 case "and":
-                    // TODO short circuit
                 case "or":
-                    // TODO short circuit
+                    var labelId = GetNextLabelId();
+                    var trueLabel = $"bool_op_true_{labelId}";
+                    var exitLabel = $"bool_op_exit_{labelId}";
+                    instructions.AddRange(Flow(e, trueLabel, true));
+                    instructions.Add(new LoadImmediate(e.Register, 0));
+                    instructions.Add(new Jump(exitLabel));
+                    instructions.Add(new Label(trueLabel));
+                    instructions.Add(new LoadImmediate(e.Register, 1));
+                    instructions.Add(new Label(exitLabel));
+                    break;
                 default:
                     throw new Exception($"Unrecognized binary operator: {e.Operator}");
             }
@@ -332,6 +387,102 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         {
             ErrorHandler.Throw("Int literals do not have l-values.", e);
             throw new Exception("Error handler did not stop execution");
+        }
+
+        private static List<IInstruction> Flow(Expression expression, string label, bool condition)
+        {
+            return expression switch
+            {
+                BinaryOperatorExpression e => BinaryOperatorExpressionFlow(e, label, condition),
+                UnaryOperatorExpression e => UnaryOperatorExpressionFlow(e, label, condition),
+                CallExpression e => SimpleFlow(e, label, condition),
+                IdExpression e => SimpleFlow(e, label, condition),
+                BoolLiteralExpression e => BoolLiteralExpressionFlow(e, label, condition),
+                _ => throw new NotImplementedException($"Invalid expression for flow: {expression}"),
+            };
+        }
+
+        private static List<IInstruction> BinaryOperatorExpressionFlow(BinaryOperatorExpression e, string label, bool condition)
+        {
+            var instructions = new List<IInstruction>();
+            if (e.Operator == "and")
+            {
+                if (!condition)
+                {
+                    instructions.AddRange(Flow(e.LeftOperand, label, false));
+                    instructions.AddRange(Flow(e.RightOperand, label, false));
+                }
+                else
+                {
+                    var labelId = GetNextLabelId();
+                    var ftLabel = $"flow_fallthrough_{labelId}";
+                    instructions.AddRange(Flow(e.LeftOperand, ftLabel, false));
+                    instructions.AddRange(Flow(e.RightOperand, label, true));
+                    instructions.Add(new Label(ftLabel));
+                }
+            }
+            else if (e.Operator == "or")
+            {
+                if (condition)
+                {
+                    instructions.AddRange(Flow(e.LeftOperand, label, true));
+                    instructions.AddRange(Flow(e.RightOperand, label, true));
+                }
+                else
+                {
+                    var labelId = GetNextLabelId();
+                    var ftLabel = $"flow_fallthrough_{labelId}";
+                    instructions.AddRange(Flow(e.LeftOperand, ftLabel, true));
+                    instructions.AddRange(Flow(e.RightOperand, label, false));
+                    instructions.Add(new Label(ftLabel));
+                }
+            }
+            else
+            {
+                instructions.AddRange(SimpleFlow(e, label, condition));
+            }
+
+            return instructions;
+        }
+
+        private static List<IInstruction> UnaryOperatorExpressionFlow(UnaryOperatorExpression e, string label, bool condition)
+        {
+            return e.Operator switch
+            {
+                "not" => Flow(e.Operand, label, !condition),
+                _ => throw new Exception($"Invalid operator for flow: {e.Operator}")
+            };
+        }
+
+        private static List<IInstruction> CallExpressionFlow(CallExpression e, string label, bool condition)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static List<IInstruction> BoolLiteralExpressionFlow(BoolLiteralExpression e, string label, bool condition)
+        {
+            var instructions = new List<IInstruction>();
+            if (e.Value == condition)
+            {
+                instructions.Add(new Jump(label));
+            }
+
+            return instructions;
+        }
+
+        private static List<IInstruction> SimpleFlow(Expression expression, string label, bool condition)
+        {
+            var instructions = ExpressionRValue(expression);
+            if (condition)
+            {
+                instructions.Add(new JumpIfNotZero(expression.Register, label));
+            }
+            else
+            {
+                instructions.Add(new JumpIfZero(expression.Register, label));
+            }
+
+            return instructions;
         }
     }
 }

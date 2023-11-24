@@ -1,22 +1,17 @@
 ﻿namespace Compiler.VirtualMachine.Instructions
 {
-    public class Print : IInstruction
+    public class Blank : IInstruction
     {
-        private readonly string _src;
+        public Blank() { }
 
-        public Print(string src) 
-        {
-            _src = src;
-        }
-        
         public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextWriter outStream)
         {
-            outStream.Write(registers[_src]);
+            // do nothing
         }
 
         public string ToCode()
         {
-            return $"p {_src}";
+            return string.Empty;
         }
     }
 }

@@ -153,11 +153,33 @@ namespace Compiler.ParseAbstraction
             return new VariableDefinitionAndAssignmentStatement(span, type, id, expression);
         }
 
-        public override AbstractSyntaxTree VisitCallStatement([NotNull] CallStatementContext context)
+        public override CallStatement VisitCallStatement([NotNull] CallStatementContext context)
         {
             var span = GetSpanOfContext(context);
             var callExpression = VisitCallExpression(context.callExpression());
             return new CallStatement(span, callExpression);
+        }
+
+        public override IfStatement VisitIfStatement([NotNull] IfStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var ifExpression = VisitExpression(context.expression());
+            var ifBody = VisitCompoundStatement(context.compoundStatement());
+
+            var elifExpressions = context.elifPart()
+                .Select(c => VisitExpression(c.expression()))
+                .ToList();
+            var elifBodies = context.elifPart()
+                .Select(c => VisitCompoundStatement(c.compoundStatement()))
+                .ToList();
+
+            CompoundStatement? elseBody = null;
+            if (context.elsePart() != null)
+            {
+                elseBody = VisitCompoundStatement(context.elsePart().compoundStatement());
+            }
+
+            return new IfStatement(span, ifExpression, ifBody, elifExpressions, elifBodies, elseBody);
         }
 
         public override ReturnStatement VisitReturnStatement([NotNull] ReturnStatementContext context)

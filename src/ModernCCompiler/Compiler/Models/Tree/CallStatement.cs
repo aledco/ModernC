@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    internal class CallStatement : Statement
+    public class CallStatement : Statement
     {
         public CallExpression CallExpression { get; }
 

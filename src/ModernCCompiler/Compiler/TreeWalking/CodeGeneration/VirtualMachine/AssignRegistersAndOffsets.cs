@@ -94,7 +94,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 }
                 else
                 {
-                    VisitStatement(statement, context, offset);
+                    size += VisitStatement(statement, context, offset);
                 }
 
                 context.Clear();
@@ -112,6 +112,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 AssignmentStatement s => VisitAssignmentStatement(s, context, offset),
                 VariableDefinitionAndAssignmentStatement s => VisitVariableDefinitionAndAssignmentStatement(s, context, offset),
                 CallStatement s => VisitCallStatement(s, context, offset),
+                IfStatement s => VisitIfStatement(s, context, offset),
                 ReturnStatement s => VisitReturnStatement(s, context, offset),
                 CompoundStatement s => VisitCompoundStatement(s, context, offset),
                 _ => throw new NotImplementedException($"Unknown statement {statement}"),
@@ -157,6 +158,26 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         {
             VisitCallExpression(s.CallExpression, context, offset);
             return 0;
+        }
+
+        private static int VisitIfStatement(IfStatement s, Context context, int offset)
+        {
+            var sizes = new List<int>();
+            VisitExpression(s.IfExpression, context, offset);
+            sizes.Add(VisitCompoundStatement(s.IfBody, context, offset));
+
+            foreach (var (e, b) in s.ElifExpressions.Zip(s.ElifBodies))
+            {
+                VisitExpression(e, context, offset);
+                sizes.Add(VisitCompoundStatement(b, context, offset));
+            }
+
+            if (s.ElseBody != null)
+            {
+                sizes.Add(VisitCompoundStatement(s.ElseBody, context, offset));
+            }
+
+            return sizes.Max();
         }
 
         private static int VisitReturnStatement(ReturnStatement s, Context context, int offset)
