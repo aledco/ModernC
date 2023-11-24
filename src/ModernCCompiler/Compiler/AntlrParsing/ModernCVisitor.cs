@@ -68,6 +68,18 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitPrimitiveType([NotNull] ModernCParser.PrimitiveTypeContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.functionType"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFunctionType([NotNull] ModernCParser.FunctionTypeContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.typeList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitTypeList([NotNull] ModernCParser.TypeListContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.compoundStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -104,6 +116,12 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitAssignmentStatement([NotNull] ModernCParser.AssignmentStatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.callStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCallStatement([NotNull] ModernCParser.CallStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.returnStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -133,6 +151,18 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitUnaryExpression([NotNull] ModernCParser.UnaryExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.callExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCallExpression([NotNull] ModernCParser.CallExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.argumentList"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitArgumentList([NotNull] ModernCParser.ArgumentListContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.intLiteral"/>.
 	/// </summary>

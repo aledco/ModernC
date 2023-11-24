@@ -67,6 +67,26 @@ public interface ModernCListener extends ParseTreeListener {
 	 */
 	void exitPrimitiveType(ModernCParser.PrimitiveTypeContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link ModernCParser#functionType}.
+	 * @param ctx the parse tree
+	 */
+	void enterFunctionType(ModernCParser.FunctionTypeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#functionType}.
+	 * @param ctx the parse tree
+	 */
+	void exitFunctionType(ModernCParser.FunctionTypeContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ModernCParser#typeList}.
+	 * @param ctx the parse tree
+	 */
+	void enterTypeList(ModernCParser.TypeListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#typeList}.
+	 * @param ctx the parse tree
+	 */
+	void exitTypeList(ModernCParser.TypeListContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ModernCParser#compoundStatement}.
 	 * @param ctx the parse tree
 	 */
@@ -176,6 +196,26 @@ public interface ModernCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitUnaryExpression(ModernCParser.UnaryExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ModernCParser#callExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterCallExpression(ModernCParser.CallExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#callExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitCallExpression(ModernCParser.CallExpressionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ModernCParser#argumentList}.
+	 * @param ctx the parse tree
+	 */
+	void enterArgumentList(ModernCParser.ArgumentListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#argumentList}.
+	 * @param ctx the parse tree
+	 */
+	void exitArgumentList(ModernCParser.ArgumentListContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ModernCParser#intLiteral}.
 	 * @param ctx the parse tree

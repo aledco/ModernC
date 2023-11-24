@@ -4,7 +4,7 @@ grammar ModernC;
  * Parsing rules
  */
 program
-    : functionDefinition functionDefinition* EOF; // TODO add global statements
+    : functionDefinition functionDefinition* EOF;
 
 functionDefinition
     : type id '(' parameterList? ')' compoundStatement;
@@ -17,11 +17,18 @@ parameter
 
 type
     : VOID_TYPE
-    | primitiveType; // TODO add pointer, array, struct, enum, function, and typedef
+    | primitiveType
+    | functionType;
 
 primitiveType
     : INT_TYPE 
     | BOOL_TYPE;
+
+functionType
+    : 'func' '(' typeList ')';
+
+typeList
+    : type (',' type)*;
 
 compoundStatement
     : '{' statement* returnStatement? '}';
@@ -31,6 +38,7 @@ statement
     | variableDefinitionStatement
     | assignmentStatement
     | variableDefinitionAndAssignmentStatement
+    | callStatement
     | compoundStatement;
 
 printStatement
@@ -45,11 +53,14 @@ variableDefinitionAndAssignmentStatement
 assignmentStatement
     : expression '=' expression ';';
 
+callStatement
+    : callExpression ';';
+
 returnStatement
     : 'return' expression? ';';
 
 expression
-    : expression ('+'|'-'|'or') term // todo might want to make productions for each operator class and have asn ast node for operator
+    : expression ('+'|'-'|'or') term
     | term;
 
 term
@@ -58,6 +69,7 @@ term
 
 factor
     : unaryExpression
+    | callExpression
     | intLiteral
     | boolLiteral
     | idExpression
@@ -65,6 +77,12 @@ factor
 
 unaryExpression
     : ('-'|'not') factor;
+
+callExpression
+    : idExpression '(' argumentList? ')';
+
+argumentList
+    : expression (',' expression)*;
 
 intLiteral
     : INT;

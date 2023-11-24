@@ -3,9 +3,9 @@
     public class FunctionType : SemanticType
     {
         public SemanticType ReturnType { get; }
-        public IEnumerable<SemanticType> Parameters { get; }
+        public IList<SemanticType> Parameters { get; }
 
-        public FunctionType(SemanticType returnType, IEnumerable<SemanticType> parameters)
+        public FunctionType(SemanticType returnType, IList<SemanticType> parameters)
         {
             ReturnType = returnType;
             Parameters = parameters;

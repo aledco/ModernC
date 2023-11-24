@@ -10,47 +10,67 @@ namespace Compiler.TreeWalking.TypeCheck
     /// </summary>
     public static class TopLevelTypeChecker
     {
+        private class Context
+        {
+            public Scope? Scope { get; set; }
+            public FunctionDefinition? EnclosingFunction { get; set; }
+        }
 
         public static void Walk(ProgramRoot program)
         {
-            VisitProgramRoot(program, new Scope());
+            var context = new Context
+            {
+                Scope = new Scope()
+            };
+            VisitProgramRoot(program, context);
         }
 
-        private static void VisitProgramRoot(ProgramRoot program, Scope scope)
+        private static void VisitProgramRoot(ProgramRoot program, Context context)
         {
-            program.GlobalScope = scope;
+            program.GlobalScope = context.Scope;
             foreach (var functionDefinition in program.FunctionDefinitions)
             {
-                VisitFunctionDefinition(functionDefinition, scope);
+                VisitFunctionDefinition(functionDefinition, context);
             }
         }
 
-        private static void VisitFunctionDefinition(FunctionDefinition functionDefinition, Scope scope)
+        private static void VisitFunctionDefinition(FunctionDefinition functionDefinition, Context context)
         {
-            functionDefinition.FunctionScope = new Scope(scope);
+            var globalScope = context.Scope;
+
+            functionDefinition.FunctionScope = new Scope(context.Scope);
+            context.Scope = functionDefinition.FunctionScope;
+            context.EnclosingFunction = functionDefinition;
+
             var returnType = functionDefinition.ReturnType.ToSemanticType();
-            var parameterTypes = VisitParameterList(functionDefinition.ParameterList, functionDefinition.FunctionScope);
-            scope.Add(functionDefinition.Id, new FunctionType(returnType, parameterTypes));
-            VisitIdNode(functionDefinition.Id, scope);
+            var parameterTypes = VisitParameterList(functionDefinition.ParameterList, context);
+
+            globalScope?.Add(functionDefinition.Id, new FunctionType(returnType, parameterTypes));
+            context.Scope = globalScope;
+            VisitIdNode(functionDefinition.Id, context);
         }
 
-        private static IEnumerable<SemanticType> VisitParameterList(ParameterList parameterList, Scope scope)
+        private static IList<SemanticType> VisitParameterList(ParameterList parameterList, Context context)
         {
             var parameterTypes = new List<SemanticType>();
             foreach (var parameter in parameterList.Parameters)
             {
                 var type = parameter.Type.ToSemanticType();
-                scope.Add(parameter.Id, type);
-                VisitIdNode(parameter.Id, scope);
+                context.Scope?.Add(parameter.Id, type);
+                VisitIdNode(parameter.Id, context);
                 parameterTypes.Add(type);
             }
 
             return parameterTypes;
         }
 
-        private static void VisitIdNode(IdNode id, Scope scope)
+        private static void VisitIdNode(IdNode id, Context context)
         {
-            id.Symbol = scope.Lookup(id);
+            id.Symbol = context.Scope?.Lookup(id);
+            if (id.Symbol != null) 
+            {
+                id.Symbol.EnclosingFunction = context.EnclosingFunction;
+            }
         }
     }
 }

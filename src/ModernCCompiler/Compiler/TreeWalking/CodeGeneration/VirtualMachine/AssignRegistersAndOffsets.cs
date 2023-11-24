@@ -111,6 +111,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 VariableDefinitionStatement s => VisitVariableDefinitionStatement(s, context, offset),
                 AssignmentStatement s => VisitAssignmentStatement(s, context, offset),
                 VariableDefinitionAndAssignmentStatement s => VisitVariableDefinitionAndAssignmentStatement(s, context, offset),
+                CallStatement s => VisitCallStatement(s, context, offset),
                 ReturnStatement s => VisitReturnStatement(s, context, offset),
                 CompoundStatement s => VisitCompoundStatement(s, context, offset),
                 _ => throw new NotImplementedException($"Unknown statement {statement}"),
@@ -152,6 +153,12 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             throw new Exception("Symbol was null");
         }
 
+        private static int VisitCallStatement(CallStatement s, Context context, int offset)
+        {
+            VisitCallExpression(s.CallExpression, context, offset);
+            return 0;
+        }
+
         private static int VisitReturnStatement(ReturnStatement s, Context context, int offset)
         {
             if (s.Expression != null)
@@ -168,10 +175,11 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             {
                 BinaryOperatorExpression e => VisitBinaryOperatorExpression(e, context, offset),
                 UnaryOperatorExpression e => VisitUnaryOperatorExpression(e, context, offset),
+                CallExpression e => VisitCallExpression(e, context, offset),
                 IdExpression e => VisitIdExpression(e, context, offset),
                 IntLiteralExpression e => VisitIntLiteralExpression(e, context, offset),
                 BoolLiteralExpression e => VisitBoolLiteralExpression(e, context, offset),
-                _ => throw new NotImplementedException($"Unknown expression: {expression}"),
+                _ => throw new NotImplementedException($"Unknown expression: {expression}")
             };
         }
 
@@ -190,6 +198,26 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             e.Register = e.Operand.Register;
             return 0;
         }
+
+        private static int VisitCallExpression(CallExpression e, Context context, int offset)
+        {
+            VisitIdExpression(e.Function, context, offset);
+            var argRegs = new List<string>();
+            foreach (var arg in e.ArgumentList.Arguments)
+            {
+                VisitExpression(arg, context, offset);
+                argRegs.Add(arg.Register);
+            }
+
+            foreach (var argReg in argRegs)
+            {
+                context.DropRegister(argReg);
+            }
+
+            e.Register = e.Function.Register;
+            return 0;
+        }
+
 
         private static int VisitIdExpression(IdExpression e, Context context, int offset)
         {
