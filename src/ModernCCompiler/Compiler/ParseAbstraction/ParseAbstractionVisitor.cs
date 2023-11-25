@@ -62,6 +62,10 @@ namespace Compiler.ParseAbstraction
             {
                 return new ByteTypeNode(span);
             }
+            else if (context.FLOAT_TYPE() != null)
+            {
+                return new FloatTypeNode(span);
+            }
             else if (context.BOOL_TYPE() != null)
             {
                 return new BoolTypeNode(span);
@@ -340,6 +344,10 @@ namespace Compiler.ParseAbstraction
             {
                 return VisitByteLiteral(context.byteLiteral());
             }
+            else if (context.floatLiteral() != null)
+            {
+                return VisitFloatLiteral(context.floatLiteral());
+            }
             else if (context.boolLiteral() != null)
             {
                 return VisitBoolLiteral(context.boolLiteral());
@@ -422,6 +430,29 @@ namespace Compiler.ParseAbstraction
             }
 
             throw new Exception($"Parse error: {context.GetText()} is an invalid byte");
+        }
+
+        public override FloatLiteralExpression VisitFloatLiteral([NotNull] FloatLiteralContext context)
+        {
+            var span = GetSpanOfContext(context);
+            if (context.FLOAT() != null)
+            {
+                var text = context.FLOAT().GetText();
+                if (float.TryParse(text, out var value))
+                {
+                    return new FloatLiteralExpression(span, value);
+                }
+            }
+            else if (context.INT() != null) 
+            {
+                var text = context.FLOAT().GetText();
+                if (int.TryParse(text, out var value))
+                {
+                    return new FloatLiteralExpression(span, value);
+                }
+            }
+            
+            throw new Exception($"Tried to parse {context.GetText()} as a float, something is wrong with the compiler");
         }
 
         public override BoolLiteralExpression VisitBoolLiteral([NotNull] BoolLiteralContext context)

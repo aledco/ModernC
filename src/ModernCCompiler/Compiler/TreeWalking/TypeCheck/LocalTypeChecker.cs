@@ -118,7 +118,7 @@ namespace Compiler.TreeWalking.TypeCheck
             SemanticType rightType;
             if (statement.BinaryExpression != null)
             {
-                rightType = VisitBinaryOperatorExpression(statement.BinaryExpression, context);
+                rightType = VisitExpression(statement.BinaryExpression, context);
             }
             else
             {
@@ -129,7 +129,7 @@ namespace Compiler.TreeWalking.TypeCheck
             var leftType = VisitExpression(statement.Left, context);
             context.LValue = false;
 
-            if (leftType is NumberType && rightType is NumberType)
+            if (leftType is RealType && rightType is NumberType)
             {
                 return;
             }
@@ -157,7 +157,7 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             var type = statement.Type.ToSemanticType();
             var expressionType = VisitExpression(statement.Expression, context);
-            if (type is NumberType && expressionType is NumberType)
+            if (type is RealType && expressionType is NumberType)
             {
             }
             else if (type != expressionType)
@@ -272,6 +272,7 @@ namespace Compiler.TreeWalking.TypeCheck
                 IdExpression e => VisitIdExpression(e, context),
                 IntLiteralExpression => new IntType(),
                 ByteLiteralExpression => new ByteType(),
+                FloatLiteralExpression => new FloatType(),
                 BoolLiteralExpression => new BoolType(),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
             }; ;

@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
-    public class IntType : NumberType
+    public class IntType : IntegralType
     {
         public override bool Equals(object? obj)
         {

@@ -114,6 +114,9 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 case ByteType:
                     instructions.Add(new PrintByte(s.Expression.Register));
                     break;
+                case FloatType:
+                    instructions.Add(new PrintFloat(s.Expression.Register));
+                    break;
                 case BoolType:
                     instructions.Add(new PrintBool(s.Expression.Register));
                     break;
@@ -298,6 +301,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 IdExpression e => IdExpressionRValue(e),
                 IntLiteralExpression e => IntLiteralExpressionRValue(e),
                 ByteLiteralExpression e => ByteLiteralExpressionRValue(e),
+                FloatLiteralExpression e => FloatLiteralExpressionRValue(e),
                 BoolLiteralExpression e => BoolLiteralExpressionRValue(e),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
             };
@@ -336,23 +340,64 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 case BinaryOperator.Plus:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
-                    instructions.Add(new Add(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    switch (e.Type)
+                    {
+                        case IntegralType:
+                            instructions.Add(new Add(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new AddFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {e.Type}");
+                    }
                     break;
                 case BinaryOperator.Minus:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
-                    instructions.Add(new Negate(e.RightOperand.Register, e.RightOperand.Register));
-                    instructions.Add(new Add(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    switch (e.Type)
+                    {
+                        case IntegralType:
+                            instructions.Add(new Negate(e.RightOperand.Register, e.RightOperand.Register));
+                            instructions.Add(new Add(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new NegateFloat(e.RightOperand.Register, e.RightOperand.Register));
+                            instructions.Add(new AddFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {e.Type}");
+                    }
                     break;
                 case BinaryOperator.Times:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
-                    instructions.Add(new Multiply(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    switch (e.Type)
+                    {
+                        case IntegralType:
+                            instructions.Add(new Multiply(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new MultiplyFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {e.Type}");
+                    }
                     break;
                 case BinaryOperator.DividedBy:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
-                    instructions.Add(new Divide(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    switch (e.Type)
+                    {
+                        case IntegralType:
+                            instructions.Add(new Divide(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new DivideFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {e.Type}");
+                    }
                     break;
                 case BinaryOperator.And:
                 case BinaryOperator.Or:
@@ -413,7 +458,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return instructions;
         }
 
-
         private static List<IInstruction> IdExpressionRValue(IdExpression e)
         {
             if (e.Id.Symbol == null)
@@ -448,6 +492,14 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             };
         }
         private static List<IInstruction> ByteLiteralExpressionRValue(ByteLiteralExpression e)
+        {
+            return new List<IInstruction>()
+            {
+                new LoadImmediate(e.Register, e.Value)
+            };
+        }
+
+        private static List<IInstruction> FloatLiteralExpressionRValue(FloatLiteralExpression e)
         {
             return new List<IInstruction>()
             {

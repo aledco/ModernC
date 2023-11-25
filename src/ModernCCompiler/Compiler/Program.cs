@@ -7,9 +7,10 @@ using Compiler.VirtualMachine;
 /*
  * TODO:
  * - finish byte escape sequences
- * - float
+ * - add float versions of comparison instructions, finalize interaction between float and int types
  * - read input
  * - make ok return 0, exit code exits program with error code, add println.
+ * - make function calls expressions
  * - arrays
  * - byte strings
  * - pointers
@@ -21,10 +22,12 @@ using Compiler.VirtualMachine;
  * - char and char strings
  * - file inclusion
  * - better command line args
+ * - repl using interpreter
+ * - comment code
  * - optimization unit
  * - smarter callee saved registers
  * - casting
- * - compile to llvm or x86
+ * - compile to llvm or x86 or C
  * - std library / link with C
  * - switch/goto
  */
@@ -40,8 +43,8 @@ namespace Compiler
             TopLevelTypeChecker.Walk(tree);
             LocalTypeChecker.Walk(tree);
             var instructions = CodeGenerator.Walk(tree);
-            //Console.WriteLine(Machine.ToCode(instructions));
-            Machine.Run(instructions, Console.Out);
+            Console.WriteLine(Machine.ToCode(instructions));
+            //Machine.Run(instructions, Console.Out);
         }
 
         private static IReader GetReader(string[] args)

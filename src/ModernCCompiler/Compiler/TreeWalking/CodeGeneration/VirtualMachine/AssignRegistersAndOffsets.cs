@@ -232,10 +232,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 BinaryOperatorExpression e => VisitBinaryOperatorExpression(e, context, offset),
                 UnaryOperatorExpression e => VisitUnaryOperatorExpression(e, context, offset),
                 CallExpression e => VisitCallExpression(e, context, offset),
-                IdExpression e => VisitIdExpression(e, context, offset),
-                IntLiteralExpression e => VisitIntLiteralExpression(e, context, offset),
-                ByteLiteralExpression e => VisitByteLiteralExpression(e, context, offset),
-                BoolLiteralExpression e => VisitBoolLiteralExpression(e, context, offset),
+                Expression e => VisitSimpleExpression(e, context, offset),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}")
             };
         }
@@ -259,7 +256,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static int VisitCallExpression(CallExpression e, Context context, int offset)
         {
-            VisitIdExpression(e.Function, context, offset);
+            VisitExpression(e.Function, context, offset);
             var argRegs = new List<string>();
             foreach (var arg in e.ArgumentList.Arguments)
             {
@@ -276,26 +273,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return 0;
         }
 
-
-        private static int VisitIdExpression(IdExpression e, Context context, int _)
-        {
-            e.Register = context.GetRegister();
-            return 0;
-        }
-
-        private static int VisitIntLiteralExpression(IntLiteralExpression e, Context context, int _)
-        {
-            e.Register = context.GetRegister();
-            return 0;
-        }
-
-        private static int VisitByteLiteralExpression(ByteLiteralExpression e, Context context, int _)
-        {
-            e.Register = context.GetRegister();
-            return 0;
-        }
-
-        private static int VisitBoolLiteralExpression(BoolLiteralExpression e, Context context, int _)
+        private static int VisitSimpleExpression(Expression e, Context context, int _)
         {
             e.Register = context.GetRegister();
             return 0;

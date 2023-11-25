@@ -1,10 +1,10 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
-    public class ByteType : IntegralType
+    public class FloatType : RealType
     {
         public override bool Equals(object? obj)
         {
-            return obj is BoolType;
+            return obj is FloatType;
         }
 
         public override int GetHashCode()
