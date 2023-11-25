@@ -6,9 +6,8 @@ using Compiler.VirtualMachine;
 
 /*
  * TODO:
- * - finish byte escape sequences
- * - add float versions of comparison instructions, finalize interaction between float and int types
- * - read input
+ * - finalize interaction between float and int types
+ * - read byte statement
  * - make ok return 0, exit code exits program with error code, add println.
  * - make function calls expressions
  * - arrays
@@ -20,6 +19,7 @@ using Compiler.VirtualMachine;
  * - global variables / statements
  * - bitwise operators
  * - char and char strings
+ * - input num should read num chars from stdin
  * - file inclusion
  * - better command line args
  * - repl using interpreter
@@ -37,14 +37,19 @@ namespace Compiler
     {
         private static void Main(string[] args)
         {
-            var reader = GetReader(args);
-            var input = reader.Read();
-            var tree = Parser.Parse(input);
-            TopLevelTypeChecker.Walk(tree);
-            LocalTypeChecker.Walk(tree);
-            var instructions = CodeGenerator.Walk(tree);
-            Console.WriteLine(Machine.ToCode(instructions));
-            //Machine.Run(instructions, Console.Out);
+            while (true)
+            {
+                var reader = GetReader(args);
+                var input = reader.Read();
+                var tree = Parser.Parse(input);
+                TopLevelTypeChecker.Walk(tree);
+                LocalTypeChecker.Walk(tree);
+                var instructions = CodeGenerator.Walk(tree);
+                //Console.WriteLine(Machine.ToCode(instructions));
+                Machine.Run(instructions, Console.Out);
+                Console.WriteLine();
+                Console.WriteLine();
+            }
         }
 
         private static IReader GetReader(string[] args)

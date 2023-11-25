@@ -107,6 +107,16 @@ public interface ModernCListener extends ParseTreeListener {
 	 */
 	void exitStatement(ModernCParser.StatementContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link ModernCParser#simpleStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterSimpleStatement(ModernCParser.SimpleStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#simpleStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitSimpleStatement(ModernCParser.SimpleStatementContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ModernCParser#printStatement}.
 	 * @param ctx the parse tree
 	 */
@@ -146,6 +156,16 @@ public interface ModernCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitAssignmentStatement(ModernCParser.AssignmentStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ModernCParser#incrementStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterIncrementStatement(ModernCParser.IncrementStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#incrementStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitIncrementStatement(ModernCParser.IncrementStatementContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ModernCParser#callStatement}.
 	 * @param ctx the parse tree
@@ -316,6 +336,26 @@ public interface ModernCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitIntLiteral(ModernCParser.IntLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ModernCParser#byteLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void enterByteLiteral(ModernCParser.ByteLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#byteLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void exitByteLiteral(ModernCParser.ByteLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ModernCParser#floatLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void enterFloatLiteral(ModernCParser.FloatLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#floatLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void exitFloatLiteral(ModernCParser.FloatLiteralContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ModernCParser#boolLiteral}.
 	 * @param ctx the parse tree

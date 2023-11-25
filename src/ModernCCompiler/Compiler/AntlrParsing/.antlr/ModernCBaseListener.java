@@ -136,6 +136,18 @@ public class ModernCBaseListener implements ModernCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterSimpleStatement(ModernCParser.SimpleStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitSimpleStatement(ModernCParser.SimpleStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterPrintStatement(ModernCParser.PrintStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -179,6 +191,18 @@ public class ModernCBaseListener implements ModernCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitAssignmentStatement(ModernCParser.AssignmentStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterIncrementStatement(ModernCParser.IncrementStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitIncrementStatement(ModernCParser.IncrementStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -383,6 +407,30 @@ public class ModernCBaseListener implements ModernCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIntLiteral(ModernCParser.IntLiteralContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterByteLiteral(ModernCParser.ByteLiteralContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitByteLiteral(ModernCParser.ByteLiteralContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterFloatLiteral(ModernCParser.FloatLiteralContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFloatLiteral(ModernCParser.FloatLiteralContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

@@ -536,7 +536,17 @@ namespace Compiler.ParseAbstraction
         {
             return escaped switch
             {
-                "\\n" => Convert.ToByte('\n'), // TODO add more escape sequences
+                "\\a" => Convert.ToByte('\a'),
+                "\\b" => Convert.ToByte('\b'),
+                "\\f" => Convert.ToByte('\f'),
+                "\\n" => Convert.ToByte('\n'),
+                "\\r" => Convert.ToByte('\r'),
+                "\\t" => Convert.ToByte('\t'),
+                "\\v" => Convert.ToByte('\v'),
+                "\\\\" => Convert.ToByte('\\'),
+                "\\\'" => Convert.ToByte('\''),
+                "\\\"" => Convert.ToByte('\"'),
+                "\\0" => Convert.ToByte('\0'),
                 _ => throw new Exception($"{escaped} is not recognized as an escape sequence.")
             };
         }

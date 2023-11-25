@@ -104,6 +104,12 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitPrintStatement([NotNull] ModernCParser.PrintStatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.readStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitReadStatement([NotNull] ModernCParser.ReadStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.variableDefinitionStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

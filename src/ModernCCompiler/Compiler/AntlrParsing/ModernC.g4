@@ -44,6 +44,7 @@ statement
 
 simpleStatement
     : printStatement
+    | readStatement
     | variableDefinitionStatement
     | assignmentStatement
     | incrementStatement
@@ -52,6 +53,9 @@ simpleStatement
 
 printStatement
     : 'print' expression;
+
+readStatement
+    : primitiveType? id 'read';
 
 variableDefinitionStatement
     : type id;
