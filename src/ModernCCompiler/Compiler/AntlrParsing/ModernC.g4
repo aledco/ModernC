@@ -44,6 +44,7 @@ simpleStatement
     : printStatement
     | variableDefinitionStatement
     | assignmentStatement
+    | incrementStatement
     | variableDefinitionAndAssignmentStatement
     | callStatement;
 
@@ -57,7 +58,10 @@ variableDefinitionAndAssignmentStatement
     : type id '=' expression;
 
 assignmentStatement
-    : expression '=' expression;
+    : expression ('='|'+='|'-='|'*='|'/=') expression;
+
+incrementStatement
+    : expression ('++'|'--');
 
 callStatement
     : callExpression;

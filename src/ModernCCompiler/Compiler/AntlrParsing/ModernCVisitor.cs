@@ -122,6 +122,12 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitAssignmentStatement([NotNull] ModernCParser.AssignmentStatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.incrementStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIncrementStatement([NotNull] ModernCParser.IncrementStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.callStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

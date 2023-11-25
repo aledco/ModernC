@@ -5,6 +5,7 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(PrintStatement))]
     [JsonDerivedType(typeof(VariableDefinitionStatement))]
     [JsonDerivedType(typeof(AssignmentStatement))]
+    [JsonDerivedType(typeof(IncrementStatement))]
     [JsonDerivedType(typeof(VariableDefinitionAndAssignmentStatement))]
     [JsonDerivedType(typeof(CallStatement))]
     [JsonDerivedType(typeof(IfStatement))]

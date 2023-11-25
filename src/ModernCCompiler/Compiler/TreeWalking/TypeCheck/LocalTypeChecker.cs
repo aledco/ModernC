@@ -68,6 +68,9 @@ namespace Compiler.TreeWalking.TypeCheck
                 case AssignmentStatement s:
                     VisitAssignmentStatement(s, context);
                     break;
+                case IncrementStatement s:
+                    VisitIncrementStatement(s, context);
+                    break;
                 case VariableDefinitionAndAssignmentStatement s:
                     VisitVariableDefinitionAndAssignmentStatement(s, context);
                     break;
@@ -112,17 +115,38 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static void VisitAssignmentStatement(AssignmentStatement statement, Context context)
         {
-            var rightType = VisitExpression(statement.Right, context);
-
+            SemanticType rightType;
+            if (statement.BinaryExpression != null)
+            {
+                rightType = VisitBinaryOperatorExpression(statement.BinaryExpression, context);
+            }
+            else
+            {
+                rightType = VisitExpression(statement.Right, context);
+            }
+            
             context.LValue = true;
             var leftType = VisitExpression(statement.Left, context);
             context.LValue = false;
 
-            if (leftType != rightType)
+            if (leftType != rightType) // TODO when floats are added ints and floats may have different types here
             {
                 ErrorHandler.Throw("Variable assignment must have matching types.", statement);
             }
         }
+
+        private static void VisitIncrementStatement(IncrementStatement s, Context context)
+        {
+            context.LValue = true;
+            var leftType = VisitExpression(s.Left, context);
+            context.LValue = false;
+
+            if (leftType is not NumberType)
+            {
+                ErrorHandler.Throw("Increment statements cannot be used on non number types", s);
+            }
+        }
+
 
         private static void VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement statement, Context context)
         {
@@ -290,34 +314,34 @@ namespace Compiler.TreeWalking.TypeCheck
 
             switch (e.Operator)
             {
-                case BinaryOperator.Equal:
+                case BinaryOperator.EqualTo:
                 case BinaryOperator.LessThan:
-                case BinaryOperator.LessThanEqual:
+                case BinaryOperator.LessThanEqualTo:
                 case BinaryOperator.GreaterThan:
-                case BinaryOperator.GreaterThanEqual:
+                case BinaryOperator.GreaterThanEqualTo:
                     return new BoolType();
-                case BinaryOperator.Add:
+                case BinaryOperator.Plus:
                     if (leftType is not NumberType)
                     {
                         ErrorHandler.Throw("Only numbers can be added", e);
                     }
 
                     return leftType;
-                case BinaryOperator.Subtract:
+                case BinaryOperator.Minus:
                     if (leftType is not NumberType)
                     {
                         ErrorHandler.Throw("Only numbers can be subtracted", e);
                     }
 
                     return leftType;
-                case BinaryOperator.Multiply:
+                case BinaryOperator.Times:
                     if (leftType is not NumberType)
                     {
                         ErrorHandler.Throw("Only numbers can be multiplied", e);
                     }
 
                     return leftType; ;
-                case BinaryOperator.Divide:
+                case BinaryOperator.DividedBy:
                     if (leftType is not NumberType)
                     {
                         ErrorHandler.Throw("Only numbers can be divided", e);

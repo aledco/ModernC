@@ -110,6 +110,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 PrintStatement s => VisitPrintStatement(s, context, offset),
                 VariableDefinitionStatement s => VisitVariableDefinitionStatement(s, context, offset),
                 AssignmentStatement s => VisitAssignmentStatement(s, context, offset),
+                IncrementStatement s => VisitIncrementStatement(s, context, offset),
                 VariableDefinitionAndAssignmentStatement s => VisitVariableDefinitionAndAssignmentStatement(s, context, offset),
                 CallStatement s => VisitCallStatement(s, context, offset),
                 IfStatement s => VisitIfStatement(s, context, offset),
@@ -139,8 +140,26 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static int VisitAssignmentStatement(AssignmentStatement s, Context context, int offset)
         {
+            if (s.BinaryExpression != null)
+            {
+                VisitBinaryOperatorExpression(s.BinaryExpression, context, offset);
+                s.Left.AssignmentRegister = context.GetRegister();
+                context.DropRegister(s.Left.AssignmentRegister);
+            }
+            else
+            {
+                VisitExpression(s.Right, context, offset);
+                VisitExpression(s.Left, context, offset);
+            }
+
+            return 0;
+        }
+
+        private static int VisitIncrementStatement(IncrementStatement s, Context context, int offset)
+        {
             VisitExpression(s.Left, context, offset);
-            VisitExpression(s.Right, context, offset);
+            s.Left.AssignmentRegister = context.GetRegister();
+            context.DropRegister(s.Left.AssignmentRegister);
             return 0;
         }
 
@@ -226,6 +245,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             VisitExpression(e.RightOperand, context, offset);
             e.Register = e.LeftOperand.Register;
             context.DropRegister(e.RightOperand.Register);
+            
             return 0;
         }
 

@@ -4,6 +4,7 @@ using Compiler.Models;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using static ModernCParser;
 
 namespace Compiler.ParseAbstraction
@@ -156,9 +157,18 @@ namespace Compiler.ParseAbstraction
             var expressions = context.expression();
             Debug.Assert(expressions.Length == 2);
 
-            var left = VisitExpression(expressions[0]); 
+            var left = VisitExpression(expressions[0]);
+            var op = GetAssignmentOperator(context.GetChild(1).GetText());
             var right = VisitExpression(expressions[1]);
-            return new AssignmentStatement(span, left, right);
+            return new AssignmentStatement(span, left, op, right);
+        }
+
+        public override IncrementStatement VisitIncrementStatement([NotNull] IncrementStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var expression = VisitExpression(context.expression());
+            var op = GetIncrementOperator(context.GetChild(1).GetText());
+            return new IncrementStatement(span, expression, op);
         }
 
         public override VariableDefinitionAndAssignmentStatement VisitVariableDefinitionAndAssignmentStatement([NotNull] VariableDefinitionAndAssignmentStatementContext context)
@@ -401,15 +411,15 @@ namespace Compiler.ParseAbstraction
         {
             return op switch
             {
-                "==" => BinaryOperator.Equal,
+                "==" => BinaryOperator.EqualTo,
                 "<" => BinaryOperator.LessThan,
-                "<=" => BinaryOperator.LessThanEqual,
+                "<=" => BinaryOperator.LessThanEqualTo,
                 ">" => BinaryOperator.GreaterThan,
-                ">=" => BinaryOperator.GreaterThanEqual,
-                "+" => BinaryOperator.Add,
-                "-" => BinaryOperator.Subtract,
-                "*" => BinaryOperator.Multiply,
-                "/" => BinaryOperator.Divide,
+                ">=" => BinaryOperator.GreaterThanEqualTo,
+                "+" => BinaryOperator.Plus,
+                "-" => BinaryOperator.Minus,
+                "*" => BinaryOperator.Times,
+                "/" => BinaryOperator.DividedBy,
                 "and" => BinaryOperator.And,
                 "or" => BinaryOperator.Or,
                 _ => throw new NotImplementedException()
@@ -420,11 +430,35 @@ namespace Compiler.ParseAbstraction
         {
             return op switch
             {
-                "-" => UnaryOperator.Negate,
+                "-" => UnaryOperator.Minus,
                 "not" => UnaryOperator.Not,
                 _ => throw new NotImplementedException()
             };
         }
+
+        private static AssignmentOperator GetAssignmentOperator(string op)
+        {
+            return op switch
+            {
+                "=" => AssignmentOperator.Equals,
+                "+=" => AssignmentOperator.PlusEquals,
+                "-=" => AssignmentOperator.MinusEquals,
+                "*=" => AssignmentOperator.TimesEquals,
+                "/=" => AssignmentOperator.DividedByEquals,
+                _ => throw new NotImplementedException()
+            };
+        }
+
+        private IncrementOperator GetIncrementOperator(string op)
+        {
+            return op switch
+            {
+                "++" => IncrementOperator.PlusPlus,
+                "--" => IncrementOperator.MinusMinus,
+                _ => throw new NotImplementedException()
+            };
+        }
+
 
         private static Span GetSpanOfContext(ParserRuleContext context)
         {

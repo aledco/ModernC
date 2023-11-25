@@ -91,6 +91,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 PrintStatement s => VisitPrintStatement(s),
                 VariableDefinitionStatement s => VisitVariableDefinitionStatement(s),
                 AssignmentStatement s => VisitAssignmentStatement(s),
+                IncrementStatement s => VisitIncrementStatement(s),
                 VariableDefinitionAndAssignmentStatement s => VisitVariableDefinitionAndAssignmentStatement(s),
                 CallStatement s => VisitCallStatement(s),
                 IfStatement s => VisitIfStatement(s),
@@ -116,9 +117,50 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> VisitAssignmentStatement(AssignmentStatement s)
         {
-            var instructions = ExpressionRValue(s.Right);
+            var instructions = new List<IInstruction>();
+            if (s.BinaryExpression != null)
+            {
+                if (s.Left.AssignmentRegister == null)
+                {
+                    throw new Exception("AssignmentRegister was null");
+                }
+
+                instructions.AddRange(BinaryOperatorExpressionRValue(s.BinaryExpression));
+                instructions.AddRange(ExpressionLValue(s.Left));
+                instructions.Add(new Store(s.Left.AssignmentRegister, s.BinaryExpression.Register));
+            }
+            else
+            {
+                instructions.AddRange(ExpressionRValue(s.Right));
+                instructions.AddRange(ExpressionLValue(s.Left));
+                instructions.Add(new Store(s.Left.Register, s.Right.Register));
+            }
+
+            return instructions;
+        }
+
+        private static List<IInstruction> VisitIncrementStatement(IncrementStatement s)
+        {
+            var instructions = new List<IInstruction>();
+            if (s.Left.AssignmentRegister == null)
+            {
+                throw new Exception("AssignmentRegister was null");
+            }
+
+            instructions.AddRange(ExpressionRValue(s.Left));
+            switch (s.Operator) 
+            {
+                case IncrementOperator.PlusPlus:
+
+                    instructions.Add(new AddImmediate(s.Left.Register, s.Left.Register, 1));
+                    break;
+                case IncrementOperator.MinusMinus:
+                    instructions.Add(new AddImmediate(s.Left.Register, s.Left.Register, -1));
+                    break;
+            }
+            
             instructions.AddRange(ExpressionLValue(s.Left));
-            instructions.Add(new Store(s.Left.Register, s.Right.Register));
+            instructions.Add(new Store(s.Left.AssignmentRegister, s.Left.Register));
             return instructions;
         }
 
@@ -247,7 +289,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             var instructions = new List<IInstruction>();
             switch (e.Operator) 
             {
-                case BinaryOperator.Equal:
+                case BinaryOperator.EqualTo:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new Equal(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
@@ -257,7 +299,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new LessThan(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                     break;
-                case BinaryOperator.LessThanEqual:
+                case BinaryOperator.LessThanEqualTo:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new LessThanEqual(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
@@ -267,28 +309,28 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new GreaterThan(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                     break;
-                case BinaryOperator.GreaterThanEqual:
+                case BinaryOperator.GreaterThanEqualTo:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new GreaterThanEqual(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                     break;
-                case BinaryOperator.Add:
+                case BinaryOperator.Plus:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new Add(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                     break;
-                case BinaryOperator.Subtract:
+                case BinaryOperator.Minus:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new Negate(e.RightOperand.Register, e.RightOperand.Register));
                     instructions.Add(new Add(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                     break;
-                case BinaryOperator.Multiply:
+                case BinaryOperator.Times:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new Multiply(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                     break;
-                case BinaryOperator.Divide:
+                case BinaryOperator.DividedBy:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new Divide(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
@@ -318,7 +360,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             instructions.Add(
                 e.Operator switch
                 {
-                    UnaryOperator.Negate => new Negate(e.Register, e.Register),
+                    UnaryOperator.Minus => new Negate(e.Register, e.Register),
                     UnaryOperator.Not => new Not(e.Register, e.Register),
                     _ => throw new Exception($"Unrecognized unary operator: {e.Operator}")
                 });
@@ -437,7 +479,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
             return new List<IInstruction>()
             {
-                new AddImmediate(e.Register, "FP", e.Id.Symbol.Offset)
+                new AddImmediate(e.AssignmentRegister ?? e.Register, "FP", e.Id.Symbol.Offset)
             };
         }
 

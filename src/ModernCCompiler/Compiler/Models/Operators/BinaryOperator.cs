@@ -2,15 +2,15 @@
 {
     public enum BinaryOperator
     {
-        Equal,
+        EqualTo,
         LessThan,
-        LessThanEqual,
+        LessThanEqualTo,
         GreaterThan,
-        GreaterThanEqual,
-        Add,
-        Subtract,
-        Multiply,
-        Divide,
+        GreaterThanEqualTo,
+        Plus,
+        Minus,
+        Times,
+        DividedBy,
         And,
         Or
     }

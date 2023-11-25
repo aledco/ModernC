@@ -35,8 +35,8 @@ namespace Compiler
             TopLevelTypeChecker.Walk(tree);
             LocalTypeChecker.Walk(tree);
             var instructions = CodeGenerator.Walk(tree);
-            //Console.WriteLine(Machine.ToCode(instructions));
-            Machine.Run(instructions, Console.Out);
+            Console.WriteLine(Machine.ToCode(instructions));
+            //Machine.Run(instructions, Console.Out);
         }
 
         private static IReader GetReader(string[] args)
