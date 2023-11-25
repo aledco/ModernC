@@ -22,6 +22,8 @@ type
 
 primitiveType
     : INT_TYPE 
+    | BYTE_TYPE
+    | FLOAT_TYPE
     | BOOL_TYPE;
 
 functionType
@@ -34,43 +36,82 @@ compoundStatement
     : '{' statement* returnStatement? '}';
 
 statement
+    : simpleStatement ';'
+    | ifStatement
+    | whileStatement
+    | forStatement
+    | compoundStatement;
+
+simpleStatement
     : printStatement
     | variableDefinitionStatement
     | assignmentStatement
+    | incrementStatement
     | variableDefinitionAndAssignmentStatement
-    | callStatement
-    | compoundStatement;
+    | callStatement;
 
 printStatement
-    : 'print' expression ';';
+    : 'print' expression;
 
 variableDefinitionStatement
-    : type id ';';
+    : type id;
 
 variableDefinitionAndAssignmentStatement
-    : type id '=' expression ';';
+    : type id '=' expression;
 
 assignmentStatement
-    : expression '=' expression ';';
+    : expression ('='|'+='|'-='|'*='|'/=') expression;
+
+incrementStatement
+    : expression ('++'|'--');
 
 callStatement
-    : callExpression ';';
+    : callExpression;
+
+ifStatement
+    : 'if' expression compoundStatement elifPart* elsePart?;
+
+elifPart
+    : 'elif' expression compoundStatement;
+
+elsePart
+    : 'else' compoundStatement;
+
+whileStatement
+    : 'while' expression compoundStatement;
+
+forStatement
+    : 'for' simpleStatement ';' expression ';' simpleStatement compoundStatement;
 
 returnStatement
     : 'return' expression? ';';
 
 expression
-    : expression ('+'|'-'|'or') term
+    : expression 'or' orExpression
+    | orExpression;
+
+orExpression
+    : orExpression 'and' andExpression
+    | andExpression;
+
+andExpression
+    : andExpression ('=='|'<'|'<='|'>'|'>=') comparison
+    | comparison;
+
+comparison
+    : comparison ('+'|'-') term
     | term;
 
 term
-    : term ('*'|'/'|'and') factor
+    : term ('*'|'/') factor
     | factor;
 
 factor
     : unaryExpression
     | callExpression
     | intLiteral
+    | byteLiteral
+    | floatLiteral
     | boolLiteral
     | idExpression
     | '(' expression ')';
@@ -86,6 +127,12 @@ argumentList
 
 intLiteral
     : INT;
+
+byteLiteral
+    : ASCII_CHAR | ESCAPED_ASCII_CHAR | INT;
+
+floatLiteral
+    : FLOAT | INT;
 
 boolLiteral
     : TRUE | FALSE;
@@ -103,11 +150,17 @@ id
 // types
 VOID_TYPE           : 'void';
 INT_TYPE            : 'int';
+BYTE_TYPE           : 'byte';
+FLOAT_TYPE          : 'float';
 BOOL_TYPE           : 'bool';
 
 TRUE                : 'true';    
 FALSE               : 'false';
+FLOAT               : [0-9]* '.' [0-9]+;
 INT                 : [0-9]+;
 ID                  : [a-zA-Z_][a-zA-Z0-9_]*;
+ASCII_CHAR          : '\'' . '\'';
+ESCAPED_ASCII_CHAR  : '\'' '\\' . '\'';
+COMMENT             : '//' .*? '\n' -> skip;
 WHITESPACE          : (' '|'\t')+ -> skip ;
 NEWLINE             : ('\r'? '\n' | '\r')+ -> skip ;

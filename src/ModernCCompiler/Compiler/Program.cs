@@ -6,7 +6,30 @@ using Compiler.VirtualMachine;
 
 /*
  * TODO:
- * - Add better error handling
+ * - finish byte escape sequences
+ * - add float versions of comparison instructions, finalize interaction between float and int types
+ * - read input
+ * - make ok return 0, exit code exits program with error code, add println.
+ * - make function calls expressions
+ * - arrays
+ * - byte strings
+ * - pointers
+ * - structs/unions/enums
+ * - lambda expressions
+ * - if expressions
+ * - global variables / statements
+ * - bitwise operators
+ * - char and char strings
+ * - file inclusion
+ * - better command line args
+ * - repl using interpreter
+ * - comment code
+ * - optimization unit
+ * - smarter callee saved registers
+ * - casting
+ * - compile to llvm or x86 or C
+ * - std library / link with C
+ * - switch/goto
  */
 namespace Compiler
 {
@@ -20,14 +43,8 @@ namespace Compiler
             TopLevelTypeChecker.Walk(tree);
             LocalTypeChecker.Walk(tree);
             var instructions = CodeGenerator.Walk(tree);
-            //Console.WriteLine(Machine.ToCode(instructions));
-            Machine.Run(instructions, Console.Out);
-
-            // TODO generate intermediate code or (LLVM)
-
-            // TODO generate actual assembly or interpret intermediate code
-
-            // TODO assemble and link
+            Console.WriteLine(Machine.ToCode(instructions));
+            //Machine.Run(instructions, Console.Out);
         }
 
         private static IReader GetReader(string[] args)

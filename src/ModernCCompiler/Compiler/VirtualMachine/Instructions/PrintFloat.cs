@@ -1,22 +1,24 @@
-﻿namespace Compiler.VirtualMachine.Instructions
+﻿using static Compiler.Utils.FloatConvert;
+
+namespace Compiler.VirtualMachine.Instructions
 {
-    public class Print : IInstruction
+    internal class PrintFloat : IInstruction
     {
         private readonly string _src;
 
-        public Print(string src) 
+        public PrintFloat(string src)
         {
             _src = src;
         }
-        
+
         public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextWriter outStream)
         {
-            outStream.WriteLine(registers[_src]);
+            outStream.Write(ToFloat(registers[_src]));
         }
 
         public string ToCode()
         {
-            return $"p {_src}";
+            return $"pfloat {_src}";
         }
     }
 }

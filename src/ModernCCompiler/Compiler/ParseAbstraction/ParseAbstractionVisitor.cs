@@ -1,6 +1,7 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using Compiler.Models;
+using Compiler.Models.Operators;
 using Compiler.Models.Tree;
 using System.Diagnostics;
 using static ModernCParser;
@@ -57,6 +58,14 @@ namespace Compiler.ParseAbstraction
             {
                 return new IntTypeNode(span);
             }
+            else if (context.BYTE_TYPE() != null)
+            {
+                return new ByteTypeNode(span);
+            }
+            else if (context.FLOAT_TYPE() != null)
+            {
+                return new FloatTypeNode(span);
+            }
             else if (context.BOOL_TYPE() != null)
             {
                 return new BoolTypeNode(span);
@@ -109,7 +118,23 @@ namespace Compiler.ParseAbstraction
 
         public override Statement VisitStatement([NotNull] StatementContext context)
         {
+            if (context.simpleStatement() != null)
+            {
+                return VisitSimpleStatement(context.simpleStatement());
+            }
+
             var ast = base.VisitStatement(context);
+            if (ast is Statement statement)
+            {
+                return statement;
+            }
+
+            throw new Exception($"Tried to parse {ast.GetType()} as a statement, something is wrong with the compiler");
+        }
+
+        public override Statement VisitSimpleStatement([NotNull] SimpleStatementContext context)
+        {
+            var ast = base.VisitSimpleStatement(context);
             if (ast is Statement statement)
             {
                 return statement;
@@ -139,9 +164,18 @@ namespace Compiler.ParseAbstraction
             var expressions = context.expression();
             Debug.Assert(expressions.Length == 2);
 
-            var left = VisitExpression(expressions[0]); 
+            var left = VisitExpression(expressions[0]);
+            var op = GetAssignmentOperator(context.GetChild(1).GetText());
             var right = VisitExpression(expressions[1]);
-            return new AssignmentStatement(span, left, right);
+            return new AssignmentStatement(span, left, op, right);
+        }
+
+        public override IncrementStatement VisitIncrementStatement([NotNull] IncrementStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var expression = VisitExpression(context.expression());
+            var op = GetIncrementOperator(context.GetChild(1).GetText());
+            return new IncrementStatement(span, expression, op);
         }
 
         public override VariableDefinitionAndAssignmentStatement VisitVariableDefinitionAndAssignmentStatement([NotNull] VariableDefinitionAndAssignmentStatementContext context)
@@ -153,13 +187,54 @@ namespace Compiler.ParseAbstraction
             return new VariableDefinitionAndAssignmentStatement(span, type, id, expression);
         }
 
-        public override AbstractSyntaxTree VisitCallStatement([NotNull] CallStatementContext context)
+        public override CallStatement VisitCallStatement([NotNull] CallStatementContext context)
         {
             var span = GetSpanOfContext(context);
             var callExpression = VisitCallExpression(context.callExpression());
             return new CallStatement(span, callExpression);
         }
 
+        public override IfStatement VisitIfStatement([NotNull] IfStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var ifExpression = VisitExpression(context.expression());
+            var ifBody = VisitCompoundStatement(context.compoundStatement());
+
+            var elifExpressions = context.elifPart()
+                .Select(c => VisitExpression(c.expression()))
+                .ToList();
+            var elifBodies = context.elifPart()
+                .Select(c => VisitCompoundStatement(c.compoundStatement()))
+                .ToList();
+
+            CompoundStatement? elseBody = null;
+            if (context.elsePart() != null)
+            {
+                elseBody = VisitCompoundStatement(context.elsePart().compoundStatement());
+            }
+
+            return new IfStatement(span, ifExpression, ifBody, elifExpressions, elifBodies, elseBody);
+        }
+
+
+        public override WhileStatement VisitWhileStatement([NotNull] WhileStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var expression = VisitExpression(context.expression());
+            var body = VisitCompoundStatement(context.compoundStatement());
+            return new WhileStatement(span, expression, body);
+        }
+
+        public override ForStatement VisitForStatement([NotNull] ForStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var initialStatement = VisitSimpleStatement(context.simpleStatement()[0]);
+            var expression = VisitExpression(context.expression());
+            var updateStatement = VisitSimpleStatement(context.simpleStatement()[1]);
+            var body = VisitCompoundStatement(context.compoundStatement());
+            return new ForStatement(span, initialStatement, expression, updateStatement, body);
+        }
+        
         public override ReturnStatement VisitReturnStatement([NotNull] ReturnStatementContext context)
         {
             var span = GetSpanOfContext(context);
@@ -172,8 +247,56 @@ namespace Compiler.ParseAbstraction
             if (context.ChildCount == 3)
             {
                 var span = GetSpanOfContext(context);
-                var op = context.GetChild(1).GetText();
+                var op = GetBinaryOperator(context.GetChild(1).GetText());
                 var left = VisitExpression(context.expression());
+                var right = VisitOrExpression(context.orExpression());
+                return new BinaryOperatorExpression(span, op, left, right);
+            }
+            else
+            {
+                return VisitOrExpression(context.orExpression());
+            }
+        }
+
+        public override Expression VisitOrExpression([NotNull] OrExpressionContext context)
+        {
+            if (context.ChildCount == 3)
+            {
+                var span = GetSpanOfContext(context);
+                var op = GetBinaryOperator(context.GetChild(1).GetText());
+                var left = VisitOrExpression(context.orExpression());
+                var right = VisitAndExpression(context.andExpression());
+                return new BinaryOperatorExpression(span, op, left, right);
+            }
+            else
+            {
+                return VisitAndExpression(context.andExpression());
+            }
+        }
+
+        public override Expression VisitAndExpression([NotNull] AndExpressionContext context)
+        {
+            if (context.ChildCount == 3)
+            {
+                var span = GetSpanOfContext(context);
+                var op = GetBinaryOperator(context.GetChild(1).GetText());
+                var left = VisitAndExpression(context.andExpression());
+                var right = VisitComparison(context.comparison());
+                return new BinaryOperatorExpression(span, op, left, right);
+            }
+            else
+            {
+                return VisitComparison(context.comparison());
+            }
+        }
+
+        public override Expression VisitComparison([NotNull] ComparisonContext context)
+        {
+            if (context.ChildCount == 3)
+            {
+                var span = GetSpanOfContext(context);
+                var op = GetBinaryOperator(context.GetChild(1).GetText());
+                var left = VisitComparison(context.comparison());
                 var right = VisitTerm(context.term());
                 return new BinaryOperatorExpression(span, op, left, right);
             }
@@ -184,12 +307,11 @@ namespace Compiler.ParseAbstraction
         }
 
         public override Expression VisitTerm([NotNull] TermContext context)
-        {
-            
+        {     
             if (context.ChildCount == 3)
             {
                 var span = GetSpanOfContext(context);
-                var op = context.GetChild(1).GetText();
+                var op = GetBinaryOperator(context.GetChild(1).GetText());
                 var left = VisitTerm(context.term());
                 var right = VisitFactor(context.factor());
                 return new BinaryOperatorExpression(span, op, left, right);
@@ -218,6 +340,14 @@ namespace Compiler.ParseAbstraction
             {
                 return VisitIntLiteral(context.intLiteral());
             }
+            else if (context.byteLiteral() != null)
+            {
+                return VisitByteLiteral(context.byteLiteral());
+            }
+            else if (context.floatLiteral() != null)
+            {
+                return VisitFloatLiteral(context.floatLiteral());
+            }
             else if (context.boolLiteral() != null)
             {
                 return VisitBoolLiteral(context.boolLiteral());
@@ -233,7 +363,7 @@ namespace Compiler.ParseAbstraction
         public override UnaryOperatorExpression VisitUnaryExpression([NotNull] UnaryExpressionContext context)
         {
             var span = GetSpanOfContext(context);
-            var op = context.GetChild(0).GetText();
+            var op = GetUnaryOperator(context.GetChild(0).GetText());
             var expression = VisitFactor(context.factor());
             return new UnaryOperatorExpression(span, op, expression);
         }
@@ -267,6 +397,64 @@ namespace Compiler.ParseAbstraction
             throw new Exception($"Tried to parse {text} as an int, something is wrong with the compiler");
         }
 
+        public override ByteLiteralExpression VisitByteLiteral([NotNull] ByteLiteralContext context)
+        {
+            var span = GetSpanOfContext(context);
+            if (context.ASCII_CHAR() != null)
+            {
+                var text = context.ASCII_CHAR().GetText();
+                var c = text[1];
+                if (!char.IsAscii(c))
+                {
+                    throw new Exception($"Parse error: {text} is an invalid byte");
+                }
+
+                var value = Convert.ToByte(c);
+                return new ByteLiteralExpression(span, value);
+            }
+            else if (context.ESCAPED_ASCII_CHAR() != null)
+            {
+                var text = context.ESCAPED_ASCII_CHAR().GetText();
+                var value = ParseEscapedByte(text.Substring(1, 2));
+                return new ByteLiteralExpression(span, value);
+            }
+            else if (context.INT() != null)
+            {
+                var text = context.INT().GetText();
+                if (byte.TryParse(text, out var value))
+                {
+                    return new ByteLiteralExpression(span, value);
+                }
+
+                throw new Exception($"Parse error: {text} is an invalid byte");
+            }
+
+            throw new Exception($"Parse error: {context.GetText()} is an invalid byte");
+        }
+
+        public override FloatLiteralExpression VisitFloatLiteral([NotNull] FloatLiteralContext context)
+        {
+            var span = GetSpanOfContext(context);
+            if (context.FLOAT() != null)
+            {
+                var text = context.FLOAT().GetText();
+                if (float.TryParse(text, out var value))
+                {
+                    return new FloatLiteralExpression(span, value);
+                }
+            }
+            else if (context.INT() != null) 
+            {
+                var text = context.FLOAT().GetText();
+                if (int.TryParse(text, out var value))
+                {
+                    return new FloatLiteralExpression(span, value);
+                }
+            }
+            
+            throw new Exception($"Tried to parse {context.GetText()} as a float, something is wrong with the compiler");
+        }
+
         public override BoolLiteralExpression VisitBoolLiteral([NotNull] BoolLiteralContext context)
         {
             var span = GetSpanOfContext(context);
@@ -290,6 +478,67 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             return new IdNode(span, context.GetText());
+        }
+
+        private static BinaryOperator GetBinaryOperator(string op)
+        {
+            return op switch
+            {
+                "==" => BinaryOperator.EqualTo,
+                "<" => BinaryOperator.LessThan,
+                "<=" => BinaryOperator.LessThanEqualTo,
+                ">" => BinaryOperator.GreaterThan,
+                ">=" => BinaryOperator.GreaterThanEqualTo,
+                "+" => BinaryOperator.Plus,
+                "-" => BinaryOperator.Minus,
+                "*" => BinaryOperator.Times,
+                "/" => BinaryOperator.DividedBy,
+                "and" => BinaryOperator.And,
+                "or" => BinaryOperator.Or,
+                _ => throw new NotImplementedException()
+            };
+        }
+
+        private static UnaryOperator GetUnaryOperator(string op)
+        {
+            return op switch
+            {
+                "-" => UnaryOperator.Minus,
+                "not" => UnaryOperator.Not,
+                _ => throw new NotImplementedException()
+            };
+        }
+
+        private static AssignmentOperator GetAssignmentOperator(string op)
+        {
+            return op switch
+            {
+                "=" => AssignmentOperator.Equals,
+                "+=" => AssignmentOperator.PlusEquals,
+                "-=" => AssignmentOperator.MinusEquals,
+                "*=" => AssignmentOperator.TimesEquals,
+                "/=" => AssignmentOperator.DividedByEquals,
+                _ => throw new NotImplementedException()
+            };
+        }
+
+        private IncrementOperator GetIncrementOperator(string op)
+        {
+            return op switch
+            {
+                "++" => IncrementOperator.PlusPlus,
+                "--" => IncrementOperator.MinusMinus,
+                _ => throw new NotImplementedException()
+            };
+        }
+
+        private static byte ParseEscapedByte(string escaped)
+        {
+            return escaped switch
+            {
+                "\\n" => Convert.ToByte('\n'), // TODO add more escape sequences
+                _ => throw new Exception($"{escaped} is not recognized as an escape sequence.")
+            };
         }
 
         private static Span GetSpanOfContext(ParserRuleContext context)

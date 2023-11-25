@@ -92,6 +92,12 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStatement([NotNull] ModernCParser.StatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.simpleStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSimpleStatement([NotNull] ModernCParser.SimpleStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.printStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -116,11 +122,47 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitAssignmentStatement([NotNull] ModernCParser.AssignmentStatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.incrementStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIncrementStatement([NotNull] ModernCParser.IncrementStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.callStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitCallStatement([NotNull] ModernCParser.CallStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.ifStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIfStatement([NotNull] ModernCParser.IfStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.elifPart"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitElifPart([NotNull] ModernCParser.ElifPartContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.elsePart"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitElsePart([NotNull] ModernCParser.ElsePartContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.whileStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitWhileStatement([NotNull] ModernCParser.WhileStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.forStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitForStatement([NotNull] ModernCParser.ForStatementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.returnStatement"/>.
 	/// </summary>
@@ -133,6 +175,24 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpression([NotNull] ModernCParser.ExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.orExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitOrExpression([NotNull] ModernCParser.OrExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.andExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAndExpression([NotNull] ModernCParser.AndExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.comparison"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitComparison([NotNull] ModernCParser.ComparisonContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.term"/>.
 	/// </summary>
@@ -169,6 +229,18 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitIntLiteral([NotNull] ModernCParser.IntLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.byteLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitByteLiteral([NotNull] ModernCParser.ByteLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.floatLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFloatLiteral([NotNull] ModernCParser.FloatLiteralContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.boolLiteral"/>.
 	/// </summary>

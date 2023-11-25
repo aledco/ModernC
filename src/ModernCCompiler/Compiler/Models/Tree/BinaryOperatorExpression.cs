@@ -1,12 +1,14 @@
-﻿namespace Compiler.Models.Tree
+﻿using Compiler.Models.Operators;
+
+namespace Compiler.Models.Tree
 {
     public class BinaryOperatorExpression : Expression
     {
-        public string Operator { get; }
         public Expression LeftOperand { get; }
+        public BinaryOperator Operator { get; }
         public Expression RightOperand { get; }
 
-        public BinaryOperatorExpression(Span span, string op, Expression left, Expression right) : base(span)
+        public BinaryOperatorExpression(Span span, BinaryOperator op, Expression left, Expression right) : base(span)
         {
             Operator = op;
             LeftOperand = left;

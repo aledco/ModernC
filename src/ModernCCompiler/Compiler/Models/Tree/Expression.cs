@@ -14,6 +14,7 @@ namespace Compiler.Models.Tree
         public SemanticType? Type { get; set; }
 
         public string Register { get; set; }
+        public string? AssignmentRegister { get; set; }
 
         protected Expression(Span span) : base(span)
         {

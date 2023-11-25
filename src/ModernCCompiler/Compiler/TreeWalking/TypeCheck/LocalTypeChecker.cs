@@ -1,6 +1,7 @@
 ﻿using Compiler.ErrorHandling;
 using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
+using Compiler.Models.Operators;
 using Compiler.Models.Tree;
 
 namespace Compiler.TreeWalking.TypeCheck
@@ -67,11 +68,23 @@ namespace Compiler.TreeWalking.TypeCheck
                 case AssignmentStatement s:
                     VisitAssignmentStatement(s, context);
                     break;
+                case IncrementStatement s:
+                    VisitIncrementStatement(s, context);
+                    break;
                 case VariableDefinitionAndAssignmentStatement s:
                     VisitVariableDefinitionAndAssignmentStatement(s, context);
                     break;
                 case CallStatement s:
                     VisitCallStatement(s, context);
+                    break;
+                case IfStatement s:
+                    VisitIfStatement(s, context);
+                    break;
+                case WhileStatement s:
+                    VisitWhileStatement(s, context);
+                    break;
+                case ForStatement s:
+                    VisitForStatement(s, context);
                     break;
                 case ReturnStatement s:
                     VisitReturnStatement(s, context);
@@ -83,7 +96,7 @@ namespace Compiler.TreeWalking.TypeCheck
                     throw new NotImplementedException($"Unknown statement {statement}");
             }
         }
-        
+
         private static void VisitPrintStatement(PrintStatement statement, Context context)
         {
             var type = VisitExpression(statement.Expression, context);
@@ -102,11 +115,24 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static void VisitAssignmentStatement(AssignmentStatement statement, Context context)
         {
-            var rightType = VisitExpression(statement.Right, context);
-
+            SemanticType rightType;
+            if (statement.BinaryExpression != null)
+            {
+                rightType = VisitExpression(statement.BinaryExpression, context);
+            }
+            else
+            {
+                rightType = VisitExpression(statement.Right, context);
+            }
+            
             context.LValue = true;
             var leftType = VisitExpression(statement.Left, context);
             context.LValue = false;
+
+            if (leftType is RealType && rightType is NumberType)
+            {
+                return;
+            }
 
             if (leftType != rightType)
             {
@@ -114,11 +140,27 @@ namespace Compiler.TreeWalking.TypeCheck
             }
         }
 
+        private static void VisitIncrementStatement(IncrementStatement s, Context context)
+        {
+            context.LValue = true;
+            var leftType = VisitExpression(s.Left, context);
+            context.LValue = false;
+
+            if (leftType is not NumberType)
+            {
+                ErrorHandler.Throw("Increment statements cannot be used on non number types", s);
+            }
+        }
+
+
         private static void VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement statement, Context context)
         {
             var type = statement.Type.ToSemanticType();
             var expressionType = VisitExpression(statement.Expression, context);
-            if (type != expressionType)
+            if (type is RealType && expressionType is NumberType)
+            {
+            }
+            else if (type != expressionType)
             {
                 ErrorHandler.Throw("Variable assignment must have matching types.", statement);
             }
@@ -132,6 +174,60 @@ namespace Compiler.TreeWalking.TypeCheck
         private static void VisitCallStatement(CallStatement s, Context context)
         {
             VisitCallExpression(s.CallExpression, context);
+        }
+
+        private static void VisitIfStatement(IfStatement s, Context context)
+        {
+            var ifExpressionType = VisitExpression(s.IfExpression, context);
+            if (ifExpressionType is not BoolType)
+            {
+                ErrorHandler.Throw("If expression must be of type boolean", s);
+            }
+
+            VisitCompoundStatement(s.IfBody, context);
+
+            foreach (var e in s.ElifExpressions)
+            {
+                var elifExpressionType = VisitExpression(e, context);
+                if (elifExpressionType is not BoolType)
+                {
+                    ErrorHandler.Throw("If expression must be of type boolean", s);
+                }
+            }
+
+            foreach (var b in s.ElifBodies) 
+            {
+                VisitCompoundStatement(b, context);
+            }
+            
+            if (s.ElseBody != null)
+            {
+                VisitCompoundStatement(s.ElseBody, context);
+            }
+        }
+
+        private static void VisitWhileStatement(WhileStatement s, Context context)
+        {
+            var expressionType = VisitExpression(s.Expression, context);
+            if (expressionType is not BoolType)
+            {
+                ErrorHandler.Throw("While loop expression must be of type boolean", s);
+            }
+
+            VisitCompoundStatement(s.Body, context);
+        }
+        
+        private static void VisitForStatement(ForStatement s, Context context)
+        {
+            VisitStatement(s.InitialStatement, context);
+            var expressionType = VisitExpression(s.Expression, context);
+            if (expressionType is not BoolType)
+            {
+                ErrorHandler.Throw("For loop expression must be of type boolean", s);
+            }
+
+            VisitStatement(s.UpdateStatement, context);
+            VisitCompoundStatement(s.Body, context);
         }
 
         private static void VisitReturnStatement(ReturnStatement statement, Context context)
@@ -168,16 +264,20 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static SemanticType VisitExpression(Expression expression, Context context)
         {
-            return expression switch
+            expression.Type = expression switch
             {
                 BinaryOperatorExpression e => VisitBinaryOperatorExpression(e, context),
                 CallExpression e => VisitCallExpression(e, context),
                 UnaryOperatorExpression e => VisitUnaryOperatorExpression(e, context),
                 IdExpression e => VisitIdExpression(e, context),
                 IntLiteralExpression => new IntType(),
+                ByteLiteralExpression => new ByteType(),
+                FloatLiteralExpression => new FloatType(),
                 BoolLiteralExpression => new BoolType(),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
-            };
+            }; ;
+
+            return expression.Type; 
         }
 
         private static SemanticType VisitCallExpression(CallExpression e, Context context)
@@ -217,12 +317,67 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             var leftType = VisitExpression(e.LeftOperand, context);
             var rightType = VisitExpression(e.RightOperand, context);
-            if (leftType != rightType)
+            if (leftType is NumberType && rightType is NumberType)
             {
-                ErrorHandler.Throw("Variable assignment must have matching types.", e);
+            }
+            else if (leftType != rightType)
+            {
+                ErrorHandler.Throw("Binary operands must have matching types.", e);
             }
 
-            return leftType;
+            switch (e.Operator)
+            {
+                case BinaryOperator.EqualTo:
+                case BinaryOperator.LessThan:
+                case BinaryOperator.LessThanEqualTo:
+                case BinaryOperator.GreaterThan:
+                case BinaryOperator.GreaterThanEqualTo:
+                    return new BoolType();
+                case BinaryOperator.Plus:
+                    if (leftType is not NumberType)
+                    {
+                        ErrorHandler.Throw("Only numbers can be added", e);
+                    }
+
+                    return leftType;
+                case BinaryOperator.Minus:
+                    if (leftType is not NumberType)
+                    {
+                        ErrorHandler.Throw("Only numbers can be subtracted", e);
+                    }
+
+                    return leftType;
+                case BinaryOperator.Times:
+                    if (leftType is not NumberType)
+                    {
+                        ErrorHandler.Throw("Only numbers can be multiplied", e);
+                    }
+
+                    return leftType; ;
+                case BinaryOperator.DividedBy:
+                    if (leftType is not NumberType)
+                    {
+                        ErrorHandler.Throw("Only numbers can be divided", e);
+                    }
+
+                    return leftType;
+                case BinaryOperator.And:
+                    if (leftType is not BoolType)
+                    {
+                        ErrorHandler.Throw("Only booleans can be anded", e);
+                    }
+
+                    return leftType;
+                case BinaryOperator.Or:
+                    if (leftType is not BoolType)
+                    {
+                        ErrorHandler.Throw("Only booleans can be ored", e);
+                    }
+
+                    return leftType;
+                default:
+                    return leftType;
+            }
         }
 
         private static SemanticType VisitUnaryOperatorExpression(UnaryOperatorExpression e, Context context)

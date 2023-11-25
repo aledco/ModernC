@@ -9,6 +9,8 @@ namespace CompilerTests
     [TestClass]
     public class VirtualMachineCodeGenerationTest
     {
+        private readonly string _component = "VirtualMachineCodeGeneration";
+
         [TestInitialize]
         public void Setup()
         {
@@ -26,15 +28,27 @@ namespace CompilerTests
                 TopLevelTypeChecker.Walk(tree);
                 LocalTypeChecker.Walk(tree);
                 var instructions = CodeGenerator.Walk(tree);
+
+                var asmOut = Machine.ToCode(instructions);
+                TestFileManager.WriteTestOutput(_component, testType, Id, asmOut);
+
                 var outStream = new StringWriter();
                 Machine.Run(instructions, outStream);
 
                 var testReference = TestFileManager.GetTestReference(testType, Id);
-                if (testReference  != null) 
-                {
-                    Assert.AreEqual(outStream.ToString().Trim(), testReference.Trim());
-                }
+                Assert.IsNotNull(testReference);
+                var actual = NormalizeOutput(outStream.ToString());
+                var expected = NormalizeOutput(testReference);
+                Assert.AreEqual(actual, expected);
             }
+        }
+
+        private static string NormalizeOutput(string output)
+        {
+            return output
+                .Replace("\r\n", "\n")
+                .Replace("\t", "    ")
+                .Trim();
         }
     }
 }
