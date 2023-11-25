@@ -1,4 +1,6 @@
-﻿namespace Compiler.Models.Tree
+﻿using Compiler.Models.NameResolution.Types;
+
+namespace Compiler.Models.Tree
 {
     public class FunctionTypeNode : TypeNode
     {
@@ -15,6 +17,12 @@
             ReturnType = types.First();
             types.RemoveAt(0);
             ParameterTypes = types;
+        }
+
+        public override SemanticType ToSemanticType()
+        {
+            return new FunctionType(ReturnType.ToSemanticType(),
+                                    ParameterTypes.Select(p => p.ToSemanticType()).ToList());
         }
     }
 }

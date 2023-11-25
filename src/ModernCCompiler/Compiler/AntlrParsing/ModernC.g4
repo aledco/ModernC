@@ -22,6 +22,8 @@ type
 
 primitiveType
     : INT_TYPE 
+    | BYTE_TYPE
+    | FLOAT_TYPE
     | BOOL_TYPE;
 
 functionType
@@ -108,6 +110,8 @@ factor
     : unaryExpression
     | callExpression
     | intLiteral
+    | byteLiteral
+    | floatLiteral
     | boolLiteral
     | idExpression
     | '(' expression ')';
@@ -123,6 +127,12 @@ argumentList
 
 intLiteral
     : INT;
+
+byteLiteral
+    : ASCII_CHAR | ESCAPED_ASCII_CHAR | INT;
+
+floatLiteral
+    : FLOAT | INT;
 
 boolLiteral
     : TRUE | FALSE;
@@ -140,11 +150,17 @@ id
 // types
 VOID_TYPE           : 'void';
 INT_TYPE            : 'int';
+BYTE_TYPE           : 'byte';
+FLOAT_TYPE          : 'float';
 BOOL_TYPE           : 'bool';
 
 TRUE                : 'true';    
 FALSE               : 'false';
+FLOAT               : [0-9]* '.' [0-9]+;
 INT                 : [0-9]+;
 ID                  : [a-zA-Z_][a-zA-Z0-9_]*;
+ASCII_CHAR          : '\'' . '\'';
+ESCAPED_ASCII_CHAR  : '\'' '\\' . '\'';
+COMMENT             : '//' .*? '\n' -> skip;
 WHITESPACE          : (' '|'\t')+ -> skip ;
 NEWLINE             : ('\r'? '\n' | '\r')+ -> skip ;

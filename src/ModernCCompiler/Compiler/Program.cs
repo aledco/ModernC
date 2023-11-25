@@ -6,21 +6,26 @@ using Compiler.VirtualMachine;
 
 /*
  * TODO:
- * - compound operators/bitwise operators
- * - char, float
+ * - finish byte escape sequences
+ * - float
  * - read input
+ * - make ok return 0, exit code exits program with error code, add println.
  * - arrays
- * - strings
+ * - byte strings
  * - pointers
  * - structs/unions/enums
  * - lambda expressions
  * - if expressions
+ * - global variables / statements
+ * - bitwise operators
+ * - char and char strings
  * - file inclusion
+ * - better command line args
  * - optimization unit
  * - smarter callee saved registers
- * - std library
  * - casting
  * - compile to llvm or x86
+ * - std library / link with C
  * - switch/goto
  */
 namespace Compiler
@@ -35,8 +40,8 @@ namespace Compiler
             TopLevelTypeChecker.Walk(tree);
             LocalTypeChecker.Walk(tree);
             var instructions = CodeGenerator.Walk(tree);
-            Console.WriteLine(Machine.ToCode(instructions));
-            //Machine.Run(instructions, Console.Out);
+            //Console.WriteLine(Machine.ToCode(instructions));
+            Machine.Run(instructions, Console.Out);
         }
 
         private static IReader GetReader(string[] args)

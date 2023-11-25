@@ -129,7 +129,12 @@ namespace Compiler.TreeWalking.TypeCheck
             var leftType = VisitExpression(statement.Left, context);
             context.LValue = false;
 
-            if (leftType != rightType) // TODO when floats are added ints and floats may have different types here
+            if (leftType is NumberType && rightType is NumberType)
+            {
+                return;
+            }
+
+            if (leftType != rightType)
             {
                 ErrorHandler.Throw("Variable assignment must have matching types.", statement);
             }
@@ -152,7 +157,10 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             var type = statement.Type.ToSemanticType();
             var expressionType = VisitExpression(statement.Expression, context);
-            if (type != expressionType)
+            if (type is NumberType && expressionType is NumberType)
+            {
+            }
+            else if (type != expressionType)
             {
                 ErrorHandler.Throw("Variable assignment must have matching types.", statement);
             }
@@ -263,9 +271,10 @@ namespace Compiler.TreeWalking.TypeCheck
                 UnaryOperatorExpression e => VisitUnaryOperatorExpression(e, context),
                 IdExpression e => VisitIdExpression(e, context),
                 IntLiteralExpression => new IntType(),
+                ByteLiteralExpression => new ByteType(),
                 BoolLiteralExpression => new BoolType(),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
-            };
+            }; ;
 
             return expression.Type; 
         }
@@ -307,9 +316,12 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             var leftType = VisitExpression(e.LeftOperand, context);
             var rightType = VisitExpression(e.RightOperand, context);
-            if (leftType != rightType)
+            if (leftType is NumberType && rightType is NumberType)
             {
-                ErrorHandler.Throw("Variable assignment must have matching types.", e);
+            }
+            else if (leftType != rightType)
+            {
+                ErrorHandler.Throw("Binary operands must have matching types.", e);
             }
 
             switch (e.Operator)

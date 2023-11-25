@@ -5,6 +5,7 @@ namespace Compiler.Models.Tree
 {
     [JsonDerivedType(typeof(VoidTypeNode))]
     [JsonDerivedType(typeof(IntTypeNode))]
+    [JsonDerivedType(typeof(ByteTypeNode))]
     [JsonDerivedType(typeof(BoolTypeNode))]
     [JsonDerivedType(typeof(FunctionTypeNode))]
     public abstract class TypeNode : AbstractSyntaxTree
@@ -13,17 +14,6 @@ namespace Compiler.Models.Tree
         {
         }
 
-        public SemanticType ToSemanticType()
-        {
-            return this switch
-            {
-                VoidTypeNode => new VoidType(),
-                IntTypeNode => new IntType(),
-                BoolTypeNode => new BoolType(),
-                FunctionTypeNode t => new FunctionType(t.ReturnType.ToSemanticType(), 
-                                                       t.ParameterTypes.Select(p => p.ToSemanticType()).ToList()),
-                var x => throw new Exception($"{x} is an invalid type: {Span}"),
-            };
-        }
+        public abstract SemanticType ToSemanticType();
     }
 }

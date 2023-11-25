@@ -106,7 +106,25 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> VisitPrintStatement(PrintStatement s)
         {
             var instructions = ExpressionRValue(s.Expression);
-            instructions.Add(new Print(s.Expression.Register));
+            switch (s.Expression.Type)
+            {
+                case IntType:
+                    instructions.Add(new PrintInt(s.Expression.Register));
+                    break;
+                case ByteType:
+                    instructions.Add(new PrintByte(s.Expression.Register));
+                    break;
+                case BoolType:
+                    instructions.Add(new PrintBool(s.Expression.Register));
+                    break;
+                case FunctionType:
+                    instructions.Add(new PrintPointer(s.Expression.Register));
+                    break;
+                default:
+                    ErrorHandler.Throw("Cannot print expression", s);
+                    break;
+            }
+            
             return instructions;
         }
 
@@ -279,6 +297,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 CallExpression e => CallExpressionRValue(e),
                 IdExpression e => IdExpressionRValue(e),
                 IntLiteralExpression e => IntLiteralExpressionRValue(e),
+                ByteLiteralExpression e => ByteLiteralExpressionRValue(e),
                 BoolLiteralExpression e => BoolLiteralExpressionRValue(e),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
             };
@@ -421,19 +440,26 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             };
         }
 
-        private static List<IInstruction> BoolLiteralExpressionRValue(BoolLiteralExpression e)
-        {
-            return new List<IInstruction>()
-            {
-                new LoadImmediate(e.Register, e.Value ? 1 : 0)
-            };
-        }
-
         private static List<IInstruction> IntLiteralExpressionRValue(IntLiteralExpression e)
         {
             return new List<IInstruction>()
             {
                 new LoadImmediate(e.Register, e.Value)
+            };
+        }
+        private static List<IInstruction> ByteLiteralExpressionRValue(ByteLiteralExpression e)
+        {
+            return new List<IInstruction>()
+            {
+                new LoadImmediate(e.Register, e.Value)
+            };
+        }
+
+        private static List<IInstruction> BoolLiteralExpressionRValue(BoolLiteralExpression e)
+        {
+            return new List<IInstruction>()
+            {
+                new LoadImmediate(e.Register, e.Value ? 1 : 0)
             };
         }
 
@@ -446,6 +472,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 CallExpression e => CallExpressionLValue(e),
                 IdExpression e => IdExpressionLValue(e),
                 IntLiteralExpression e => IntLiteralExpressionLValue(e),
+                ByteLiteralExpression e => ByteLiteralExpressionLValue(e),
                 BoolLiteralExpression e => BoolLiteralExpressionLValue(e),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
             };
@@ -483,15 +510,21 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             };
         }
 
-        private static List<IInstruction> BoolLiteralExpressionLValue(BoolLiteralExpression e)
-        {
-            ErrorHandler.Throw("Bool literals do not have l-values.", e);
-            throw new Exception("Error handler did not stop execution");
-        }
-
         private static List<IInstruction> IntLiteralExpressionLValue(IntLiteralExpression e)
         {
             ErrorHandler.Throw("Int literals do not have l-values.", e);
+            throw new Exception("Error handler did not stop execution");
+        }
+
+        private static List<IInstruction> ByteLiteralExpressionLValue(ByteLiteralExpression e)
+        {
+            ErrorHandler.Throw("Byte literals do not have l-values.", e);
+            throw new Exception("Error handler did not stop execution");
+        }
+
+        private static List<IInstruction> BoolLiteralExpressionLValue(BoolLiteralExpression e)
+        {
+            ErrorHandler.Throw("Bool literals do not have l-values.", e);
             throw new Exception("Error handler did not stop execution");
         }
 
@@ -501,10 +534,8 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             {
                 BinaryOperatorExpression e => BinaryOperatorExpressionFlow(e, label, condition),
                 UnaryOperatorExpression e => UnaryOperatorExpressionFlow(e, label, condition),
-                CallExpression e => SimpleFlow(e, label, condition),
-                IdExpression e => SimpleFlow(e, label, condition),
                 BoolLiteralExpression e => BoolLiteralExpressionFlow(e, label, condition),
-                _ => throw new NotImplementedException($"Invalid expression for flow: {expression}"),
+                Expression e => SimpleFlow(e, label, condition),
             };
         }
 

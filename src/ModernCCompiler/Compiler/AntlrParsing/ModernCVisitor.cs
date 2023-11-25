@@ -230,6 +230,18 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitIntLiteral([NotNull] ModernCParser.IntLiteralContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.byteLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitByteLiteral([NotNull] ModernCParser.ByteLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.floatLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFloatLiteral([NotNull] ModernCParser.FloatLiteralContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.boolLiteral"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

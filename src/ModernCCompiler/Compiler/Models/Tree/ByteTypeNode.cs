@@ -2,15 +2,15 @@
 
 namespace Compiler.Models.Tree
 {
-    public class BoolTypeNode : PrimitiveTypeNode
+    public class ByteTypeNode : PrimitiveTypeNode
     {
-        public BoolTypeNode(Span span) : base(span)
+        public ByteTypeNode(Span span) : base(span)
         {
         }
 
         public override SemanticType ToSemanticType()
         {
-            return new BoolType();
+            return new ByteType();
         }
     }
 }

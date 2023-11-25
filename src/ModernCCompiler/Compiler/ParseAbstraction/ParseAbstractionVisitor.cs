@@ -4,7 +4,6 @@ using Compiler.Models;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
 using System.Diagnostics;
-using System.Net.Http.Headers;
 using static ModernCParser;
 
 namespace Compiler.ParseAbstraction
@@ -58,6 +57,10 @@ namespace Compiler.ParseAbstraction
             if (context.INT_TYPE() != null)
             {
                 return new IntTypeNode(span);
+            }
+            else if (context.BYTE_TYPE() != null)
+            {
+                return new ByteTypeNode(span);
             }
             else if (context.BOOL_TYPE() != null)
             {
@@ -333,6 +336,10 @@ namespace Compiler.ParseAbstraction
             {
                 return VisitIntLiteral(context.intLiteral());
             }
+            else if (context.byteLiteral() != null)
+            {
+                return VisitByteLiteral(context.byteLiteral());
+            }
             else if (context.boolLiteral() != null)
             {
                 return VisitBoolLiteral(context.boolLiteral());
@@ -380,6 +387,41 @@ namespace Compiler.ParseAbstraction
             }
 
             throw new Exception($"Tried to parse {text} as an int, something is wrong with the compiler");
+        }
+
+        public override ByteLiteralExpression VisitByteLiteral([NotNull] ByteLiteralContext context)
+        {
+            var span = GetSpanOfContext(context);
+            if (context.ASCII_CHAR() != null)
+            {
+                var text = context.ASCII_CHAR().GetText();
+                var c = text[1];
+                if (!char.IsAscii(c))
+                {
+                    throw new Exception($"Parse error: {text} is an invalid byte");
+                }
+
+                var value = Convert.ToByte(c);
+                return new ByteLiteralExpression(span, value);
+            }
+            else if (context.ESCAPED_ASCII_CHAR() != null)
+            {
+                var text = context.ESCAPED_ASCII_CHAR().GetText();
+                var value = ParseEscapedByte(text.Substring(1, 2));
+                return new ByteLiteralExpression(span, value);
+            }
+            else if (context.INT() != null)
+            {
+                var text = context.INT().GetText();
+                if (byte.TryParse(text, out var value))
+                {
+                    return new ByteLiteralExpression(span, value);
+                }
+
+                throw new Exception($"Parse error: {text} is an invalid byte");
+            }
+
+            throw new Exception($"Parse error: {context.GetText()} is an invalid byte");
         }
 
         public override BoolLiteralExpression VisitBoolLiteral([NotNull] BoolLiteralContext context)
@@ -459,6 +501,14 @@ namespace Compiler.ParseAbstraction
             };
         }
 
+        private static byte ParseEscapedByte(string escaped)
+        {
+            return escaped switch
+            {
+                "\\n" => Convert.ToByte('\n'), // TODO add more escape sequences
+                _ => throw new Exception($"{escaped} is not recognized as an escape sequence.")
+            };
+        }
 
         private static Span GetSpanOfContext(ParserRuleContext context)
         {

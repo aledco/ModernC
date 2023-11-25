@@ -36,11 +36,19 @@ namespace CompilerTests
                 Machine.Run(instructions, outStream);
 
                 var testReference = TestFileManager.GetTestReference(testType, Id);
-                if (testReference  != null) 
-                {
-                    Assert.AreEqual(outStream.ToString().Trim(), testReference.Trim());
-                }
+                Assert.IsNotNull(testReference);
+                var actual = NormalizeOutput(outStream.ToString());
+                var expected = NormalizeOutput(testReference);
+                Assert.AreEqual(actual, expected);
             }
+        }
+
+        private static string NormalizeOutput(string output)
+        {
+            return output
+                .Replace("\r\n", "\n")
+                .Replace("\t", "    ")
+                .Trim();
         }
     }
 }

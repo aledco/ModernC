@@ -234,6 +234,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 CallExpression e => VisitCallExpression(e, context, offset),
                 IdExpression e => VisitIdExpression(e, context, offset),
                 IntLiteralExpression e => VisitIntLiteralExpression(e, context, offset),
+                ByteLiteralExpression e => VisitByteLiteralExpression(e, context, offset),
                 BoolLiteralExpression e => VisitBoolLiteralExpression(e, context, offset),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}")
             };
@@ -282,13 +283,19 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return 0;
         }
 
-        private static int VisitBoolLiteralExpression(BoolLiteralExpression e, Context context, int _)
+        private static int VisitIntLiteralExpression(IntLiteralExpression e, Context context, int _)
         {
             e.Register = context.GetRegister();
             return 0;
         }
 
-        private static int VisitIntLiteralExpression(IntLiteralExpression e, Context context, int _)
+        private static int VisitByteLiteralExpression(ByteLiteralExpression e, Context context, int _)
+        {
+            e.Register = context.GetRegister();
+            return 0;
+        }
+
+        private static int VisitBoolLiteralExpression(BoolLiteralExpression e, Context context, int _)
         {
             e.Register = context.GetRegister();
             return 0;
