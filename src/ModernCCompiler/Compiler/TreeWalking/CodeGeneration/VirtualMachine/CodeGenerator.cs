@@ -320,22 +320,62 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 case BinaryOperator.LessThan:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
-                    instructions.Add(new LessThan(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    switch (e.LeftOperand.Type) // TODO check the types here better
+                    {
+                        case IntegralType or BoolType:
+                            instructions.Add(new LessThan(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new LessThanFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {e.Type}");
+                    }
                     break;
                 case BinaryOperator.LessThanEqualTo:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
-                    instructions.Add(new LessThanEqual(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    switch (e.LeftOperand.Type)
+                    {
+                        case IntegralType or BoolType:
+                            instructions.Add(new LessThanEqual(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new LessThanEqualFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {e.Type}");
+                    }
                     break;
                 case BinaryOperator.GreaterThan:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
-                    instructions.Add(new GreaterThan(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    switch (e.LeftOperand.Type)
+                    {
+                        case IntegralType or BoolType:
+                            instructions.Add(new GreaterThan(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new GreaterThanFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {e.Type}");
+                    }
                     break;
                 case BinaryOperator.GreaterThanEqualTo:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
-                    instructions.Add(new GreaterThanEqual(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    switch (e.LeftOperand.Type)
+                    {
+                        case IntegralType or BoolType:
+                            instructions.Add(new GreaterThanEqual(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new GreaterThanEqualFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {e.Type}");
+                    }
                     break;
                 case BinaryOperator.Plus:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
@@ -519,35 +559,10 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         {
             return expression switch
             {
-                BinaryOperatorExpression e => BinaryOperatorExpressionLValue(e),
-                UnaryOperatorExpression e => UnaryOperatorExpressionLValue(e),
-                CallExpression e => CallExpressionLValue(e),
                 IdExpression e => IdExpressionLValue(e),
-                IntLiteralExpression e => IntLiteralExpressionLValue(e),
-                ByteLiteralExpression e => ByteLiteralExpressionLValue(e),
-                BoolLiteralExpression e => BoolLiteralExpressionLValue(e),
-                _ => throw new NotImplementedException($"Unknown expression: {expression}"),
+                Expression e => NoExpressionLValue(e),
             };
         }
-
-        private static List<IInstruction> BinaryOperatorExpressionLValue(BinaryOperatorExpression e)
-        {
-            ErrorHandler.Throw("Binary expressions do not have l-values.", e);
-            throw new Exception("Error handler did not stop execution");
-        }
-
-        private static List<IInstruction> UnaryOperatorExpressionLValue(UnaryOperatorExpression e)
-        {
-            ErrorHandler.Throw("Unary expressions do not have l-values.", e);
-            throw new Exception("Error handler did not stop execution");
-        }
-
-        private static List<IInstruction> CallExpressionLValue(CallExpression e)
-        {
-            ErrorHandler.Throw("Call expressions do not have l-values.", e);
-            throw new Exception("Error handler did not stop execution");
-        }
-
 
         private static List<IInstruction> IdExpressionLValue(IdExpression e)
         {
@@ -562,21 +577,9 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             };
         }
 
-        private static List<IInstruction> IntLiteralExpressionLValue(IntLiteralExpression e)
+        private static List<IInstruction> NoExpressionLValue(Expression e)
         {
-            ErrorHandler.Throw("Int literals do not have l-values.", e);
-            throw new Exception("Error handler did not stop execution");
-        }
-
-        private static List<IInstruction> ByteLiteralExpressionLValue(ByteLiteralExpression e)
-        {
-            ErrorHandler.Throw("Byte literals do not have l-values.", e);
-            throw new Exception("Error handler did not stop execution");
-        }
-
-        private static List<IInstruction> BoolLiteralExpressionLValue(BoolLiteralExpression e)
-        {
-            ErrorHandler.Throw("Bool literals do not have l-values.", e);
+            ErrorHandler.Throw("Expression does not have an l-value.", e);
             throw new Exception("Error handler did not stop execution");
         }
 
