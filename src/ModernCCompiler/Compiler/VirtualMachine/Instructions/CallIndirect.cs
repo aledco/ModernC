@@ -9,7 +9,7 @@
             _dst = dst;
         }
 
-        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextWriter outStream)
+        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextReader inStream, TextWriter outStream)
         {
             registers[Registers.ReturnAddress] = registers[Registers.ProgramCounter];
             registers[Registers.ProgramCounter] = registers[_dst];

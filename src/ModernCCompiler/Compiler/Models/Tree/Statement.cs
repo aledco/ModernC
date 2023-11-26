@@ -10,6 +10,7 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(CallStatement))]
     [JsonDerivedType(typeof(IfStatement))]
     [JsonDerivedType(typeof(WhileStatement))]
+    [JsonDerivedType(typeof(DoWhileStatement))]
     [JsonDerivedType(typeof(ForStatement))]
     [JsonDerivedType(typeof(ReturnStatement))]
     [JsonDerivedType(typeof(CompoundStatement))]

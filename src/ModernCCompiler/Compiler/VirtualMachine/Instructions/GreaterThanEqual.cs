@@ -13,7 +13,7 @@
             _right = right;
         }
 
-        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextWriter outStream)
+        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextReader inStream, TextWriter outStream)
         {
             registers[_dst] = registers[_left] >= registers[_right] ? 1 : 0;
         }

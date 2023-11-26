@@ -33,22 +33,39 @@ namespace CompilerTests
                 TestFileManager.WriteTestOutput(_component, testType, Id, asmOut);
 
                 var outStream = new StringWriter();
-                Machine.Run(instructions, outStream);
+                Machine.Run(instructions, Console.In, outStream);
 
-                var testReference = TestFileManager.GetTestReference(testType, Id);
-                Assert.IsNotNull(testReference);
-                var actual = NormalizeOutput(outStream.ToString());
-                var expected = NormalizeOutput(testReference);
+                var expected = TestFileManager.GetTestReference(testType, Id);
+                Assert.IsNotNull(expected);
+                var actual = TestFileManager.NormalizeText(outStream.ToString());
                 Assert.AreEqual(actual, expected);
             }
         }
 
-        private static string NormalizeOutput(string output)
+        [TestMethod]
+        public void TestAllReading()
         {
-            return output
-                .Replace("\r\n", "\n")
-                .Replace("\t", "    ")
-                .Trim();
+            var testType = "Reading";
+            foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
+            {
+                Console.WriteLine(Id);
+                var tree = Parser.Parse(Contents);
+                TopLevelTypeChecker.Walk(tree);
+                LocalTypeChecker.Walk(tree);
+                var instructions = CodeGenerator.Walk(tree);
+
+                var asmOut = Machine.ToCode(instructions);
+                TestFileManager.WriteTestOutput(_component, testType, Id, asmOut);
+
+                var inStream = TestFileManager.GetTestInputStream(testType, Id);
+                var outStream = new StringWriter();
+                Machine.Run(instructions, inStream, outStream);
+
+                var expected = TestFileManager.GetTestReference(testType, Id);
+                Assert.IsNotNull(expected);
+                var actual = TestFileManager.NormalizeText(outStream.ToString());
+                Assert.AreEqual(actual, expected);
+            }
         }
     }
 }

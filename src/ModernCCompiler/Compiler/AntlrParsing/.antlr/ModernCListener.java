@@ -327,6 +327,16 @@ public interface ModernCListener extends ParseTreeListener {
 	 */
 	void exitArgumentList(ModernCParser.ArgumentListContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link ModernCParser#readExpression}.
+	 * @param ctx the parse tree
+	 */
+	void enterReadExpression(ModernCParser.ReadExpressionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#readExpression}.
+	 * @param ctx the parse tree
+	 */
+	void exitReadExpression(ModernCParser.ReadExpressionContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ModernCParser#intLiteral}.
 	 * @param ctx the parse tree
 	 */

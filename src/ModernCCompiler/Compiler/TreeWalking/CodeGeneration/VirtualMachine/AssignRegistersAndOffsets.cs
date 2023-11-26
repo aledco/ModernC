@@ -115,6 +115,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 CallStatement s => VisitCallStatement(s, context, offset),
                 IfStatement s => VisitIfStatement(s, context, offset),
                 WhileStatement s => VisitWhileStatement(s, context, offset),
+                DoWhileStatement s => VisitDoWhileStatement(s, context, offset),
                 ForStatement s => VisitForStatement(s, context, offset),
                 ReturnStatement s => VisitReturnStatement(s, context, offset),
                 CompoundStatement s => VisitCompoundStatement(s, context, offset),
@@ -206,6 +207,14 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             VisitExpression(s.Expression, context, offset);
             return VisitCompoundStatement(s.Body, context, offset);
         }
+
+        private static int VisitDoWhileStatement(DoWhileStatement s, Context context, int offset)
+        {
+            var size = VisitCompoundStatement(s.Body, context, offset);
+            VisitExpression(s.Expression, context, offset);
+            return size;
+        }
+
 
         private static int VisitForStatement(ForStatement s, Context context, int offset)
         {

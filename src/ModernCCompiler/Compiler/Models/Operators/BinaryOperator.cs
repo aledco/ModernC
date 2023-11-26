@@ -3,6 +3,7 @@
     public enum BinaryOperator
     {
         EqualTo,
+        NotEqualTo,
         LessThan,
         LessThanEqualTo,
         GreaterThan,

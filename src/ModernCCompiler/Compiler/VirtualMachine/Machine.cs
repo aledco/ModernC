@@ -5,7 +5,7 @@ namespace Compiler.VirtualMachine
 {
     public static class Machine
     {
-        public static void Run(IList<IInstruction> instructions, TextWriter outStream)
+        public static void Run(IList<IInstruction> instructions, TextReader inStream, TextWriter outStream)
         {
             var memory = new Memory();
             var registers = new Registers();
@@ -20,7 +20,7 @@ namespace Compiler.VirtualMachine
 
             while (registers[Registers.ProgramCounter] < instructions.Count) 
             {
-                instructions[registers[Registers.ProgramCounter]].Execute(memory, registers, labels, outStream);
+                instructions[registers[Registers.ProgramCounter]].Execute(memory, registers, labels, inStream, outStream);
                 registers[Registers.ProgramCounter]++;
             }
         }

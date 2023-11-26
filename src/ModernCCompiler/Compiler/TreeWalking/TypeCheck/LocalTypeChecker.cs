@@ -83,6 +83,9 @@ namespace Compiler.TreeWalking.TypeCheck
                 case WhileStatement s:
                     VisitWhileStatement(s, context);
                     break;
+                case DoWhileStatement s:
+                    VisitDoWhileStatement(s, context);
+                    break;
                 case ForStatement s:
                     VisitForStatement(s, context);
                     break;
@@ -216,7 +219,17 @@ namespace Compiler.TreeWalking.TypeCheck
 
             VisitCompoundStatement(s.Body, context);
         }
-        
+
+        private static void VisitDoWhileStatement(DoWhileStatement s, Context context)
+        {
+            VisitCompoundStatement(s.Body, context);
+            var expressionType = VisitExpression(s.Expression, context);
+            if (expressionType is not BoolType)
+            {
+                ErrorHandler.Throw("Do while loop expression must be of type boolean", s);
+            }
+        }
+
         private static void VisitForStatement(ForStatement s, Context context)
         {
             VisitStatement(s.InitialStatement, context);
@@ -268,6 +281,7 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 BinaryOperatorExpression e => VisitBinaryOperatorExpression(e, context),
                 CallExpression e => VisitCallExpression(e, context),
+                ReadExpression => new ByteType(),
                 UnaryOperatorExpression e => VisitUnaryOperatorExpression(e, context),
                 IdExpression e => VisitIdExpression(e, context),
                 IntLiteralExpression => new IntType(),
@@ -328,6 +342,7 @@ namespace Compiler.TreeWalking.TypeCheck
             switch (e.Operator)
             {
                 case BinaryOperator.EqualTo:
+                case BinaryOperator.NotEqualTo:
                 case BinaryOperator.LessThan:
                 case BinaryOperator.LessThanEqualTo:
                 case BinaryOperator.GreaterThan:

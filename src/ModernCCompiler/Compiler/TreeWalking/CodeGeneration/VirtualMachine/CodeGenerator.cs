@@ -96,6 +96,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 CallStatement s => VisitCallStatement(s),
                 IfStatement s => VisitIfStatement(s),
                 WhileStatement s => VisitWhileStatement(s),
+                DoWhileStatement s => VisitDoWhileStatement(s),
                 ForStatement s => VisitForStatement(s),
                 ReturnStatement s => VisitReturnStatement(s),
                 CompoundStatement s => VisitCompoundStatement(s),
@@ -256,6 +257,21 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return instructions;
         }
 
+        private static List<IInstruction> VisitDoWhileStatement(DoWhileStatement s)
+        {
+            var instructions = new List<IInstruction>();
+            var labelId = GetNextLabelId();
+            var topLabel = $"do_while_top_{labelId}";
+            var exitLabel = $"do_while_exit_{labelId}";
+
+            instructions.Add(new Label(topLabel));
+            instructions.AddRange(VisitCompoundStatement(s.Body));
+            instructions.AddRange(Flow(s.Expression, exitLabel, false));
+            instructions.Add(new Jump(topLabel));
+            instructions.Add(new Label(exitLabel));
+            return instructions;
+        }
+
         private static List<IInstruction> VisitForStatement(ForStatement s)
         {
             var instructions = new List<IInstruction>();
@@ -298,6 +314,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 BinaryOperatorExpression e => BinaryOperatorExpressionRValue(e),
                 UnaryOperatorExpression e => UnaryOperatorExpressionRValue(e),
                 CallExpression e => CallExpressionRValue(e),
+                ReadExpression e => ReadExpressionRValue(e),
                 IdExpression e => IdExpressionRValue(e),
                 IntLiteralExpression e => IntLiteralExpressionRValue(e),
                 ByteLiteralExpression e => ByteLiteralExpressionRValue(e),
@@ -316,6 +333,12 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
                     instructions.AddRange(ExpressionRValue(e.RightOperand));
                     instructions.Add(new Equal(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    break;
+                case BinaryOperator.NotEqualTo:
+                    instructions.AddRange(ExpressionRValue(e.LeftOperand));
+                    instructions.AddRange(ExpressionRValue(e.RightOperand));
+                    instructions.Add(new Equal(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                    instructions.Add(new Not(e.Register, e.Register));
                     break;
                 case BinaryOperator.LessThan:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
@@ -496,6 +519,14 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             });
 
             return instructions;
+        }
+
+        private static List<IInstruction> ReadExpressionRValue(ReadExpression e)
+        {
+            return new List<IInstruction>()
+            {
+                new Read(e.Register)
+            };
         }
 
         private static List<IInstruction> IdExpressionRValue(IdExpression e)
