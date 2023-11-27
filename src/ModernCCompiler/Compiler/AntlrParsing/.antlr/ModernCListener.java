@@ -217,6 +217,16 @@ public interface ModernCListener extends ParseTreeListener {
 	 */
 	void exitWhileStatement(ModernCParser.WhileStatementContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link ModernCParser#doWhileStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterDoWhileStatement(ModernCParser.DoWhileStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#doWhileStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitDoWhileStatement(ModernCParser.DoWhileStatementContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ModernCParser#forStatement}.
 	 * @param ctx the parse tree
 	 */

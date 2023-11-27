@@ -7,7 +7,6 @@ using Compiler.VirtualMachine;
 
 /*
  * TODO:
- * - finalize interaction between float and int types
  * - Add break and continue
  * - make ok return 0, exit code exits program with error code, add println.
  * - make the identifier of a function call an expression (might need to make a callableExpression production)
