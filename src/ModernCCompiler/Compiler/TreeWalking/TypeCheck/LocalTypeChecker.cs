@@ -15,6 +15,7 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             public Scope? Scope { get; set; }
             public FunctionDefinition? EnclosingFunction { get; set; }
+            public Stack<LoopStatement> EnclosingLoops { get; set; } = new();
             public bool LValue { get; set; } = false;
             public FunctionDefinition? RValueFunction { get; set; }
         }
@@ -62,6 +63,9 @@ namespace Compiler.TreeWalking.TypeCheck
                 case PrintStatement s:
                     VisitPrintStatement(s, context);
                     break;
+                case PrintLineStatement s:
+                    VisitPrintLineStatement(s, context);
+                    break;
                 case VariableDefinitionStatement s:
                     VisitVariableDefinitionStatement(s, context);
                     break;
@@ -81,16 +85,31 @@ namespace Compiler.TreeWalking.TypeCheck
                     VisitIfStatement(s, context);
                     break;
                 case WhileStatement s:
+                    context.EnclosingLoops.Push(s);
                     VisitWhileStatement(s, context);
+                    context.EnclosingLoops.Pop();
                     break;
                 case DoWhileStatement s:
+                    context.EnclosingLoops.Push(s);
                     VisitDoWhileStatement(s, context);
+                    context.EnclosingLoops.Pop();
                     break;
                 case ForStatement s:
+                    context.EnclosingLoops.Push(s);
                     VisitForStatement(s, context);
+                    context.EnclosingLoops.Pop();
+                    break;
+                case BreakStatement s:
+                    VisitBreakStatement(s, context);
+                    break;
+                case ContinueStatement s:
+                    VisitContinueStatement(s, context);
                     break;
                 case ReturnStatement s:
                     VisitReturnStatement(s, context);
+                    break;
+                case ExitStatement s:
+                    VisitExitStatement(s, context);
                     break;
                 case CompoundStatement s:
                     VisitCompoundStatement(s, context);
@@ -102,11 +121,13 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static void VisitPrintStatement(PrintStatement statement, Context context)
         {
-            var type = VisitExpression(statement.Expression, context);
-            if (type.GetType() == typeof(VoidType))
-            {
-                ErrorHandler.Throw("Expressions can not have a type of void.", statement);
-            }
+            VisitExpression(statement.Expression, context);
+        }
+
+        private static void VisitPrintLineStatement(PrintLineStatement statement, Context context)
+        {
+            VisitPrintStatement(statement.PrintExpression, context);
+            VisitPrintStatement(statement.PrintLine, context);
         }
 
         private static void VisitVariableDefinitionStatement(VariableDefinitionStatement statement, Context context)
@@ -255,6 +276,30 @@ namespace Compiler.TreeWalking.TypeCheck
             VisitCompoundStatement(s.Body, context);
         }
 
+        private static void VisitBreakStatement(BreakStatement s, Context context)
+        {
+            if (context.EnclosingLoops.TryPeek(out var loop))
+            {
+                s.EnclosingLoop = loop;
+            }
+            else
+            {
+                ErrorHandler.Throw("Break statements can only be used inside a loop", s);
+            }
+        }
+
+        private static void VisitContinueStatement(ContinueStatement s, Context context)
+        {
+            if (context.EnclosingLoops.TryPeek(out var loop))
+            {
+                s.EnclosingLoop = loop;
+            }
+            else
+            {
+                ErrorHandler.Throw("Continue statements can only be used inside a loop", s);
+            }
+        }
+
         private static void VisitReturnStatement(ReturnStatement statement, Context context)
         {
             if (context.EnclosingFunction?.Id?.Symbol?.Type is FunctionType functionType)
@@ -286,6 +331,14 @@ namespace Compiler.TreeWalking.TypeCheck
             }
         }
 
+        private static void VisitExitStatement(ExitStatement s, Context context)
+        {
+            var type = VisitExpression(s.Expression, context);
+            if (type is not IntegralType)
+            {
+                ErrorHandler.Throw("Exit code must be an integer", s);
+            }
+        }
 
         private static SemanticType VisitExpression(Expression expression, Context context)
         {
@@ -301,7 +354,12 @@ namespace Compiler.TreeWalking.TypeCheck
                 FloatLiteralExpression => new FloatType(),
                 BoolLiteralExpression => new BoolType(),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
-            }; ;
+            };
+
+            if (expression.Type is VoidType)
+            {
+                ErrorHandler.Throw("Expressions can not have a type of void.", expression);
+            }
 
             return expression.Type; 
         }
@@ -368,44 +426,21 @@ namespace Compiler.TreeWalking.TypeCheck
                 case BinaryOperator.GreaterThanEqualTo:
                     return new BoolType();
                 case BinaryOperator.Plus:
-                    if (leftType is not NumberType)
-                    {
-                        ErrorHandler.Throw("Only numbers can be added", e);
-                    }
-
-                    return leftType;
                 case BinaryOperator.Minus:
-                    if (leftType is not NumberType)
-                    {
-                        ErrorHandler.Throw("Only numbers can be subtracted", e);
-                    }
-
-                    return leftType;
                 case BinaryOperator.Times:
-                    if (leftType is not NumberType)
-                    {
-                        ErrorHandler.Throw("Only numbers can be multiplied", e);
-                    }
-
-                    return leftType; ;
                 case BinaryOperator.DividedBy:
+                case BinaryOperator.Modulo:
                     if (leftType is not NumberType)
                     {
-                        ErrorHandler.Throw("Only numbers can be divided", e);
+                        ErrorHandler.Throw("Operator is only valid for number types", e);
                     }
 
                     return leftType;
                 case BinaryOperator.And:
-                    if (leftType is not BoolType)
-                    {
-                        ErrorHandler.Throw("Only booleans can be anded", e);
-                    }
-
-                    return leftType;
                 case BinaryOperator.Or:
                     if (leftType is not BoolType)
                     {
-                        ErrorHandler.Throw("Only booleans can be ored", e);
+                        ErrorHandler.Throw("Operator is only valid for boolean types", e);
                     }
 
                     return leftType;

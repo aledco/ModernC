@@ -5,6 +5,7 @@ namespace Compiler.ErrorHandling
     public static class ErrorHandler
     {
         public static bool Testing { get; set; } = false;
+        public static bool Interpreting { get; set; } = false;
 
         public static void Throw(string message, AbstractSyntaxTree node)
         {
@@ -16,7 +17,10 @@ namespace Compiler.ErrorHandling
             {
                 Console.Error.WriteLine(message);
                 Console.Error.WriteLine($"\tAt {node.Span}");
-                Environment.Exit(1);
+                if (!Interpreting)
+                {
+                    Environment.Exit(1);
+                }
             }
         }
     }

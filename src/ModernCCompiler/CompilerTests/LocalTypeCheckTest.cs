@@ -55,6 +55,7 @@ public class LocalTypeCheckTest
         var testType = "LocalSemanticErrors";
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
+            Console.WriteLine(Id);
             var tree = Parser.Parse(Contents);
             TopLevelTypeChecker.Walk(tree);
             try

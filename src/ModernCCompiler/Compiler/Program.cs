@@ -1,5 +1,5 @@
 ﻿using Compiler.CommandLine;
-using Compiler.Input;
+using Compiler.ErrorHandling;
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking.CodeGeneration.VirtualMachine;
 using Compiler.TreeWalking.TypeCheck;
@@ -7,13 +7,11 @@ using Compiler.VirtualMachine;
 
 /*
  * TODO:
- * - Add break and continue
- * - make ok return 0, exit code exits program with error code, add println.
- * - make the identifier of a function call an expression (might need to make a callableExpression production)
  * - arrays
  * - byte strings
  * - pointers
  * - structs/unions/enums
+ * - make the identifier of a function call an expression (might need to make a callableExpression production)
  * - lambda expressions
  * - if expressions
  * - global variables / statements
@@ -21,8 +19,10 @@ using Compiler.VirtualMachine;
  * - char and char strings
  * - input num should read num chars from stdin
  * - file inclusion
+ * - add checks to make sure every code path has a return
  * - better command line args
  * - repl using interpreter
+ * - add code underlining to error messages
  * - comment code
  * - optimization unit
  * - smarter callee saved registers
@@ -38,23 +38,24 @@ namespace Compiler
         private static void Main(string[] sargs)
         {
             var args = new Args(sargs);
-            var reader = args.GetReader();
             switch (args.Mode)
             {
                 case Mode.Interpret:
-                    Interpret(reader);
+                    ErrorHandler.Interpreting = true;
+                    Interpret(args);
                     break;
                 case Mode.Compile:
-                    Compile(reader);
+                    Compile(args);
                     break;
                 case Mode.Execute:
-                    Execute(reader);
+                    Execute(args);
                     break;
             }
         }
 
-        private static void Interpret(IReader reader)
+        private static void Interpret(Args args)
         {
+            var reader = args.GetReader();
             while (true)
             {
                 var input = reader.Read();
@@ -69,19 +70,21 @@ namespace Compiler
             }
         }
 
-        private static void Compile(IReader reader) 
+        private static void Compile(Args args) 
         {
+            var reader = args.GetReader();
             var input = reader.Read();
             var tree = Parser.Parse(input);
             TopLevelTypeChecker.Walk(tree);
             LocalTypeChecker.Walk(tree);
             var instructions = CodeGenerator.Walk(tree);
             var asm = Machine.ToCode(instructions);
-            File.WriteAllText("a.out", asm); // TODO cmd arg for out file
+            File.WriteAllText(args.OutputFileName, asm);
         }
 
-        private static void Execute(IReader reader)
+        private static void Execute(Args args)
         {
+            var reader = args.GetReader();
             var input = reader.Read();
             var tree = Parser.Parse(input);
             TopLevelTypeChecker.Walk(tree);

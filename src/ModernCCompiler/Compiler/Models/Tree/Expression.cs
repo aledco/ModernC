@@ -6,6 +6,8 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(BinaryOperatorExpression))]
     [JsonDerivedType(typeof(UnaryOperatorExpression))]
     [JsonDerivedType(typeof(IntLiteralExpression))]
+    [JsonDerivedType(typeof(ByteLiteralExpression))]
+    [JsonDerivedType(typeof(FloatLiteralExpression))]
     [JsonDerivedType(typeof(BoolLiteralExpression))]
     [JsonDerivedType(typeof(IdExpression))]
     [JsonDerivedType(typeof(CallExpression))]

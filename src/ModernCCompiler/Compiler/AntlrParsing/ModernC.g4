@@ -27,16 +27,17 @@ primitiveType
     | BOOL_TYPE;
 
 functionType
-    : 'func' '(' typeList ')';
+    : FUNC '(' typeList ')';
 
 typeList
     : type (',' type)*;
 
-compoundStatement
-    : '{' statement* returnStatement? '}';
-
 statement
     : simpleStatement ';'
+    | breakStatement
+    | continueStatement
+    | returnStatement
+    | exitStatement
     | ifStatement
     | whileStatement
     | doWhileStatement
@@ -45,14 +46,21 @@ statement
 
 simpleStatement
     : printStatement
+    | printlnStatement
     | variableDefinitionStatement
     | assignmentStatement
     | incrementStatement
     | variableDefinitionAndAssignmentStatement
     | callStatement;
 
+compoundStatement
+    : '{' statement* '}';
+
 printStatement
-    : 'print' expression;
+    : PRINT expression;
+
+printlnStatement
+    : PRINTLN expression;
 
 variableDefinitionStatement
     : type id;
@@ -61,7 +69,7 @@ variableDefinitionAndAssignmentStatement
     : type id '=' expression;
 
 assignmentStatement
-    : expression ('='|'+='|'-='|'*='|'/=') expression;
+    : expression ('='|'+='|'-='|'*='|'/='|'%=') expression;
 
 incrementStatement
     : expression ('++'|'--');
@@ -70,32 +78,42 @@ callStatement
     : callExpression;
 
 ifStatement
-    : 'if' expression compoundStatement elifPart* elsePart?;
+    : IF expression compoundStatement elifPart* elsePart?;
 
 elifPart
-    : 'elif' expression compoundStatement;
+    : ELIF expression compoundStatement;
 
 elsePart
-    : 'else' compoundStatement;
+    : ELSE compoundStatement;
 
 whileStatement
-    : 'while' expression compoundStatement;
+    : WHILE expression compoundStatement;
 
 doWhileStatement
-    : 'do' compoundStatement 'while' expression ';';
+    : DO compoundStatement WHILE expression ';';
 
 forStatement
-    : 'for' simpleStatement ';' expression ';' simpleStatement compoundStatement;
+    : FOR simpleStatement ';' expression ';' simpleStatement compoundStatement;
+
+breakStatement
+    : BREAK ';';
+
+continueStatement
+    : CONTINUE ';';
 
 returnStatement
-    : 'return' expression? ';';
+    : RETURN expression? ';'
+    | OK ';';
+
+exitStatement
+    : EXIT expression ';';
 
 expression
-    : expression 'or' orExpression
+    : expression OR orExpression
     | orExpression;
 
 orExpression
-    : orExpression 'and' andExpression
+    : orExpression AND andExpression
     | andExpression;
 
 andExpression
@@ -107,7 +125,7 @@ comparison
     | term;
 
 term
-    : term ('*'|'/') factor
+    : term ('*'|'/'|'%') factor
     | factor;
 
 factor
@@ -122,7 +140,7 @@ factor
     | '(' expression ')';
 
 unaryExpression
-    : ('-'|'not') factor;
+    : ('-'|NOT) factor;
 
 callExpression
     : idExpression '(' argumentList? ')';
@@ -131,7 +149,7 @@ argumentList
     : expression (',' expression)*;
 
 readExpression
-    : 'read';
+    : READ;
 
 intLiteral
     : INT;
@@ -155,12 +173,32 @@ id
  * Lexing rules
  */
 
-// types
+// type keywords
 VOID_TYPE           : 'void';
 INT_TYPE            : 'int';
 BYTE_TYPE           : 'byte';
 FLOAT_TYPE          : 'float';
 BOOL_TYPE           : 'bool';
+FUNC                : 'func';
+
+// other keywords
+PRINT               : 'print';
+PRINTLN             : 'println';
+READ                : 'read';
+IF                  : 'if';
+ELIF                : 'elif';
+ELSE                : 'else';
+WHILE               : 'while';
+DO                  : 'do';
+FOR                 : 'for';
+BREAK               : 'break';
+CONTINUE            : 'continue';
+RETURN              : 'return';
+OK                  : 'ok';
+EXIT                : 'exit';
+NOT                 : 'not';
+OR                  : 'or';
+AND                 : 'and';
 
 TRUE                : 'true';    
 FALSE               : 'false';

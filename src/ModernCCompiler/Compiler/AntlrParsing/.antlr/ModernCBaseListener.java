@@ -160,6 +160,18 @@ public class ModernCBaseListener implements ModernCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterPrintlnStatement(ModernCParser.PrintlnStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitPrintlnStatement(ModernCParser.PrintlnStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterVariableDefinitionStatement(ModernCParser.VariableDefinitionStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -299,6 +311,18 @@ public class ModernCBaseListener implements ModernCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitReturnStatement(ModernCParser.ReturnStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterExitStatement(ModernCParser.ExitStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExitStatement(ModernCParser.ExitStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

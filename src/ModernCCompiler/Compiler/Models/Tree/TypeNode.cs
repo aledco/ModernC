@@ -6,6 +6,7 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(VoidTypeNode))]
     [JsonDerivedType(typeof(IntTypeNode))]
     [JsonDerivedType(typeof(ByteTypeNode))]
+    [JsonDerivedType(typeof(FloatTypeNode))]
     [JsonDerivedType(typeof(BoolTypeNode))]
     [JsonDerivedType(typeof(FunctionTypeNode))]
     public abstract class TypeNode : AbstractSyntaxTree

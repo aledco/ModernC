@@ -14,7 +14,7 @@ namespace CompilerTests
         [TestInitialize]
         public void Setup()
         {
-            ErrorHandler.Testing = true;
+            ErrorHandler.Testing = false;
         }
 
         [TestMethod]

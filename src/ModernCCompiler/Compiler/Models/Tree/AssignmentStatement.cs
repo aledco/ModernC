@@ -22,6 +22,7 @@ namespace Compiler.Models.Tree
                 AssignmentOperator.MinusEquals => new BinaryOperatorExpression(span, BinaryOperator.Minus, left, right),
                 AssignmentOperator.TimesEquals => new BinaryOperatorExpression(span, BinaryOperator.Times, left, right),
                 AssignmentOperator.DividedByEquals => new BinaryOperatorExpression(span, BinaryOperator.DividedBy, left, right),
+                AssignmentOperator.ModuloEquals => new BinaryOperatorExpression(span, BinaryOperator.Modulo, left, right),
                 _ => throw new NotImplementedException()
             };
         }
