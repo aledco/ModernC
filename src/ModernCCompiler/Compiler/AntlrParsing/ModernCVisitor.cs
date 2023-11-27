@@ -80,12 +80,6 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitTypeList([NotNull] ModernCParser.TypeListContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="ModernCParser.compoundStatement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitCompoundStatement([NotNull] ModernCParser.CompoundStatementContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -98,11 +92,23 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSimpleStatement([NotNull] ModernCParser.SimpleStatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.compoundStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCompoundStatement([NotNull] ModernCParser.CompoundStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.printStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitPrintStatement([NotNull] ModernCParser.PrintStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.printlnStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitPrintlnStatement([NotNull] ModernCParser.PrintlnStatementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.variableDefinitionStatement"/>.
 	/// </summary>
@@ -170,11 +176,29 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitForStatement([NotNull] ModernCParser.ForStatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.breakStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBreakStatement([NotNull] ModernCParser.BreakStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.continueStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitContinueStatement([NotNull] ModernCParser.ContinueStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.returnStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitReturnStatement([NotNull] ModernCParser.ReturnStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.exitStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExitStatement([NotNull] ModernCParser.ExitStatementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.expression"/>.
 	/// </summary>

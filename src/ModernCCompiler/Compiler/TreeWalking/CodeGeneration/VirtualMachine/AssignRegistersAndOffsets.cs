@@ -108,6 +108,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return statement switch
             {
                 PrintStatement s => VisitPrintStatement(s, context, offset),
+                PrintLineStatement s => VisitPrintLineStatement(s, context, offset),
                 VariableDefinitionStatement s => VisitVariableDefinitionStatement(s, context, offset),
                 AssignmentStatement s => VisitAssignmentStatement(s, context, offset),
                 IncrementStatement s => VisitIncrementStatement(s, context, offset),
@@ -117,7 +118,9 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 WhileStatement s => VisitWhileStatement(s, context, offset),
                 DoWhileStatement s => VisitDoWhileStatement(s, context, offset),
                 ForStatement s => VisitForStatement(s, context, offset),
+                BreakStatement or ContinueStatement => 0,
                 ReturnStatement s => VisitReturnStatement(s, context, offset),
+                ExitStatement s => VisitExitStatement(s, context, offset),
                 CompoundStatement s => VisitCompoundStatement(s, context, offset),
                 _ => throw new NotImplementedException($"Unknown statement {statement}"),
             };
@@ -125,7 +128,15 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static int VisitPrintStatement(PrintStatement s, Context context, int offset)
         {
-            return VisitExpression(s.Expression, context, offset);
+            VisitExpression(s.Expression, context, offset);
+            return 0;
+        }
+
+        private static int VisitPrintLineStatement(PrintLineStatement s, Context context, int offset)
+        {
+            VisitPrintStatement(s.PrintExpression, context, offset);
+            VisitPrintStatement(s.PrintLine, context, offset);
+            return 0;
         }
 
         private static int VisitVariableDefinitionStatement(VariableDefinitionStatement s, Context _, int offset)
@@ -218,10 +229,33 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static int VisitForStatement(ForStatement s, Context context, int offset)
         {
-            VisitStatement(s.InitialStatement, context, offset);
+            var size = 0;
+            if (s.InitialStatement is VariableDefinitionStatement or VariableDefinitionAndAssignmentStatement)
+            {
+                var varSize = VisitStatement(s.InitialStatement, context, offset);
+                offset += varSize;
+                size += varSize;
+            }
+            else
+            {
+                VisitStatement(s.InitialStatement, context, offset);
+            }
+
+            
             VisitExpression(s.Expression, context, offset);
-            VisitStatement(s.UpdateStatement, context, offset);
-            return VisitCompoundStatement(s.Body, context, offset);
+            if (s.UpdateStatement is VariableDefinitionStatement or VariableDefinitionAndAssignmentStatement)
+            {
+                var varSize = VisitStatement(s.UpdateStatement, context, offset);
+                offset += varSize;
+                size += varSize;
+            }
+            else
+            {
+                VisitStatement(s.UpdateStatement, context, offset);
+            }
+
+            size += VisitCompoundStatement(s.Body, context, offset);
+            return size;
         }
 
         private static int VisitReturnStatement(ReturnStatement s, Context context, int offset)
@@ -231,6 +265,12 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 VisitExpression(s.Expression, context, offset);
             }
 
+            return 0;
+        }
+
+        private static int VisitExitStatement(ExitStatement s, Context context, int offset)
+        {
+            VisitExpression(s.Expression, context, offset);
             return 0;
         }
 

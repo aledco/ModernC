@@ -6,6 +6,7 @@
         PlusEquals,
         MinusEquals,
         TimesEquals,
-        DividedByEquals
+        DividedByEquals,
+        ModuloEquals
     }
 }

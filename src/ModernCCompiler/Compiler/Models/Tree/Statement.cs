@@ -3,6 +3,7 @@
 namespace Compiler.Models.Tree
 {
     [JsonDerivedType(typeof(PrintStatement))]
+    [JsonDerivedType(typeof(PrintLineStatement))]
     [JsonDerivedType(typeof(VariableDefinitionStatement))]
     [JsonDerivedType(typeof(AssignmentStatement))]
     [JsonDerivedType(typeof(IncrementStatement))]
@@ -13,6 +14,9 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(DoWhileStatement))]
     [JsonDerivedType(typeof(ForStatement))]
     [JsonDerivedType(typeof(ReturnStatement))]
+    [JsonDerivedType(typeof(BreakStatement))]
+    [JsonDerivedType(typeof(ContinueStatement))]
+    [JsonDerivedType(typeof(ExitStatement))]
     [JsonDerivedType(typeof(CompoundStatement))]
     public abstract class Statement : AbstractSyntaxTree
     {

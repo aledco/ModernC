@@ -127,6 +127,16 @@ public interface ModernCListener extends ParseTreeListener {
 	 */
 	void exitPrintStatement(ModernCParser.PrintStatementContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link ModernCParser#printlnStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterPrintlnStatement(ModernCParser.PrintlnStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#printlnStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitPrintlnStatement(ModernCParser.PrintlnStatementContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ModernCParser#variableDefinitionStatement}.
 	 * @param ctx the parse tree
 	 */
@@ -246,6 +256,16 @@ public interface ModernCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitReturnStatement(ModernCParser.ReturnStatementContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ModernCParser#exitStatement}.
+	 * @param ctx the parse tree
+	 */
+	void enterExitStatement(ModernCParser.ExitStatementContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#exitStatement}.
+	 * @param ctx the parse tree
+	 */
+	void exitExitStatement(ModernCParser.ExitStatementContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ModernCParser#expression}.
 	 * @param ctx the parse tree

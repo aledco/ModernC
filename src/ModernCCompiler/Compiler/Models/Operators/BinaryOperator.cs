@@ -12,6 +12,7 @@
         Minus,
         Times,
         DividedBy,
+        Modulo,
         And,
         Or
     }

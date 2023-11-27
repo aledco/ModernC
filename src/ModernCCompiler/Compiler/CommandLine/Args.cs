@@ -5,12 +5,14 @@ namespace Compiler.CommandLine
 {
     public class Args
     {
-        public string FileName { get; }
+        public string FileName { get; private set; }
+        public string OutputFileName { get; private set; }
         public Mode Mode { get; private set; }
 
         public Args(string[] args)
         {
             FileName = string.Empty;
+            OutputFileName = "a.out";
             Mode = Mode.Compile;
             var showHelp = false;
 
@@ -28,6 +30,11 @@ namespace Compiler.CommandLine
                     }
                 },
                 {
+                    "o|out=",
+                    "specify and output file",
+                    v => OutputFileName = v
+                },
+                {
                     "h|help",
                     "show the help message.",
                     v => showHelp = v != null
@@ -39,7 +46,7 @@ namespace Compiler.CommandLine
                 var extra = p.Parse(args);
                 if (showHelp)
                 {
-                    Console.WriteLine("mcc [filename] [-r|--run]");
+                    Console.WriteLine("mcc [filename] [-r|--run] [-o|--out file]");
                     Environment.Exit(0);
                 }
 

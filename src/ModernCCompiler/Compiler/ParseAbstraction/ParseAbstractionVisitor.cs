@@ -106,13 +106,6 @@ namespace Compiler.ParseAbstraction
             var statements = context.statement()
                 .Select(VisitStatement)
                 .ToList();
-
-            if (context.returnStatement() != null)
-            {
-                var returnStatement = VisitReturnStatement(context.returnStatement());
-                statements.Add(returnStatement);
-            }
-
             return new CompoundStatement(span, statements);
         }
 
@@ -148,6 +141,13 @@ namespace Compiler.ParseAbstraction
             var span = GetSpanOfContext(context);
             var expression = VisitExpression(context.expression());
             return new PrintStatement(span, expression);
+        }
+
+        public override PrintLineStatement VisitPrintlnStatement([NotNull] PrintlnStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var expression = VisitExpression(context.expression());
+            return new PrintLineStatement(span, expression);
         }
 
         public override VariableDefinitionStatement VisitVariableDefinitionStatement([NotNull] VariableDefinitionStatementContext context)
@@ -242,12 +242,37 @@ namespace Compiler.ParseAbstraction
             var body = VisitCompoundStatement(context.compoundStatement());
             return new ForStatement(span, initialStatement, expression, updateStatement, body);
         }
-        
+
+        public override BreakStatement VisitBreakStatement([NotNull] BreakStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            return new BreakStatement(span);
+        }
+
+        public override ContinueStatement VisitContinueStatement([NotNull] ContinueStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            return new ContinueStatement(span);
+        }
+
         public override ReturnStatement VisitReturnStatement([NotNull] ReturnStatementContext context)
         {
             var span = GetSpanOfContext(context);
+
+            if (context.OK() != null)
+            {
+                return new ReturnStatement(span, new IntLiteralExpression(span, 0));
+            }
+            
             var expression = context.expression() != null ? VisitExpression(context.expression()) : null;
             return new ReturnStatement(span, expression);
+        }
+
+        public override ExitStatement VisitExitStatement([NotNull] ExitStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var expression = VisitExpression(context.expression());
+            return new ExitStatement(span, expression);
         }
 
         public override Expression VisitExpression([NotNull] ExpressionContext context)
@@ -486,6 +511,7 @@ namespace Compiler.ParseAbstraction
                 "-" => BinaryOperator.Minus,
                 "*" => BinaryOperator.Times,
                 "/" => BinaryOperator.DividedBy,
+                "%" => BinaryOperator.Modulo,
                 "and" => BinaryOperator.And,
                 "or" => BinaryOperator.Or,
                 _ => throw new NotImplementedException()
@@ -511,6 +537,7 @@ namespace Compiler.ParseAbstraction
                 "-=" => AssignmentOperator.MinusEquals,
                 "*=" => AssignmentOperator.TimesEquals,
                 "/=" => AssignmentOperator.DividedByEquals,
+                "%=" => AssignmentOperator.ModuloEquals,
                 _ => throw new NotImplementedException()
             };
         }

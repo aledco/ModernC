@@ -26,12 +26,12 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         {
             var instructions = new List<IInstruction>()
             {
-                new Call("main"),
-                new Jump("exit")
+                new Call(ProgramRoot.MainFunctionLabel),
+                new Jump(ProgramRoot.ExitLabel)
             };
 
             instructions.AddRange(program.FunctionDefinitions.SelectMany(VisitFunctionDefinition));
-            instructions.Add(new Label("exit"));
+            instructions.Add(new Label(ProgramRoot.ExitLabel));
             return instructions;
         }
 
@@ -89,6 +89,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return statement switch
             {
                 PrintStatement s => VisitPrintStatement(s),
+                PrintLineStatement s => VisitPrintLineStatement(s),
                 VariableDefinitionStatement s => VisitVariableDefinitionStatement(s),
                 AssignmentStatement s => VisitAssignmentStatement(s),
                 IncrementStatement s => VisitIncrementStatement(s),
@@ -98,7 +99,10 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 WhileStatement s => VisitWhileStatement(s),
                 DoWhileStatement s => VisitDoWhileStatement(s),
                 ForStatement s => VisitForStatement(s),
+                BreakStatement s => VisitBreakStatement(s),
+                ContinueStatement s => VisitContinueStatement(s),
                 ReturnStatement s => VisitReturnStatement(s),
+                ExitStatement s => VisitExitStatement(s),
                 CompoundStatement s => VisitCompoundStatement(s),
                 _ => throw new NotImplementedException($"Unknown statement {statement}"),
             };
@@ -129,6 +133,13 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     break;
             }
             
+            return instructions;
+        }
+
+        private static List<IInstruction> VisitPrintLineStatement(PrintLineStatement s)
+        {
+            var instructions = VisitPrintStatement(s.PrintExpression);
+            instructions.AddRange(VisitPrintStatement(s.PrintLine));
             return instructions;
         }
 
@@ -245,9 +256,9 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> VisitWhileStatement(WhileStatement s)
         {
             var instructions = new List<IInstruction>();
-            var labelId = GetNextLabelId();
-            var topLabel = $"while_top_{labelId}";
-            var exitLabel = $"while_exit_{labelId}";
+            s.LabelId = GetNextLabelId();
+            var topLabel = s.GetLoopLabel();
+            var exitLabel = s.GetExitLabel();
 
             instructions.Add(new Label(topLabel));
             instructions.AddRange(Flow(s.Expression, exitLabel, false));
@@ -260,9 +271,9 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> VisitDoWhileStatement(DoWhileStatement s)
         {
             var instructions = new List<IInstruction>();
-            var labelId = GetNextLabelId();
-            var topLabel = $"do_while_top_{labelId}";
-            var exitLabel = $"do_while_exit_{labelId}";
+            s.LabelId = GetNextLabelId();
+            var topLabel = s.GetLoopLabel();
+            var exitLabel = s.GetExitLabel();
 
             instructions.Add(new Label(topLabel));
             instructions.AddRange(VisitCompoundStatement(s.Body));
@@ -275,9 +286,9 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> VisitForStatement(ForStatement s)
         {
             var instructions = new List<IInstruction>();
-            var labelId = GetNextLabelId();
-            var topLabel = $"for_top_{labelId}";
-            var exitLabel = $"for_exit_{labelId}";
+            s.LabelId = GetNextLabelId();
+            var topLabel = s.GetLoopLabel();
+            var exitLabel = s.GetExitLabel();
 
             instructions.AddRange(VisitStatement(s.InitialStatement));
             instructions.Add(new Label(topLabel));
@@ -287,6 +298,39 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             instructions.Add(new Jump(topLabel));
             instructions.Add(new Label(exitLabel));
             return instructions;
+        }
+
+        private static List<IInstruction> VisitBreakStatement(BreakStatement s)
+        {
+            if (s.EnclosingLoop == null)
+            {
+                throw new Exception("EnclosingLoop was null");
+            }
+
+            return new List<IInstruction>()
+            {
+                new Jump(s.EnclosingLoop.GetExitLabel())
+            };
+        }
+
+        private static List<IInstruction> VisitContinueStatement(ContinueStatement s)
+        {
+            if (s.EnclosingLoop == null)
+            {
+                throw new Exception("EnclosingLoop was null");
+            }
+            
+            if (s.EnclosingLoop is ForStatement forLoop)
+            {
+                var instructions = VisitStatement(forLoop.UpdateStatement);
+                instructions.Add(new Jump(s.EnclosingLoop.GetLoopLabel()));
+                return instructions;
+            }
+
+            return new List<IInstruction>()
+            {
+                new Jump(s.EnclosingLoop.GetLoopLabel())
+            };
         }
 
         private static List<IInstruction> VisitReturnStatement(ReturnStatement s)
@@ -304,6 +348,13 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             }
 
             instructions.Add(new Jump(s.EnclosingFunction.ReturnLabel));
+            return instructions;
+        }
+
+        private static List<IInstruction> VisitExitStatement(ExitStatement s)
+        {
+            var instructions = ExpressionRValue(s.Expression);
+            instructions.Add(new Jump(ProgramRoot.ExitLabel)); // TODO return error code to OS when running
             return instructions;
         }
 
@@ -457,6 +508,21 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                             break;
                         case RealType:
                             instructions.Add(new DivideFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {e.Type}");
+                    }
+                    break;
+                case BinaryOperator.Modulo:
+                    instructions.AddRange(ExpressionRValue(e.LeftOperand));
+                    instructions.AddRange(ExpressionRValue(e.RightOperand));
+                    switch (e.Type)
+                    {
+                        case IntegralType:
+                            instructions.Add(new Modulo(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new ModuloFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                             break;
                         default:
                             throw new Exception($"Invalid type: {e.Type}");
