@@ -32,7 +32,7 @@
         public static IEnumerable<(string Id, string Contents)> EnumerateTestInput(string testType)
         {
             var inputDir = GetTestInputDir(testType);
-            foreach (var file in Directory.EnumerateFiles(inputDir))
+            foreach (var file in Directory.EnumerateFiles(inputDir, "*.mc"))
             {
                 var id = Path.GetFileName(file).Replace("test", "").Replace(".mc", "");
                 yield return (id, File.ReadAllText(file));
@@ -82,10 +82,25 @@
             var refFile = Path.Combine(refDir, $"test{id}.ref");
             if (Path.Exists(refFile))
             {
-                return File.ReadAllText(refFile);
+                return NormalizeText(File.ReadAllText(refFile));
             }
 
             return null;
+        }
+
+        public static StringReader GetTestInputStream(string testType, string id)
+        {
+            var inputDir = GetTestInputDir(testType);
+            var inFile = Path.Combine(inputDir, $"test{id}.in");
+            return new StringReader(NormalizeText(File.ReadAllText(inFile)));
+        }
+
+        public static string NormalizeText(string output)
+        {
+            return output
+                .Replace("\r\n", "\n")
+                .Replace("\t", "    ")
+                .Trim();
         }
     }
 }

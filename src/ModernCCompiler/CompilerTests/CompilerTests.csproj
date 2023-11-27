@@ -32,7 +32,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="TestFiles\In\Reading\" />
     <Folder Include="TestFiles\In\TopLevelSemanticErrors\" />
+    <Folder Include="TestFiles\Ref\Reading\" />
   </ItemGroup>
 
 </Project>

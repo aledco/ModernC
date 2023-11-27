@@ -1,4 +1,5 @@
-﻿using Compiler.Models.NameResolution.Types;
+﻿using Compiler.ErrorHandling;
+using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Symbols;
 using Compiler.Models.Tree;
 
@@ -23,7 +24,7 @@ namespace Compiler.Models.NameResolution
         {
             if (_table.ContainsKey(id.Value))
             {
-                throw new AlreadyDefinedException(id);
+                ErrorHandler.Throw("Identifier is already defined", id);
             }
 
             _table[id.Value] = new Symbol(id.Value, this, type);
@@ -38,7 +39,7 @@ namespace Compiler.Models.NameResolution
                     return _parent.Lookup(id);
                 }
 
-                throw new NotDefinedException(id);
+                ErrorHandler.Throw("Identifier is not defined", id);
             }
 
             return _table[id.Value];
@@ -63,20 +64,6 @@ namespace Compiler.Models.NameResolution
         public bool HasParent()
         {
             return _parent != null;
-        }
-
-        private class AlreadyDefinedException : Exception
-        {
-            public AlreadyDefinedException(IdNode id) : base($"{id.Value} has already been defined: {id.Span}")
-            {
-            }
-        }
-
-        private class NotDefinedException : Exception
-        {
-            public NotDefinedException(IdNode id) : base($"{id.Value} has not been defined: {id.Span}")
-            {
-            }
         }
     }
 }

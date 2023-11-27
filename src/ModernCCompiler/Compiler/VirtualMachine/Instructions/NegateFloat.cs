@@ -13,7 +13,7 @@ namespace Compiler.VirtualMachine.Instructions
             _src = src;
         }
 
-        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextWriter outStream)
+        public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextReader inStream, TextWriter outStream)
         {
             registers[_dst] = ToInt(-ToFloat(registers[_src]));
         }

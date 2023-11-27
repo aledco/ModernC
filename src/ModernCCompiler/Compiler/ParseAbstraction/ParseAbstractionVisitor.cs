@@ -225,6 +225,14 @@ namespace Compiler.ParseAbstraction
             return new WhileStatement(span, expression, body);
         }
 
+        public override DoWhileStatement VisitDoWhileStatement([NotNull] DoWhileStatementContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var body = VisitCompoundStatement(context.compoundStatement());
+            var expression = VisitExpression(context.expression());
+            return new DoWhileStatement(span, body, expression);
+        }
+
         public override ForStatement VisitForStatement([NotNull] ForStatementContext context)
         {
             var span = GetSpanOfContext(context);
@@ -324,40 +332,18 @@ namespace Compiler.ParseAbstraction
 
         public override Expression VisitFactor([NotNull] FactorContext context)
         {
-            if (context.unaryExpression() != null)
-            {
-                return VisitUnaryExpression(context.unaryExpression());
-            }
-            else if (context.callExpression() != null)
-            {
-                return VisitCallExpression(context.callExpression());
-            }
-            else if (context.idExpression() != null)
-            {
-                return VisitIdExpression(context.idExpression());
-            }
-            else if (context.intLiteral() != null)
-            {
-                return VisitIntLiteral(context.intLiteral());
-            }
-            else if (context.byteLiteral() != null)
-            {
-                return VisitByteLiteral(context.byteLiteral());
-            }
-            else if (context.floatLiteral() != null)
-            {
-                return VisitFloatLiteral(context.floatLiteral());
-            }
-            else if (context.boolLiteral() != null)
-            {
-                return VisitBoolLiteral(context.boolLiteral());
-            }
-            else if (context.expression() != null)
+            if (context.expression() != null)
             {
                 return VisitExpression(context.expression());
             }
 
-            throw new Exception($"Tried to parse {context.GetText()} as an expression, something is wrong with the compiler");
+            var ast = base.VisitFactor(context);
+            if (ast is Expression expression)
+            {
+                return expression;
+            }
+
+            throw new Exception($"Tried to parse {ast.GetType()} as an expression, something is wrong with the compiler");
         }
 
         public override UnaryOperatorExpression VisitUnaryExpression([NotNull] UnaryExpressionContext context)
@@ -383,6 +369,12 @@ namespace Compiler.ParseAbstraction
                 .Select(VisitExpression)
                 .ToList();
             return new ArgumentList(span, arguments);
+        }
+
+        public override ReadExpression VisitReadExpression([NotNull] ReadExpressionContext context)
+        {
+            var span = GetSpanOfContext(context);
+            return new ReadExpression(span);
         }
 
         public override IntLiteralExpression VisitIntLiteral([NotNull] IntLiteralContext context)
@@ -485,6 +477,7 @@ namespace Compiler.ParseAbstraction
             return op switch
             {
                 "==" => BinaryOperator.EqualTo,
+                "!=" => BinaryOperator.NotEqualTo,
                 "<" => BinaryOperator.LessThan,
                 "<=" => BinaryOperator.LessThanEqualTo,
                 ">" => BinaryOperator.GreaterThan,
@@ -536,7 +529,17 @@ namespace Compiler.ParseAbstraction
         {
             return escaped switch
             {
-                "\\n" => Convert.ToByte('\n'), // TODO add more escape sequences
+                "\\a" => Convert.ToByte('\a'),
+                "\\b" => Convert.ToByte('\b'),
+                "\\f" => Convert.ToByte('\f'),
+                "\\n" => Convert.ToByte('\n'),
+                "\\r" => Convert.ToByte('\r'),
+                "\\t" => Convert.ToByte('\t'),
+                "\\v" => Convert.ToByte('\v'),
+                "\\\\" => Convert.ToByte('\\'),
+                "\\\'" => Convert.ToByte('\''),
+                "\\\"" => Convert.ToByte('\"'),
+                "\\0" => Convert.ToByte('\0'),
                 _ => throw new Exception($"{escaped} is not recognized as an escape sequence.")
             };
         }

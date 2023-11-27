@@ -158,6 +158,12 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitWhileStatement([NotNull] ModernCParser.WhileStatementContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.doWhileStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitDoWhileStatement([NotNull] ModernCParser.DoWhileStatementContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.forStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -223,6 +229,12 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitArgumentList([NotNull] ModernCParser.ArgumentListContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.readExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitReadExpression([NotNull] ModernCParser.ReadExpressionContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.intLiteral"/>.
 	/// </summary>

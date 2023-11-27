@@ -39,6 +39,7 @@ statement
     : simpleStatement ';'
     | ifStatement
     | whileStatement
+    | doWhileStatement
     | forStatement
     | compoundStatement;
 
@@ -80,6 +81,9 @@ elsePart
 whileStatement
     : 'while' expression compoundStatement;
 
+doWhileStatement
+    : 'do' compoundStatement 'while' expression ';';
+
 forStatement
     : 'for' simpleStatement ';' expression ';' simpleStatement compoundStatement;
 
@@ -95,7 +99,7 @@ orExpression
     | andExpression;
 
 andExpression
-    : andExpression ('=='|'<'|'<='|'>'|'>=') comparison
+    : andExpression ('=='|'!='|'<'|'<='|'>'|'>=') comparison
     | comparison;
 
 comparison
@@ -109,6 +113,7 @@ term
 factor
     : unaryExpression
     | callExpression
+    | readExpression
     | intLiteral
     | byteLiteral
     | floatLiteral
@@ -124,6 +129,9 @@ callExpression
 
 argumentList
     : expression (',' expression)*;
+
+readExpression
+    : 'read';
 
 intLiteral
     : INT;

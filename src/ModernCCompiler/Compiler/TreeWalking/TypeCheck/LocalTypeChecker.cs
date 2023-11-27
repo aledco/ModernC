@@ -83,6 +83,9 @@ namespace Compiler.TreeWalking.TypeCheck
                 case WhileStatement s:
                     VisitWhileStatement(s, context);
                     break;
+                case DoWhileStatement s:
+                    VisitDoWhileStatement(s, context);
+                    break;
                 case ForStatement s:
                     VisitForStatement(s, context);
                     break;
@@ -129,14 +132,19 @@ namespace Compiler.TreeWalking.TypeCheck
             var leftType = VisitExpression(statement.Left, context);
             context.LValue = false;
 
-            if (leftType is RealType && rightType is NumberType)
+            switch (leftType)
             {
-                return;
-            }
+                case RealType when rightType is NumberType:
+                    break;
+                case IntegralType when rightType is IntegralType:
+                    break;
+                default:
+                    if (leftType != rightType)
+                    {
+                        ErrorHandler.Throw("Variable assignment must have matching types.", statement);
+                    }
 
-            if (leftType != rightType)
-            {
-                ErrorHandler.Throw("Variable assignment must have matching types.", statement);
+                    break;
             }
         }
 
@@ -146,9 +154,9 @@ namespace Compiler.TreeWalking.TypeCheck
             var leftType = VisitExpression(s.Left, context);
             context.LValue = false;
 
-            if (leftType is not NumberType)
+            if (leftType is not IntegralType)
             {
-                ErrorHandler.Throw("Increment statements cannot be used on non number types", s);
+                ErrorHandler.Throw("Increment statements cannot be used on non integral types", s);
             }
         }
 
@@ -157,12 +165,19 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             var type = statement.Type.ToSemanticType();
             var expressionType = VisitExpression(statement.Expression, context);
-            if (type is RealType && expressionType is NumberType)
+            switch (type)
             {
-            }
-            else if (type != expressionType)
-            {
-                ErrorHandler.Throw("Variable assignment must have matching types.", statement);
+                case RealType when expressionType is NumberType:
+                    break;
+                case IntegralType when expressionType is IntegralType:
+                    break;
+                default:
+                    if (type != expressionType)
+                    {
+                        ErrorHandler.Throw("Variable assignment must have matching types.", statement);
+                    }
+
+                    break;
             }
 
             context.Scope?.Add(statement.Id, type);
@@ -216,7 +231,17 @@ namespace Compiler.TreeWalking.TypeCheck
 
             VisitCompoundStatement(s.Body, context);
         }
-        
+
+        private static void VisitDoWhileStatement(DoWhileStatement s, Context context)
+        {
+            VisitCompoundStatement(s.Body, context);
+            var expressionType = VisitExpression(s.Expression, context);
+            if (expressionType is not BoolType)
+            {
+                ErrorHandler.Throw("Do while loop expression must be of type boolean", s);
+            }
+        }
+
         private static void VisitForStatement(ForStatement s, Context context)
         {
             VisitStatement(s.InitialStatement, context);
@@ -268,6 +293,7 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 BinaryOperatorExpression e => VisitBinaryOperatorExpression(e, context),
                 CallExpression e => VisitCallExpression(e, context),
+                ReadExpression => new ByteType(),
                 UnaryOperatorExpression e => VisitUnaryOperatorExpression(e, context),
                 IdExpression e => VisitIdExpression(e, context),
                 IntLiteralExpression => new IntType(),
@@ -317,17 +343,25 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             var leftType = VisitExpression(e.LeftOperand, context);
             var rightType = VisitExpression(e.RightOperand, context);
-            if (leftType is NumberType && rightType is NumberType)
+            switch (leftType)
             {
-            }
-            else if (leftType != rightType)
-            {
-                ErrorHandler.Throw("Binary operands must have matching types.", e);
+                case IntegralType when rightType is IntegralType:
+                    break;
+                case RealType when rightType is RealType:
+                    break;
+                default:
+                    if (leftType != rightType)
+                    {
+                        ErrorHandler.Throw("Binary operands must have matching types.", e);
+                    }
+
+                    break;
             }
 
             switch (e.Operator)
             {
                 case BinaryOperator.EqualTo:
+                case BinaryOperator.NotEqualTo:
                 case BinaryOperator.LessThan:
                 case BinaryOperator.LessThanEqualTo:
                 case BinaryOperator.GreaterThan:

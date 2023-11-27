@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Added by me
 src/ModernCCompiler/CompilerTests/TestFiles/Out/
+publish/
+mcc.exe
+mcc

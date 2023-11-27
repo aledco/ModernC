@@ -7,8 +7,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup>
+	<AssemblyName>mcc</AssemblyName>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.13.1" />
+    <PackageReference Include="Mono.Options" Version="6.12.0.148" />
   </ItemGroup>
 
 </Project>
