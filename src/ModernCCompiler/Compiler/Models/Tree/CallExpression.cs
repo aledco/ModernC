@@ -1,11 +1,16 @@
-﻿namespace Compiler.Models.Tree
+﻿using System.Text.Json.Serialization;
+
+namespace Compiler.Models.Tree
 {
-    public class CallExpression : Expression
+    public class CallExpression : TailedExpression
     {
-        public IdExpression Function { get; }
+        public Expression Function { get; }
         public ArgumentList ArgumentList { get; }
 
-        public CallExpression(Span span, IdExpression function, ArgumentList? args) : base(span)
+        [JsonIgnore]
+        public FunctionDefinition? TargetFunction { get; set; }
+
+        public CallExpression(Span span, Expression function, ArgumentList? args) : base(span, function)
         {
             Function = function;
             ArgumentList = args ?? new ArgumentList();

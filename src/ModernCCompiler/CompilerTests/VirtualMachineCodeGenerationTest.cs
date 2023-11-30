@@ -2,6 +2,7 @@
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking.CodeGeneration.VirtualMachine;
 using Compiler.TreeWalking.TypeCheck;
+using Compiler.Utils;
 using Compiler.VirtualMachine;
 
 namespace CompilerTests
@@ -14,7 +15,7 @@ namespace CompilerTests
         [TestInitialize]
         public void Setup()
         {
-            ErrorHandler.Testing = false;
+            ErrorHandler.ThrowExceptions = true;
         }
 
         [TestMethod]
@@ -25,7 +26,7 @@ namespace CompilerTests
             {
                 Console.WriteLine(Id);
                 var tree = Parser.Parse(Contents);
-                TopLevelTypeChecker.Walk(tree);
+                GlobalTypeChecker.Walk(tree);
                 LocalTypeChecker.Walk(tree);
                 var instructions = CodeGenerator.Walk(tree);
 
@@ -38,7 +39,9 @@ namespace CompilerTests
                 var expected = TestFileManager.GetTestReference(testType, Id);
                 Assert.IsNotNull(expected);
                 var actual = TestFileManager.NormalizeText(outStream.ToString());
-                Assert.AreEqual(actual, expected);
+                Assert.AreEqual(expected, actual);
+
+                Globals.Clear();
             }
         }
 
@@ -50,7 +53,7 @@ namespace CompilerTests
             {
                 Console.WriteLine(Id);
                 var tree = Parser.Parse(Contents);
-                TopLevelTypeChecker.Walk(tree);
+                GlobalTypeChecker.Walk(tree);
                 LocalTypeChecker.Walk(tree);
                 var instructions = CodeGenerator.Walk(tree);
 

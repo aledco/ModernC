@@ -15,7 +15,7 @@ public class ParserTest
     [TestInitialize]
     public void Setup()
     {
-        ErrorHandler.Testing = true;
+        ErrorHandler.ThrowExceptions = true;
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ public class ParserTest
     [TestMethod]
     public void TestAllSemanticErrors()
     {
-        var testType = "TopLevelSemanticErrors";
+        var testType = "GlobalSemanticErrors";
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);

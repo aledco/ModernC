@@ -1,6 +1,4 @@
-﻿using static Antlr4.Runtime.Atn.SemanticContext;
-
-namespace Compiler.Models.Tree
+﻿namespace Compiler.Models.Tree
 {
     public class VariableDefinitionStatement : Statement
     {

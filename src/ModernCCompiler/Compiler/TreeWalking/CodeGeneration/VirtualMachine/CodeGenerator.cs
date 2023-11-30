@@ -1,4 +1,5 @@
 ﻿using Compiler.ErrorHandling;
+using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
@@ -24,11 +25,17 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> VisitProgramRoot(ProgramRoot program)
         {
-            var instructions = new List<IInstruction>()
+            var instructions = program.GlobalStatements
+                .SelectMany(VisitStatement)
+                .ToList(); // TODO make data section to put declarations in
+
+            instructions.AddRange(new IInstruction[]
             {
+                new Blank(),
                 new Call(ProgramRoot.MainFunctionLabel),
-                new Jump(ProgramRoot.ExitLabel)
-            };
+                new Jump(ProgramRoot.ExitLabel),
+                new Blank(),
+            });
 
             instructions.AddRange(program.FunctionDefinitions.SelectMany(VisitFunctionDefinition));
             instructions.Add(new Label(ProgramRoot.ExitLabel));
@@ -143,9 +150,48 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return instructions;
         }
 
-        private static List<IInstruction> VisitVariableDefinitionStatement(VariableDefinitionStatement _)
+        private static List<IInstruction> VisitVariableDefinitionStatement(VariableDefinitionStatement s)
         {
-            return new List<IInstruction>();
+            if (s.Id.Symbol == null)
+            {
+                throw new Exception("Symbol was null");
+            }
+
+            var instructions = new List<IInstruction>();
+            if (s.Type is UserDefinedTypeNode userDefinedTypeNode)
+            {
+                var definition = SymbolTable.LookupDefinition(userDefinedTypeNode);
+                switch (definition) 
+                {
+                    case StructDefinition d:
+                        foreach (var field in d.Fields)
+                        {
+                            if (field.DefaultExpression != null)
+                            {
+                                instructions.AddRange(ExpressionRValue(field.DefaultExpression));
+                                if (s.Id.Symbol.IsGlobal)
+                                {
+                                    instructions.Add(new DeclareGlobal(s.Id.Symbol.Name, s.Id.Symbol.Type.GetSizeInWords()));
+                                    instructions.Add(new LoadLabel(Registers.Temporary, s.Id.Symbol.Name));
+                                    instructions.Add(new Store(Registers.Temporary, field.DefaultExpression.Register));
+                                }
+                                else
+                                {
+                                    instructions.Add(new Store(Registers.FramePointer, field.DefaultExpression.Register, s.Id.Symbol.Offset + field.Offset));
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        throw new NotImplementedException();
+                }
+            }
+            else if (s.Id.Symbol.IsGlobal)
+            {
+                instructions.Add(new DeclareGlobal(s.Id.Symbol.Name, s.Id.Symbol.Type.GetSizeInWords()));
+            }
+
+            return instructions;
         }
 
         private static List<IInstruction> VisitAssignmentStatement(AssignmentStatement s)
@@ -153,20 +199,23 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             var instructions = new List<IInstruction>();
             if (s.BinaryExpression != null)
             {
-                if (s.Left.AssignmentRegister == null)
+                if (s.Left.ExtraRegister == null)
                 {
                     throw new Exception("AssignmentRegister was null");
                 }
 
                 instructions.AddRange(BinaryOperatorExpressionRValue(s.BinaryExpression));
                 instructions.AddRange(ExpressionLValue(s.Left));
-                instructions.Add(new Store(s.Left.AssignmentRegister, s.BinaryExpression.Register));
+                instructions.Add(new Store(s.Left.ExtraRegister, s.BinaryExpression.Register));
             }
             else
             {
                 instructions.AddRange(ExpressionRValue(s.Right));
                 instructions.AddRange(ExpressionLValue(s.Left));
-                instructions.Add(new Store(s.Left.Register, s.Right.Register));
+                if (s.Right is not ArrayLiteralExpression)
+                {
+                    instructions.Add(new Store(s.Left.Register, s.Right.Register));
+                }
             }
 
             return instructions;
@@ -175,7 +224,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> VisitIncrementStatement(IncrementStatement s)
         {
             var instructions = new List<IInstruction>();
-            if (s.Left.AssignmentRegister == null)
+            if (s.Left.ExtraRegister == null)
             {
                 throw new Exception("AssignmentRegister was null");
             }
@@ -193,7 +242,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             }
             
             instructions.AddRange(ExpressionLValue(s.Left));
-            instructions.Add(new Store(s.Left.AssignmentRegister, s.Left.Register));
+            instructions.Add(new Store(s.Left.ExtraRegister, s.Left.Register));
             return instructions;
         }
 
@@ -205,7 +254,20 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             }
 
             var instructions = ExpressionRValue(s.Expression);
-            instructions.Add(new Store("FP", s.Expression.Register, s.Id.Symbol.Offset));
+            if (s.Expression is not ArrayLiteralExpression)
+            {
+                if (s.Id.Symbol.IsGlobal)
+                {
+                    instructions.Add(new DeclareGlobal(s.Id.Symbol.Name, s.Id.Symbol.Type.GetSizeInWords()));
+                    instructions.Add(new LoadLabel(Registers.Temporary, s.Id.Symbol.Name));
+                    instructions.Add(new Store(Registers.Temporary, s.Expression.Register));
+                }
+                else
+                {
+                    instructions.Add(new Store(Registers.FramePointer, s.Expression.Register, s.Id.Symbol.Offset));
+                }
+            }
+            
             return instructions;
         }
 
@@ -365,14 +427,17 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 BinaryOperatorExpression e => BinaryOperatorExpressionRValue(e),
                 UnaryOperatorExpression e => UnaryOperatorExpressionRValue(e),
                 CallExpression e => CallExpressionRValue(e),
+                ArrayIndexExpression e => ArrayIndexExpressionRVaule(e),
+                FieldAccessExpression e => FieldAccessExpressionRValue(e),
                 ReadExpression e => ReadExpressionRValue(e),
                 IdExpression e => IdExpressionRValue(e),
+                ArrayLiteralExpression e => ArrayLiteralExpressionRValue(e),
                 IntLiteralExpression e => IntLiteralExpressionRValue(e),
                 ByteLiteralExpression e => ByteLiteralExpressionRValue(e),
                 FloatLiteralExpression e => FloatLiteralExpressionRValue(e),
                 BoolLiteralExpression e => BoolLiteralExpressionRValue(e),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
-            };
+            }; ;
         }
 
         private static List<IInstruction> BinaryOperatorExpressionRValue(BinaryOperatorExpression e)
@@ -550,24 +615,31 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> UnaryOperatorExpressionRValue(UnaryOperatorExpression e)
         {
             var instructions = ExpressionRValue(e.Operand);
-            instructions.Add(
-                e.Operator switch
-                {
-                    UnaryOperator.Minus => new Negate(e.Register, e.Register),
-                    UnaryOperator.Not => new Not(e.Register, e.Register),
-                    _ => throw new Exception($"Unrecognized unary operator: {e.Operator}")
-                });
+            switch (e.Operator)
+            {
+                case UnaryOperator.Not:
+                    instructions.Add(new Not(e.Register, e.Register));
+                    break;
+                case UnaryOperator.Minus:
+                    switch (e.Type)
+                    {
+                        case IntegralType:
+                            instructions.Add(new Negate(e.Register, e.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new NegateFloat(e.Register, e.Register));
+                            break;
+                    }
+
+                    break;
+            }
+
             return instructions;
         }
 
         private static List<IInstruction> CallExpressionRValue(CallExpression e)
         {
-            if (e.Function.Id.Symbol?.EnclosingFunction == null)
-            {
-                throw new Exception("EnclosingFunction was null");
-            }
-
-            var instructions = IdExpressionRValue(e.Function);
+            var instructions = ExpressionRValue(e.Function);
             instructions.Add(new AddImmediate(Registers.StackPointer, Registers.StackPointer, e.ArgumentList.Arguments.Count + 1));
 
             for (var i = 0; i < e.ArgumentList.Arguments.Count; i++)
@@ -587,6 +659,21 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return instructions;
         }
 
+        private static List<IInstruction> ArrayIndexExpressionRVaule(ArrayIndexExpression e)
+        {
+            var instructions = ArrayIndexExpressionLValue(e);
+            instructions.Add(new Load(e.Register, e.Register));
+            return instructions;
+        }
+
+        private static List<IInstruction> FieldAccessExpressionRValue(FieldAccessExpression e)
+        {
+            var instructions = ExpressionLValue(e.Left);
+            // TODO may need to do something differen for complex types
+            instructions.Add(new Load(e.Register, e.Left.Register, e.Offset));
+            return instructions;
+        }
+
         private static List<IInstruction> ReadExpressionRValue(ReadExpression e)
         {
             return new List<IInstruction>()
@@ -602,7 +689,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 throw new Exception("Symbol was null");
             }
 
-            if (e.Id.Symbol.Type is FunctionType && e.Id.Symbol.IsGlobal)
+            if (e.Id.Symbol.Type is FunctionType && e.Id.Symbol.IsDefinedGlobalFunction)
             {
                 if (e.Id.Symbol.EnclosingFunction == null)
                 {
@@ -614,11 +701,42 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     new LoadLabel(e.Register, e.Id.Symbol.EnclosingFunction.EnterLabel)
                 };
             }
+            else if (e.Id.Symbol.IsGlobal)
+            {
+                return new List<IInstruction>
+                {
+                    new LoadLabel(e.Register, e.Id.Symbol.Name),
+                    new Load(e.Register, e.Register)
+                };
+            }
+
+            //else if (e.Id.Symbol.Type is ArrayType)
+            //{
+            //    return ExpressionLValue(e);
+            //}
 
             return new List<IInstruction>
             {
                 new Load(e.Register, Registers.FramePointer, e.Id.Symbol.Offset),
             };
+        }
+
+        private static List<IInstruction> ArrayLiteralExpressionRValue(ArrayLiteralExpression e)
+        {
+            // TODO fix this once done with structs and arrays
+            var instructions = new List<IInstruction>();
+            for (var i = 0; i < e.Elements.Count; i++)
+            {
+                var elem = e.Elements[i];
+                instructions.AddRange(ExpressionRValue(elem));
+                if (elem.Type != null && elem.Type is not ArrayType)
+                {
+                    var offset = e.Offset + (i * elem.Type.GetSizeInWords());
+                    instructions.Add(new Store(Registers.FramePointer, elem.Register, offset));
+                }
+            }
+
+            return instructions;
         }
 
         private static List<IInstruction> IntLiteralExpressionRValue(IntLiteralExpression e)
@@ -657,6 +775,8 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return expression switch
             {
                 IdExpression e => IdExpressionLValue(e),
+                ArrayIndexExpression e => ArrayIndexExpressionLValue(e),
+                FieldAccessExpression e => FieldAccessExpressionLValue(e),
                 Expression e => NoExpressionLValue(e),
             };
         }
@@ -668,10 +788,50 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 throw new Exception("Symbol was null");
             }
 
+            if (e.Id.Symbol.IsGlobal)
+            {
+                return new List<IInstruction>()
+                {
+                    new LoadLabel(e.ExtraRegister ?? e.Register, e.Id.Symbol.Name),
+                };
+            }
+
             return new List<IInstruction>()
             {
-                new AddImmediate(e.AssignmentRegister ?? e.Register, "FP", e.Id.Symbol.Offset)
+                new AddImmediate(e.ExtraRegister ?? e.Register, Registers.FramePointer, e.Id.Symbol.Offset)
             };
+        }
+
+        private static List<IInstruction> ArrayIndexExpressionLValue(ArrayIndexExpression e)
+        {
+            if (e.Array.Type == null || e.Index.Type == null)
+            {
+                throw new Exception("Type was null");
+            }
+
+            var instructions = ExpressionLValue(e.Array);
+            instructions.AddRange(ExpressionRValue(e.Index));
+            if (e.Index.Type.GetSizeInWords() > 1)
+            {
+                if (e.Index.ExtraRegister == null)
+                {
+                    throw new Exception("ExtraRegister was null");
+                }
+
+                instructions.Add(new LoadImmediate(e.Index.ExtraRegister, e.Array.Type.GetSizeInWords()));
+                instructions.Add(new Multiply(e.Index.Register, e.Index.Register, e.Index.ExtraRegister));
+            }
+            
+            instructions.Add(new Add(e.Register, e.Array.Register, e.Index.Register));
+            return instructions;
+        }
+
+        private static List<IInstruction> FieldAccessExpressionLValue(FieldAccessExpression e)
+        {
+            var instructions = ExpressionLValue(e.Left);
+            // TODO may need to do something differen for complex types
+            instructions.Add(new AddImmediate(e.Register, e.Left.Register, e.Offset));
+            return instructions;
         }
 
         private static List<IInstruction> NoExpressionLValue(Expression e)

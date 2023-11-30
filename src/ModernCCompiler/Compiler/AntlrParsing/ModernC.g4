@@ -4,7 +4,11 @@ grammar ModernC;
  * Parsing rules
  */
 program
-    : functionDefinition functionDefinition* EOF;
+    : (topLevelStatement|definition|functionDefinition)* EOF;
+
+topLevelStatement
+    : variableDefinitionStatement ';'
+    | variableDefinitionAndAssignmentStatement ';';
 
 functionDefinition
     : type id '(' parameterList? ')' compoundStatement;
@@ -15,10 +19,22 @@ parameterList
 parameter
     : type id;
 
+definition
+    : structDefinition;
+
+structDefinition
+     : STRUCT userDefinedType '{' structFieldDefinition+ '}';
+
+structFieldDefinition
+    : type id ';'
+    | type id '=' expression ';';
+    
 type
     : VOID_TYPE
     | primitiveType
-    | functionType;
+    | type '[' intLiteral ']' // array type
+    | functionType
+    | userDefinedType; // user-defined type
 
 primitiveType
     : INT_TYPE 
@@ -28,6 +44,9 @@ primitiveType
 
 functionType
     : FUNC '(' typeList ')';
+
+userDefinedType
+    : id;
 
 typeList
     : type (',' type)*;
@@ -66,16 +85,18 @@ variableDefinitionStatement
     : type id;
 
 variableDefinitionAndAssignmentStatement
-    : type id '=' expression;
+    : type id '=' expression
+    | type id '=' arrayLiteral;
 
 assignmentStatement
-    : expression ('='|'+='|'-='|'*='|'/='|'%=') expression;
+    : expression ('='|'+='|'-='|'*='|'/='|'%=') expression
+    | expression '=' arrayLiteral;
 
 incrementStatement
     : expression ('++'|'--');
 
 callStatement
-    : callExpression;
+    : tailedExpression;
 
 ifStatement
     : IF expression compoundStatement elifPart* elsePart?;
@@ -130,7 +151,7 @@ term
 
 factor
     : unaryExpression
-    | callExpression
+    | tailedExpression
     | readExpression
     | intLiteral
     | byteLiteral
@@ -142,11 +163,21 @@ factor
 unaryExpression
     : ('-'|NOT) factor;
 
-callExpression
-    : idExpression '(' argumentList? ')';
+tailedExpression
+    : idExpression (callExpressionTail|arrayExpressionTail|fieldAccessExpressionTail)
+    | tailedExpression (callExpressionTail|arrayExpressionTail|fieldAccessExpressionTail);
+
+callExpressionTail
+    : '(' argumentList? ')';
 
 argumentList
     : expression (',' expression)*;
+
+arrayExpressionTail
+    : '[' expression ']';
+
+fieldAccessExpressionTail
+    : '.' id;
 
 readExpression
     : READ;
@@ -166,6 +197,12 @@ boolLiteral
 idExpression
     : id;
 
+arrayLiteral
+    : '[' expressionList ']';
+
+expressionList
+    : expression (',' expression)*;
+
 id
     : ID;
 
@@ -179,6 +216,7 @@ INT_TYPE            : 'int';
 BYTE_TYPE           : 'byte';
 FLOAT_TYPE          : 'float';
 BOOL_TYPE           : 'bool';
+ARR                 : 'arr';
 FUNC                : 'func';
 
 // other keywords
@@ -199,6 +237,7 @@ EXIT                : 'exit';
 NOT                 : 'not';
 OR                  : 'or';
 AND                 : 'and';
+STRUCT              : 'struct';
 
 TRUE                : 'true';    
 FALSE               : 'false';

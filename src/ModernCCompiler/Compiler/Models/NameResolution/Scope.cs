@@ -7,7 +7,7 @@ namespace Compiler.Models.NameResolution
 {
     public class Scope
     {
-        private readonly Dictionary<string, Symbol> _table = new();
+        private readonly Dictionary<string, Symbol> _symbolTable = new();
         private readonly Scope? _parent;
 
         public Scope()
@@ -20,45 +20,48 @@ namespace Compiler.Models.NameResolution
             _parent = parent;
         }
 
-        public void Add(IdNode id, SemanticType type)
+        public void AddSymbol(IdNode id, SemanticType type)
         {
-            if (_table.ContainsKey(id.Value))
+            if (_symbolTable.ContainsKey(id.Value))
             {
                 ErrorHandler.Throw("Identifier is already defined", id);
             }
+            else if (SymbolTable.TypeExists(id.Value))
+            {
+                ErrorHandler.Throw("Type cannot be redefined as identifier", id);
+            }
 
-            _table[id.Value] = new Symbol(id.Value, this, type);
+            _symbolTable[id.Value] = new Symbol(id.Value, this, type);
         }
 
-        public Symbol Lookup(IdNode id)
+        public Symbol LookupSymbol(IdNode id)
         {
-            if (!_table.ContainsKey(id.Value))
+            if (!_symbolTable.ContainsKey(id.Value))
             {
                 if (_parent != null)
                 {
-                    return _parent.Lookup(id);
+                    return _parent.LookupSymbol(id);
                 }
 
                 ErrorHandler.Throw("Identifier is not defined", id);
             }
 
-            return _table[id.Value];
+            return _symbolTable[id.Value];
         }
 
-        public FunctionDefinition LookupFunction(IdNode id)
+        public bool SymbolExists(string name)
         {
-            if (_parent != null) 
+            if (!_symbolTable.ContainsKey(name))
             {
-                return _parent.LookupFunction(id);
+                if (_parent == null)
+                {
+                    return false;
+                }
+
+                return _parent.SymbolExists(name);
             }
 
-            var symbol = _table[id.Value];
-            if (symbol.EnclosingFunction == null)
-            {
-                throw new Exception("EnclosingFunction was null");
-            }
-
-            return symbol.EnclosingFunction;
+            return true;
         }
 
         public bool HasParent()

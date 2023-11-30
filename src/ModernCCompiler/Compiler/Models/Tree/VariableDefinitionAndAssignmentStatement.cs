@@ -1,6 +1,4 @@
-﻿using Compiler.Models.Operators;
-
-namespace Compiler.Models.Tree
+﻿namespace Compiler.Models.Tree
 {
     public class VariableDefinitionAndAssignmentStatement : Statement
     {

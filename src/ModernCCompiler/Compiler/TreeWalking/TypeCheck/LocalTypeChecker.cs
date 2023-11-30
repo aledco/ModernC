@@ -7,7 +7,7 @@ using Compiler.Models.Tree;
 namespace Compiler.TreeWalking.TypeCheck
 {
     /// <summary>
-    /// Does local type checking for compound statements.
+    /// Performs type checking for code inside functions or data types.
     /// </summary>
     public static class LocalTypeChecker
     {
@@ -28,9 +28,66 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static void VisitProgramRoot(ProgramRoot program, Context context)
         {
+            foreach (var definition in program.Definitions)
+            {
+                VisitDefinition(definition, context);
+            }
             foreach (var functionDefinition in program.FunctionDefinitions)
             {
                 VisitFunctionDefinition(functionDefinition, context);
+            }
+        }
+
+        private static void VisitDefinition(Definition definition, Context context)
+        {
+            switch (definition)
+            {
+                case StructDefinition d:
+                    VisitStructDefinition(d, context);
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
+        private static void VisitStructDefinition(StructDefinition structDefinition, Context context)
+        {
+            foreach (var field in structDefinition.Fields)
+            {
+                var type = field.Type.ToSemanticType();
+                if (type is StructType structType && structType.TypeEquals(structDefinition.Type.ToSemanticType()))
+                {
+                    ErrorHandler.Throw("Recursive structures are not allowed, use a pointer instead", structDefinition);
+                }
+
+                VisitStructFieldDefinition(field, context);
+            }
+        }
+
+        private static void VisitStructFieldDefinition(StructFieldDefinition field, Context context)
+        {
+            var type = field.Type.ToSemanticType();
+            if (field.DefaultExpression != null)
+            {
+                switch (field.DefaultExpression)
+                {
+                    case UnaryOperatorExpression:
+                    case ArrayLiteralExpression:
+                    case IntLiteralExpression:
+                    case ByteLiteralExpression:
+                    case FloatLiteralExpression:
+                    case BoolLiteralExpression: // TODO add id expressions for globals
+                        break;
+                    default:
+                        ErrorHandler.Throw("Expression cannot be a field default expression", field.DefaultExpression);
+                        break;
+                }
+
+                var expressionType = VisitExpression(field.DefaultExpression, context);
+                if (!type.TypeEquals(expressionType))
+                {
+                    ErrorHandler.Throw("Defaul expression type must match", field);
+                }
             }
         }
 
@@ -49,9 +106,9 @@ namespace Compiler.TreeWalking.TypeCheck
         private static void VisitCompoundStatement(CompoundStatement body, Context context)
         {
             body.LocalScope = new Scope(context.Scope);
-            context.Scope = body.LocalScope;
             foreach (var statement in body.Statements)
             {
+                context.Scope = body.LocalScope;
                 VisitStatement(statement, context);
             }
         }
@@ -133,7 +190,7 @@ namespace Compiler.TreeWalking.TypeCheck
         private static void VisitVariableDefinitionStatement(VariableDefinitionStatement statement, Context context)
         {
             var type = statement.Type.ToSemanticType();
-            context.Scope?.Add(statement.Id, type);
+            context.Scope?.AddSymbol(statement.Id, type);
             VisitIdNode(statement.Id, context);
         }
 
@@ -147,6 +204,10 @@ namespace Compiler.TreeWalking.TypeCheck
             else
             {
                 rightType = VisitExpression(statement.Right, context);
+                if (rightType is ArrayType)
+                {
+                    ErrorHandler.Throw("Arrays cannot be reasigned", statement); // TODO remove if move semantics are decided
+                }
             }
             
             context.LValue = true;
@@ -160,7 +221,7 @@ namespace Compiler.TreeWalking.TypeCheck
                 case IntegralType when rightType is IntegralType:
                     break;
                 default:
-                    if (leftType != rightType)
+                    if (!leftType.TypeEquals(rightType))
                     {
                         ErrorHandler.Throw("Variable assignment must have matching types.", statement);
                     }
@@ -193,7 +254,7 @@ namespace Compiler.TreeWalking.TypeCheck
                 case IntegralType when expressionType is IntegralType:
                     break;
                 default:
-                    if (type != expressionType)
+                    if (!type.TypeEquals(expressionType))
                     {
                         ErrorHandler.Throw("Variable assignment must have matching types.", statement);
                     }
@@ -201,7 +262,7 @@ namespace Compiler.TreeWalking.TypeCheck
                     break;
             }
 
-            context.Scope?.Add(statement.Id, type);
+            context.Scope?.AddSymbol(statement.Id, type);
             context.LValue = true;
             VisitIdNode(statement.Id, context);
             context.LValue = false;
@@ -265,6 +326,8 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static void VisitForStatement(ForStatement s, Context context)
         {
+            s.Scope = new Scope(context.Scope);
+            context.Scope = s.Scope;
             VisitStatement(s.InitialStatement, context);
             var expressionType = VisitExpression(s.Expression, context);
             if (expressionType is not BoolType)
@@ -304,6 +367,11 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             if (context.EnclosingFunction?.Id?.Symbol?.Type is FunctionType functionType)
             {
+                if (functionType.ReturnType is ArrayType)
+                {
+                    ErrorHandler.Throw("The compilier does not currently support returning arrays from functions", statement); // TODO remove once copy is implemented 
+                }
+
                 if (functionType.ReturnType is VoidType && statement.Expression != null)
                 {
                     ErrorHandler.Throw("Function has a return type of void and cannot return a value.", statement);
@@ -316,7 +384,7 @@ namespace Compiler.TreeWalking.TypeCheck
                 if (statement.Expression != null)
                 {
                     var expressionType = VisitExpression(statement.Expression, context);
-                    if (functionType.ReturnType is not VoidType && expressionType != functionType.ReturnType)
+                    if (functionType.ReturnType is not VoidType && !expressionType.TypeEquals(functionType.ReturnType))
                     {
                         ErrorHandler.Throw("Function return type does not match return value.", statement);
                     }
@@ -346,9 +414,12 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 BinaryOperatorExpression e => VisitBinaryOperatorExpression(e, context),
                 CallExpression e => VisitCallExpression(e, context),
+                ArrayIndexExpression e => VisitArrayIndexExpression(e, context),
+                FieldAccessExpression e => VisitFieldAccessExpression(e, context),
                 ReadExpression => new ByteType(),
                 UnaryOperatorExpression e => VisitUnaryOperatorExpression(e, context),
                 IdExpression e => VisitIdExpression(e, context),
+                ArrayLiteralExpression e => VisitArrayLiteralExpression(e, context),
                 IntLiteralExpression => new IntType(),
                 ByteLiteralExpression => new ByteType(),
                 FloatLiteralExpression => new FloatType(),
@@ -364,29 +435,66 @@ namespace Compiler.TreeWalking.TypeCheck
             return expression.Type; 
         }
 
+        private static SemanticType VisitFieldAccessExpression(FieldAccessExpression e, Context context)
+        {
+            var type = VisitExpression(e.Left, context);
+            switch (type)
+            {
+                case StructType t:
+                    var fieldType = t.FieldTypes.Where(t => t.Value == e.Id.Value).Select(t => t.Type).FirstOrDefault();
+                    if (fieldType == null)
+                    {
+                        ErrorHandler.Throw("Field does not exist", e);
+                        throw new Exception("ErrorHandler failed to exit application");
+                    }
+
+                    return fieldType;
+                default:
+                    ErrorHandler.Throw("Field access expression is not valid for this type", e);
+                    throw new Exception("ErrorHandler failed to exit application");
+            }
+        }
+
         private static SemanticType VisitCallExpression(CallExpression e, Context context)
         {
-            var type = VisitIdExpression(e.Function, context);
-            if (type is FunctionType functionType)
+            e.Type = VisitExpression(e.Function, context);
+            if (e.Type is FunctionType functionType)
             {
                 var argTypes = VisitArgumentList(e.ArgumentList, context);
                 if (argTypes.Count != functionType.Parameters.Count)
                 {
-                    ErrorHandler.Throw($"{e.Function.Id.Value} was called with an incorrect number of arguments.", e);
+                    ErrorHandler.Throw($"Function was called with an incorrect number of arguments.", e);
                 }
 
                 for (var i = 0; i < argTypes.Count; i++)
                 {
-                    if (argTypes[i] != functionType.Parameters[i])
+                    if (!argTypes[i].TypeEquals(functionType.Parameters[i]))
                     {
-                        ErrorHandler.Throw($"{e.Function.Id.Value} was called with incorrect types.", e);
+                        ErrorHandler.Throw($"Function was called with incorrect types.", e);
                     }
                 }
 
                 return functionType.ReturnType;
             }
 
-            ErrorHandler.Throw($"{e.Function.Id.Value} cannot be called like a function.", e);
+            ErrorHandler.Throw($"Expression cannot be called like a function.", e);
+            throw new Exception("Error handler did not stop execution");
+        }
+        private static SemanticType VisitArrayIndexExpression(ArrayIndexExpression e, Context context)
+        {
+            e.Type = VisitExpression(e.Array, context);
+            if (e.Type is ArrayType arrayType)
+            {
+                var indexType = VisitExpression(e.Index, context);
+                if (indexType is not IntegralType)
+                {
+                    ErrorHandler.Throw("Index expression must be an integer type", e);
+                }
+
+                return arrayType.ElementType;
+            }
+
+            ErrorHandler.Throw("Expression cannot be indexed like an array", e);
             throw new Exception("Error handler did not stop execution");
         }
 
@@ -408,7 +516,7 @@ namespace Compiler.TreeWalking.TypeCheck
                 case RealType when rightType is RealType:
                     break;
                 default:
-                    if (leftType != rightType)
+                    if (!leftType.TypeEquals(rightType))
                     {
                         ErrorHandler.Throw("Binary operands must have matching types.", e);
                     }
@@ -424,7 +532,8 @@ namespace Compiler.TreeWalking.TypeCheck
                 case BinaryOperator.LessThanEqualTo:
                 case BinaryOperator.GreaterThan:
                 case BinaryOperator.GreaterThanEqualTo:
-                    return new BoolType();
+                    e.Type = new BoolType();
+                    break;
                 case BinaryOperator.Plus:
                 case BinaryOperator.Minus:
                 case BinaryOperator.Times:
@@ -435,7 +544,8 @@ namespace Compiler.TreeWalking.TypeCheck
                         ErrorHandler.Throw("Operator is only valid for number types", e);
                     }
 
-                    return leftType;
+                    e.Type = leftType;
+                    break;
                 case BinaryOperator.And:
                 case BinaryOperator.Or:
                     if (leftType is not BoolType)
@@ -443,50 +553,66 @@ namespace Compiler.TreeWalking.TypeCheck
                         ErrorHandler.Throw("Operator is only valid for boolean types", e);
                     }
 
-                    return leftType;
+                    e.Type = leftType;
+                    break;
                 default:
-                    return leftType;
+                    throw new NotImplementedException();
             }
+
+            return e.Type;
         }
 
         private static SemanticType VisitUnaryOperatorExpression(UnaryOperatorExpression e, Context context)
         {
-            return VisitExpression(e.Operand, context);
+            e.Type = VisitExpression(e.Operand, context);
+            switch (e.Operator)
+            {
+                case UnaryOperator.Minus:
+                    if (e.Type is not NumberType)
+                    {
+                        ErrorHandler.Throw("Operator is only valid for numeric types", e);
+                    }
+
+                    return e.Type;
+                case UnaryOperator.Not:
+                    if (e.Type is not BoolType)
+                    {
+                        ErrorHandler.Throw("Operator is only valid for boolean types", e);
+                    }
+
+                    return e.Type;
+                default:
+                    throw new NotImplementedException();
+            }
         }
 
         private static SemanticType VisitIdExpression(IdExpression e, Context context)
         {
-            return VisitIdNode(e.Id, context);
+            e.Type = VisitIdNode(e.Id, context);
+            return e.Type;
         }
 
+        private static SemanticType VisitArrayLiteralExpression(ArrayLiteralExpression e, Context context)
+        {
+            var elementTypes = e.Elements
+                .Select(e => VisitExpression(e, context))
+                .ToList();
+
+            if (!elementTypes.TrueForAll(e => e.TypeEquals(elementTypes.First())))
+            {
+                ErrorHandler.Throw("Array literal elements must all be the same type", e);
+            }
+
+            e.Type = new ArrayType(elementTypes.First(), elementTypes.Count);
+            return e.Type;
+        }
+        
         private static SemanticType VisitIdNode(IdNode id, Context context)
         {
-            id.Symbol = context.Scope?.Lookup(id);
+            id.Symbol = context.Scope?.LookupSymbol(id);
             if (id.Symbol == null)
             {
                 throw new Exception("Symbol was null");
-            }
-
-            if (id.Symbol.Type is FunctionType)
-            {
-                if (context.LValue && id.Symbol.EnclosingFunction == null)
-                {
-                    if (context.RValueFunction == null)
-                    {
-                        throw new Exception("RValueFunction was null");
-                    }
-
-                    id.Symbol.EnclosingFunction = context.RValueFunction;
-                }
-                else if (!context.LValue)
-                {
-                    if (id.Symbol.EnclosingFunction == null)
-                    {
-                        id.Symbol.EnclosingFunction = context.Scope?.LookupFunction(id);
-                    }
-                    
-                    context.RValueFunction = id.Symbol.EnclosingFunction;
-                }
             }
 
             return id.Symbol.Type;

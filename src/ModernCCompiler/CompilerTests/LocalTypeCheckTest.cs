@@ -17,7 +17,7 @@ public class LocalTypeCheckTest
     [TestInitialize]
     public void Setup()
     {
-        ErrorHandler.Testing = true;
+        ErrorHandler.ThrowExceptions = true;
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ public class LocalTypeCheckTest
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
-            TopLevelTypeChecker.Walk(tree);
+            GlobalTypeChecker.Walk(tree);
             LocalTypeChecker.Walk(tree);
             foreach (var functionDefinition in tree.FunctionDefinitions)
             {
@@ -57,7 +57,7 @@ public class LocalTypeCheckTest
         {
             Console.WriteLine(Id);
             var tree = Parser.Parse(Contents);
-            TopLevelTypeChecker.Walk(tree);
+            GlobalTypeChecker.Walk(tree);
             try
             {
                 LocalTypeChecker.Walk(tree);

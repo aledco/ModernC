@@ -2,14 +2,19 @@
 {
     public class FloatType : RealType
     {
-        public override bool Equals(object? obj)
+        public override int GetSizeInBytes()
         {
-            return obj is FloatType;
+            return 4;
         }
 
-        public override int GetHashCode()
+        public override int GetSizeInWords()
         {
-            return base.GetHashCode();
+            return 1;
+        }
+
+        public override bool TypeEquals(SemanticType other)
+        {
+            return other is RealType;
         }
     }
 }

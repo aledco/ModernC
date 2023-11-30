@@ -28,6 +28,18 @@ public class ModernCBaseListener implements ModernCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterTopLevelStatement(ModernCParser.TopLevelStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitTopLevelStatement(ModernCParser.TopLevelStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterFunctionDefinition(ModernCParser.FunctionDefinitionContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -59,6 +71,42 @@ public class ModernCBaseListener implements ModernCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitParameter(ModernCParser.ParameterContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterDefinition(ModernCParser.DefinitionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitDefinition(ModernCParser.DefinitionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterStructDefinition(ModernCParser.StructDefinitionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitStructDefinition(ModernCParser.StructDefinitionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterStructFieldDefinition(ModernCParser.StructFieldDefinitionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitStructFieldDefinition(ModernCParser.StructFieldDefinitionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -100,6 +148,18 @@ public class ModernCBaseListener implements ModernCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterUserDefinedType(ModernCParser.UserDefinedTypeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitUserDefinedType(ModernCParser.UserDefinedTypeContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterTypeList(ModernCParser.TypeListContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -107,18 +167,6 @@ public class ModernCBaseListener implements ModernCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitTypeList(ModernCParser.TypeListContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterCompoundStatement(ModernCParser.CompoundStatementContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitCompoundStatement(ModernCParser.CompoundStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -143,6 +191,18 @@ public class ModernCBaseListener implements ModernCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitSimpleStatement(ModernCParser.SimpleStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterCompoundStatement(ModernCParser.CompoundStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitCompoundStatement(ModernCParser.CompoundStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -304,6 +364,30 @@ public class ModernCBaseListener implements ModernCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterBreakStatement(ModernCParser.BreakStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitBreakStatement(ModernCParser.BreakStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterContinueStatement(ModernCParser.ContinueStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitContinueStatement(ModernCParser.ContinueStatementContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterReturnStatement(ModernCParser.ReturnStatementContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -412,13 +496,25 @@ public class ModernCBaseListener implements ModernCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterCallExpression(ModernCParser.CallExpressionContext ctx) { }
+	@Override public void enterTailedExpression(ModernCParser.TailedExpressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitCallExpression(ModernCParser.CallExpressionContext ctx) { }
+	@Override public void exitTailedExpression(ModernCParser.TailedExpressionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterCallExpressionTail(ModernCParser.CallExpressionTailContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitCallExpressionTail(ModernCParser.CallExpressionTailContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -431,6 +527,18 @@ public class ModernCBaseListener implements ModernCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitArgumentList(ModernCParser.ArgumentListContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterArrayExpressionTail(ModernCParser.ArrayExpressionTailContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitArrayExpressionTail(ModernCParser.ArrayExpressionTailContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -503,6 +611,30 @@ public class ModernCBaseListener implements ModernCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitIdExpression(ModernCParser.IdExpressionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterArrayLiteral(ModernCParser.ArrayLiteralContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitArrayLiteral(ModernCParser.ArrayLiteralContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterExpressionList(ModernCParser.ExpressionListContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExpressionList(ModernCParser.ExpressionListContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

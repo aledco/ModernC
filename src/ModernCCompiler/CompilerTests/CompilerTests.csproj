@@ -33,7 +33,7 @@
 
   <ItemGroup>
     <Folder Include="TestFiles\In\Reading\" />
-    <Folder Include="TestFiles\In\TopLevelSemanticErrors\" />
+    <Folder Include="TestFiles\In\GlobalSemanticErrors\" />
     <Folder Include="TestFiles\Ref\Reading\" />
   </ItemGroup>
 

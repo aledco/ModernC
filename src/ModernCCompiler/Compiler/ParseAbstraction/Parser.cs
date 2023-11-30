@@ -1,9 +1,10 @@
 ﻿using Antlr4.Runtime;
+using Compiler.ErrorHandling;
 using Compiler.Models.Tree;
 
 namespace Compiler.ParseAbstraction
 {
-    public class Parser
+    public static class Parser
     {
         /// <summary>
         /// Parses the input and returns an abstract syntax tree.
@@ -23,7 +24,7 @@ namespace Compiler.ParseAbstraction
             var programContext = modernCParser.program();
             if (modernCParser.NumberOfSyntaxErrors > 0)
             {
-                Environment.Exit(1);
+                ErrorHandler.ParseError();
             }
 
             // Abstract

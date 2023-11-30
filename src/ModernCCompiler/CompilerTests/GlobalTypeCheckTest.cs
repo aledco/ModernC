@@ -9,14 +9,14 @@ namespace CompilerTests;
 /// Tests the top level type checker.
 /// </summary>
 [TestClass]
-public class TopLevelTypeCheckTest
+public class GlobalTypeCheckTest
 {
-    private readonly string _component = "TopLevelTypeCheck";
+    private readonly string _component = "GlobalTypeCheck";
 
     [TestInitialize]
     public void Setup()
     {
-        ErrorHandler.Testing = true;
+        ErrorHandler.ThrowExceptions = true;
     }
 
     /// <summary>
@@ -29,7 +29,7 @@ public class TopLevelTypeCheckTest
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
-            TopLevelTypeChecker.Walk(tree);
+            GlobalTypeChecker.Walk(tree);
             Assert.IsNotNull(tree.GlobalScope);
             foreach (var functionDefinition in tree.FunctionDefinitions)
             {
@@ -51,15 +51,15 @@ public class TopLevelTypeCheckTest
     /// Top Level Semantic Errors tests should throw an exception.
     /// </summary>
     [TestMethod]
-    public void TestAllTopLevelSemanticErrors()
+    public void TestAllGlobalSemanticErrors()
     {
-        var testType = "TopLevelSemanticErrors";
+        var testType = "GlobalSemanticErrors";
         foreach (var (_, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
             try
             {
-                TopLevelTypeChecker.Walk(tree);
+                GlobalTypeChecker.Walk(tree);
                 Assert.Fail();
             }
             catch
@@ -79,7 +79,7 @@ public class TopLevelTypeCheckTest
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
-            TopLevelTypeChecker.Walk(tree);
+            GlobalTypeChecker.Walk(tree);
             Assert.IsNotNull(tree.GlobalScope);
             foreach (var functionDefinition in tree.FunctionDefinitions)
             {

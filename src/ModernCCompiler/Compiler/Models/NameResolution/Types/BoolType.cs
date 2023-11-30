@@ -2,14 +2,19 @@
 {
     public class BoolType : SemanticType
     {
-        public override bool Equals(object? obj)
+        public override int GetSizeInBytes()
         {
-            return obj is VoidType;
+            return 1;
         }
 
-        public override int GetHashCode()
+        public override int GetSizeInWords()
         {
-            return base.GetHashCode();
+            return 1;
+        }
+
+        public override bool TypeEquals(SemanticType other)
+        {
+            return other is BoolType;
         }
     }
 }
