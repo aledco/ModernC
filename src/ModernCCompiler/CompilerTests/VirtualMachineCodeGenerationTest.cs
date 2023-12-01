@@ -18,6 +18,12 @@ namespace CompilerTests
             ErrorHandler.ThrowExceptions = true;
         }
 
+        [TestCleanup]
+        public void Cleanup()
+        {
+            Globals.Clear();
+        }
+
         [TestMethod]
         public void TestAllPassing()
         {

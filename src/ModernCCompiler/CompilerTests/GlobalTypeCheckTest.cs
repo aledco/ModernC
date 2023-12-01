@@ -1,6 +1,7 @@
 using Compiler.ErrorHandling;
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking.TypeCheck;
+using Compiler.Utils;
 using System.Text.Json;
 
 namespace CompilerTests;
@@ -17,6 +18,12 @@ public class GlobalTypeCheckTest
     public void Setup()
     {
         ErrorHandler.ThrowExceptions = true;
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        Globals.Clear();
     }
 
     /// <summary>

@@ -23,7 +23,7 @@ namespace Compiler.ParseAbstraction
             catch
             {
                 ErrorHandler.Throw("An empty program has no meaning");
-            
+                throw;
             }
 
             var functionDefinitons = context.functionDefinition()

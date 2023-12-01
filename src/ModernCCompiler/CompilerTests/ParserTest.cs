@@ -1,5 +1,6 @@
 using Compiler.ErrorHandling;
 using Compiler.ParseAbstraction;
+using Compiler.Utils;
 using System.Text.Json;
 
 namespace CompilerTests;
@@ -16,6 +17,12 @@ public class ParserTest
     public void Setup()
     {
         ErrorHandler.ThrowExceptions = true;
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        Globals.Clear();
     }
 
     /// <summary>

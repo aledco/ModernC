@@ -13,13 +13,12 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(IdExpression))]
     [JsonDerivedType(typeof(CallExpression))]
     [JsonDerivedType(typeof(ArrayIndexExpression))]
-    [JsonDerivedType(typeof(TailedExpression))]
+    [JsonDerivedType(typeof(FieldAccessExpression))]
     public abstract class Expression : AbstractSyntaxTree
     {
         public SemanticType? Type { get; set; }
 
         public string Register { get; set; }
-        public string? ExtraRegister { get; set; }
 
         protected Expression(Span span) : base(span)
         {

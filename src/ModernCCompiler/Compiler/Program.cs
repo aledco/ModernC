@@ -8,13 +8,12 @@ using Compiler.VirtualMachine;
 
 /*
  * TODO:
- * - figure out why test068 is failing (seems like the struct data is being declared multiple times)
  * - add more struct field access tests
  * - add more global variable definitions tests
+ * - implement move semantics for complex types and a way to pass structs / return structs from functions
  * - implement struct literals
  * - implement structs first, then type aliases, then pointers, then arrays and strings, then unions
  * - enforce some kind of order to global entities
- * - implement move semantics for complex types
  * - implement arrays by the spec below
  * - implement arrays as a struct that hold it's size --or-- have a construct similar to generics that allows to a placeholder in the type
  *   that holds the arrays length to be used in code later
@@ -104,11 +103,14 @@ namespace Compiler
                     Machine.Run(instructions, Console.In, Console.Out);
                     Console.WriteLine();
                     Console.WriteLine();
-                    Globals.Clear();
                 }
                 catch (Exception ex) 
                 { 
                     Console.Error.WriteLine(ex);
+                }
+                finally
+                {
+                    Globals.Clear();
                 }
             }
         }

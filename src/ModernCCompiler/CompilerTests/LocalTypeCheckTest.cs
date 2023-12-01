@@ -2,6 +2,7 @@ using Compiler.ErrorHandling;
 using Compiler.Models.Tree;
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking.TypeCheck;
+using Compiler.Utils;
 using System.Text.Json;
 
 namespace CompilerTests;
@@ -18,6 +19,12 @@ public class LocalTypeCheckTest
     public void Setup()
     {
         ErrorHandler.ThrowExceptions = true;
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        Globals.Clear();
     }
 
     /// <summary>

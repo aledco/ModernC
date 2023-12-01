@@ -193,26 +193,17 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static int VisitAssignmentStatement(AssignmentStatement s, Context context, int offset)
         {
-            if (s.BinaryExpression != null)
-            {
-                VisitBinaryOperatorExpression(s.BinaryExpression, context, offset);
-                s.Left.ExtraRegister = context.GetRegister();
-                context.DropRegister(s.Left.ExtraRegister);
-            }
-            else
-            {
-                VisitExpression(s.Right, context, offset);
-                VisitExpression(s.Left, context, offset);
-            }
-
+            VisitExpression(s.Right, context, offset);
+            VisitExpression(s.Left, context, offset);
+            context.DropRegister(s.Right.Register);
+            context.DropRegister(s.Left.Register);
             return 0;
         }
 
         private static int VisitIncrementStatement(IncrementStatement s, Context context, int offset)
         {
             VisitExpression(s.Left, context, offset);
-            s.Left.ExtraRegister = context.GetRegister();
-            context.DropRegister(s.Left.ExtraRegister);
+            context.DropRegister(s.Left.Register);
             return 0;
         }
 
@@ -364,13 +355,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         {
             VisitExpression(e.Array, context, offset);
             VisitExpression(e.Index, context, offset);
-            if (e.Index.Type?.GetSizeInWords() > 1)
-            {
-                // if the element size is greater than a word, need another register to calculate the element offset
-                e.Index.ExtraRegister = context.GetRegister();
-                context.DropRegister(e.Index.Register);
-            }
-
             context.DropRegister(e.Index.Register);
             e.Register = e.Array.Register;
             return 0;

@@ -196,20 +196,8 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static void VisitAssignmentStatement(AssignmentStatement statement, Context context)
         {
-            SemanticType rightType;
-            if (statement.BinaryExpression != null)
-            {
-                rightType = VisitExpression(statement.BinaryExpression, context);
-            }
-            else
-            {
-                rightType = VisitExpression(statement.Right, context);
-                if (rightType is ArrayType)
-                {
-                    ErrorHandler.Throw("Arrays cannot be reasigned", statement); // TODO remove if move semantics are decided
-                }
-            }
-            
+            var rightType = VisitExpression(statement.Right, context);
+
             context.LValue = true;
             var leftType = VisitExpression(statement.Left, context);
             context.LValue = false;

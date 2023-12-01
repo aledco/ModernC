@@ -164,6 +164,11 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 switch (definition) 
                 {
                     case StructDefinition d:
+                        if (s.Id.Symbol.IsGlobal)
+                        {
+                            instructions.Add(new DeclareGlobal(s.Id.Symbol.Name, s.Id.Symbol.Type.GetSizeInWords()));
+                        }
+
                         foreach (var field in d.Fields)
                         {
                             if (field.DefaultExpression != null)
@@ -171,9 +176,8 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                                 instructions.AddRange(ExpressionRValue(field.DefaultExpression));
                                 if (s.Id.Symbol.IsGlobal)
                                 {
-                                    instructions.Add(new DeclareGlobal(s.Id.Symbol.Name, s.Id.Symbol.Type.GetSizeInWords()));
                                     instructions.Add(new LoadLabel(Registers.Temporary, s.Id.Symbol.Name));
-                                    instructions.Add(new Store(Registers.Temporary, field.DefaultExpression.Register));
+                                    instructions.Add(new Store(Registers.Temporary, field.DefaultExpression.Register, field.Offset));
                                 }
                                 else
                                 {
@@ -197,52 +201,126 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> VisitAssignmentStatement(AssignmentStatement s)
         {
             var instructions = new List<IInstruction>();
-            if (s.BinaryExpression != null)
+            instructions.AddRange(ExpressionRValue(s.Right));
+            switch (s.Operator)
             {
-                if (s.Left.ExtraRegister == null)
-                {
-                    throw new Exception("AssignmentRegister was null");
-                }
+                case AssignmentOperator.Equals:
+                    instructions.AddRange(ExpressionLValue(s.Left));
+                    
+                    break;
+                case AssignmentOperator.PlusEquals:
+                    instructions.AddRange(ExpressionRValue(s.Left));
+                    switch (s.Left.Type)
+                    {
+                        case IntegralType or BoolType:
+                            instructions.Add(new Add(s.Right.Register, s.Left.Register, s.Right.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new AddFloat(s.Right.Register, s.Left.Register, s.Right.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {s.Left.Type}");
+                    }
+                   
+                    instructions.AddRange(ExpressionLValue(s.Left));
+                    break;
+                case AssignmentOperator.MinusEquals:
+                    instructions.AddRange(ExpressionRValue(s.Left));
+                    switch (s.Left.Type)
+                    {
+                        case IntegralType or BoolType:
+                            instructions.Add(new Negate(s.Right.Register, s.Right.Register));
+                            instructions.Add(new Add(s.Right.Register, s.Left.Register, s.Right.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new NegateFloat(s.Right.Register, s.Right.Register));
+                            instructions.Add(new AddFloat(s.Right.Register, s.Left.Register, s.Right.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {s.Left.Type}");
+                    }
 
-                instructions.AddRange(BinaryOperatorExpressionRValue(s.BinaryExpression));
-                instructions.AddRange(ExpressionLValue(s.Left));
-                instructions.Add(new Store(s.Left.ExtraRegister, s.BinaryExpression.Register));
-            }
-            else
-            {
-                instructions.AddRange(ExpressionRValue(s.Right));
-                instructions.AddRange(ExpressionLValue(s.Left));
-                if (s.Right is not ArrayLiteralExpression)
-                {
-                    instructions.Add(new Store(s.Left.Register, s.Right.Register));
-                }
+                    instructions.AddRange(ExpressionLValue(s.Left));
+                    break;
+                case AssignmentOperator.TimesEquals:
+                    instructions.AddRange(ExpressionRValue(s.Left));
+                    switch (s.Left.Type)
+                    {
+                        case IntegralType or BoolType:
+                            instructions.Add(new Multiply(s.Right.Register, s.Left.Register, s.Right.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new MultiplyFloat(s.Right.Register, s.Left.Register, s.Right.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {s.Left.Type}");
+                    }
+
+                    instructions.AddRange(ExpressionLValue(s.Left));
+                    break;
+                case AssignmentOperator.DividedByEquals:
+                    instructions.AddRange(ExpressionRValue(s.Left));
+                    switch (s.Left.Type)
+                    {
+                        case IntegralType or BoolType:
+                            instructions.Add(new Divide(s.Right.Register, s.Left.Register, s.Right.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new DivideFloat(s.Right.Register, s.Left.Register, s.Right.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {s.Left.Type}");
+                    }
+
+                    instructions.AddRange(ExpressionLValue(s.Left));
+                    break;
+                case AssignmentOperator.ModuloEquals:
+                    instructions.AddRange(ExpressionRValue(s.Left));
+                    switch (s.Left.Type)
+                    {
+                        case IntegralType or BoolType:
+                            instructions.Add(new Modulo(s.Right.Register, s.Left.Register, s.Right.Register));
+                            break;
+                        case RealType:
+                            instructions.Add(new ModuloFloat(s.Right.Register, s.Left.Register, s.Right.Register));
+                            break;
+                        default:
+                            throw new Exception($"Invalid type: {s.Left.Type}");
+                    }
+
+                    instructions.AddRange(ExpressionLValue(s.Left));
+                    break;
             }
 
+            instructions.Add(new Store(s.Left.Register, s.Right.Register));
             return instructions;
         }
 
         private static List<IInstruction> VisitIncrementStatement(IncrementStatement s)
         {
             var instructions = new List<IInstruction>();
-            if (s.Left.ExtraRegister == null)
-            {
-                throw new Exception("AssignmentRegister was null");
-            }
-
             instructions.AddRange(ExpressionRValue(s.Left));
-            switch (s.Operator) 
+            int val = s.Operator switch
             {
-                case IncrementOperator.PlusPlus:
+                IncrementOperator.PlusPlus => 1,
+                IncrementOperator.MinusMinus => -1,
+                _ => throw new NotImplementedException()
+            };
 
-                    instructions.Add(new AddImmediate(s.Left.Register, s.Left.Register, 1));
+            switch (s.Left.Type)
+            {
+                case IntegralType or BoolType:
+                    instructions.Add(new AddImmediate(Registers.Temporary, s.Left.Register, val));
                     break;
-                case IncrementOperator.MinusMinus:
-                    instructions.Add(new AddImmediate(s.Left.Register, s.Left.Register, -1));
+                case RealType:
+                    instructions.Add(new AddFloatImmediate(Registers.Temporary, s.Left.Register, val));
                     break;
+                default:
+                    throw new Exception($"Invalid type: {s.Left.Type}");
             }
-            
+
             instructions.AddRange(ExpressionLValue(s.Left));
-            instructions.Add(new Store(s.Left.ExtraRegister, s.Left.Register));
+            instructions.Add(new Store(s.Left.Register, Registers.Temporary));
             return instructions;
         }
 
@@ -792,13 +870,13 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             {
                 return new List<IInstruction>()
                 {
-                    new LoadLabel(e.ExtraRegister ?? e.Register, e.Id.Symbol.Name),
+                    new LoadLabel(e.Register, e.Id.Symbol.Name),
                 };
             }
 
             return new List<IInstruction>()
             {
-                new AddImmediate(e.ExtraRegister ?? e.Register, Registers.FramePointer, e.Id.Symbol.Offset)
+                new AddImmediate(e.Register, Registers.FramePointer, e.Id.Symbol.Offset)
             };
         }
 
@@ -813,13 +891,8 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             instructions.AddRange(ExpressionRValue(e.Index));
             if (e.Index.Type.GetSizeInWords() > 1)
             {
-                if (e.Index.ExtraRegister == null)
-                {
-                    throw new Exception("ExtraRegister was null");
-                }
-
-                instructions.Add(new LoadImmediate(e.Index.ExtraRegister, e.Array.Type.GetSizeInWords()));
-                instructions.Add(new Multiply(e.Index.Register, e.Index.Register, e.Index.ExtraRegister));
+                instructions.Add(new LoadImmediate(Registers.Temporary, e.Array.Type.GetSizeInWords()));
+                instructions.Add(new Multiply(e.Index.Register, e.Index.Register, Registers.Temporary));
             }
             
             instructions.Add(new Add(e.Register, e.Array.Register, e.Index.Register));
