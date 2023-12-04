@@ -212,6 +212,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             if (s.Id.Symbol != null)
             {
                 VisitExpression(s.Expression, context, offset);
+                context.DropRegister(s.Expression.Register);
                 s.Id.Symbol.Offset = offset;
                 return s.Id.Symbol.Type.GetSizeInWords();
             }
@@ -221,7 +222,8 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static int VisitCallStatement(CallStatement s, Context context, int offset)
         {
-            VisitCallExpression(s.CallExpression, context, offset);
+            VisitExpression(s.CallExpression, context, offset);
+            context.DropRegister(s.CallExpression.Register);
             return 0;
         }
 
@@ -229,11 +231,13 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         {
             var sizes = new List<int>();
             VisitExpression(s.IfExpression, context, offset);
+            context.DropRegister(s.IfExpression.Register);
             sizes.Add(VisitCompoundStatement(s.IfBody, context, offset));
 
             foreach (var (e, b) in s.ElifExpressions.Zip(s.ElifBodies))
             {
                 VisitExpression(e, context, offset);
+                context.DropRegister(e.Register);
                 sizes.Add(VisitCompoundStatement(b, context, offset));
             }
 
@@ -248,6 +252,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static int VisitWhileStatement(WhileStatement s, Context context, int offset)
         {
             VisitExpression(s.Expression, context, offset);
+            context.DropRegister(s.Expression.Register);
             return VisitCompoundStatement(s.Body, context, offset);
         }
 
@@ -255,6 +260,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         {
             var size = VisitCompoundStatement(s.Body, context, offset);
             VisitExpression(s.Expression, context, offset);
+            context.DropRegister(s.Expression.Register);
             return size;
         }
 
@@ -275,6 +281,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
             
             VisitExpression(s.Expression, context, offset);
+            context.DropRegister(s.Expression.Register);
             if (s.UpdateStatement is VariableDefinitionStatement or VariableDefinitionAndAssignmentStatement)
             {
                 var varSize = VisitStatement(s.UpdateStatement, context, offset);
@@ -295,6 +302,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             if (s.Expression != null)
             {
                 VisitExpression(s.Expression, context, offset);
+                context.DropRegister(s.Expression.Register);
             }
 
             return 0;
@@ -303,6 +311,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static int VisitExitStatement(ExitStatement s, Context context, int offset)
         {
             VisitExpression(s.Expression, context, offset);
+            context.DropRegister(s.Expression.Register);
             return 0;
         }
 
@@ -315,6 +324,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 ArrayIndexExpression e => VisitArrayIndexExpression(e, context, offset),
                 FieldAccessExpression e => VisitFieldAccessExpression(e, context, offset),
                 CallExpression e => VisitCallExpression(e, context, offset),
+                StructLiteralExpression e => VisitStructLiteralExpression(e, context, offset),
                 ArrayLiteralExpression e => VisitArrayLiteralExpression(e, context, offset),
                 Expression e => VisitAtomicExpression(e, context, offset),
                 _ => throw new NotImplementedException($"Unknown expression: {expression}")
@@ -365,7 +375,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             var operatingType = e.GetOperatingType();
             if (operatingType is UserDefinedType userDefinedType)
             {
-                var definition = SymbolTable.LookupDefinition(userDefinedType);
+                var definition = SymbolTable.LookupDefinition(userDefinedType, e.Span);
                 switch (definition)
                 {
                     case StructDefinition d:
@@ -382,6 +392,20 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             }
 
             throw new Exception("Operating type was not a user defined type");
+        }
+
+        private static int VisitStructLiteralExpression(StructLiteralExpression e, Context context, int offset)
+        {
+            e.Register = context.GetRegister();
+            e.MapOffsetsFromDefinition();
+            foreach (var field in e.Fields)
+            {
+                VisitExpression(field.Expression, context, offset);
+                context.DropRegister(field.Expression.Register);
+            }
+
+            context.DropRegister(e.Register);
+            return 0;
         }
 
         private static int VisitArrayLiteralExpression(ArrayLiteralExpression e, Context context, int offset)

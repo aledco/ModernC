@@ -74,6 +74,8 @@ namespace CompilerTests
                 Assert.IsNotNull(expected);
                 var actual = TestFileManager.NormalizeText(outStream.ToString());
                 Assert.AreEqual(actual, expected);
+
+                Globals.Clear();
             }
         }
     }

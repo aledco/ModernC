@@ -7,5 +7,10 @@
         {
             Value = value;
         }
+
+        public override Expression Copy(Span span)
+        {
+            return new IntLiteralExpression(span, Value);
+        }
     }
 }

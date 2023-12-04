@@ -14,7 +14,12 @@ namespace Compiler.Models.Tree
 
         public override UserDefinedType ToSemanticType()
         {
-            return SymbolTable.LookupType(this);
+            if (SymbolTable.TryLookupType(this, out var type))
+            {
+                return type;
+            }
+
+            return new UserDefinedType(Id.Value);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
-    public abstract class UserDefinedType : SemanticType
+    public class UserDefinedType : SemanticType
     {
         public string Value { get; }
 

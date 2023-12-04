@@ -12,5 +12,10 @@ namespace Compiler.Models.Tree
             Operator = op;
             Operand = operand;
         }
+
+        public override Expression Copy(Span span)
+        {
+            return new UnaryOperatorExpression(span, Operator, Operand);
+        }
     }
 }

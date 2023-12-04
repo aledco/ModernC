@@ -51,6 +51,8 @@ public class GlobalTypeCheckTest
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+
+            Globals.Clear();
         }
     }
 
@@ -73,6 +75,8 @@ public class GlobalTypeCheckTest
             {
                 Assert.IsTrue(true);
             }
+
+            Globals.Clear();
         }
     }
 
@@ -99,6 +103,8 @@ public class GlobalTypeCheckTest
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+
+            Globals.Clear();
         }
     }
 }

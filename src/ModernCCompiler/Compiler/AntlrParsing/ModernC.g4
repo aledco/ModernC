@@ -85,12 +85,10 @@ variableDefinitionStatement
     : type id;
 
 variableDefinitionAndAssignmentStatement
-    : type id '=' expression
-    | type id '=' arrayLiteral;
+    : type id '=' expression;
 
 assignmentStatement
-    : expression ('='|'+='|'-='|'*='|'/='|'%=') expression
-    | expression '=' arrayLiteral;
+    : expression ('='|'+='|'-='|'*='|'/='|'%=') expression;
 
 incrementStatement
     : expression ('++'|'--');
@@ -157,6 +155,7 @@ factor
     | byteLiteral
     | floatLiteral
     | boolLiteral
+    | complexLiteral
     | idExpression
     | '(' expression ')';
 
@@ -197,11 +196,21 @@ boolLiteral
 idExpression
     : id;
 
+complexLiteral
+    : arrayLiteral
+    | structLiteral;
+
 arrayLiteral
     : '[' expressionList ']';
 
 expressionList
     : expression (',' expression)*;
+
+structLiteral
+    : '{' (structLiteralField ',')* structLiteralField? '}';
+
+structLiteralField
+    : id '=' expression;
 
 id
     : ID;

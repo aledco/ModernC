@@ -8,5 +8,10 @@
         {
             Value = value;
         }
+
+        public override Expression Copy(Span span)
+        {
+            return new BoolLiteralExpression(span, Value);
+        }
     }
 }

@@ -447,6 +447,16 @@ public interface ModernCListener extends ParseTreeListener {
 	 */
 	void exitArrayExpressionTail(ModernCParser.ArrayExpressionTailContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link ModernCParser#fieldAccessExpressionTail}.
+	 * @param ctx the parse tree
+	 */
+	void enterFieldAccessExpressionTail(ModernCParser.FieldAccessExpressionTailContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#fieldAccessExpressionTail}.
+	 * @param ctx the parse tree
+	 */
+	void exitFieldAccessExpressionTail(ModernCParser.FieldAccessExpressionTailContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ModernCParser#readExpression}.
 	 * @param ctx the parse tree
 	 */

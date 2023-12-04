@@ -15,6 +15,7 @@ namespace Compiler.TreeWalking.TypeCheck
         private class Context
         {
             public Scope? Scope { get; set; }
+            public SemanticType? VariableAssignmentType { get; set; }
         }
 
         public static void Walk(ProgramRoot program)
@@ -34,10 +35,12 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 VisitDefinition(definition, context);
             }
+
             foreach (var statement in program.GlobalStatements)
             {
                 VisitStatement(statement, context);
             }
+
             foreach (var functionDefinition in program.FunctionDefinitions)
             {
                 VisitFunctionDefinition(functionDefinition, context);
@@ -65,11 +68,11 @@ namespace Compiler.TreeWalking.TypeCheck
                     type = s.Type.ToSemanticType();
                     context.Scope?.AddSymbol(s.Id, type);
                     VisitIdNode(s.Id, context);
-
                     break;
                 case VariableDefinitionAndAssignmentStatement s:
                     type = s.Type.ToSemanticType();
                     context.Scope?.AddSymbol(s.Id, type);
+                    context.VariableAssignmentType = type;
                     VisitIdNode(s.Id, context);
                     var expressionType = VisitExpression(s.Expression, context);
                     if (!type.TypeEquals(expressionType))
@@ -131,6 +134,9 @@ namespace Compiler.TreeWalking.TypeCheck
                 case UnaryOperatorExpression e:
                     expression.Type = VisitUnaryOperatorExpression(e, context);
                     break;
+                case StructLiteralExpression e:
+                    expression.Type = VisitStructLiteralExpression(e, context);
+                    break;
                 case ArrayLiteralExpression e:
                     expression.Type = VisitArrayLiteralExpression(e, context);
                     break;
@@ -186,6 +192,17 @@ namespace Compiler.TreeWalking.TypeCheck
                 default:
                     throw new NotImplementedException();
             }
+        }
+
+        private static SemanticType VisitStructLiteralExpression(StructLiteralExpression e, Context context)
+        {
+            if (context.VariableAssignmentType is UserDefinedType userDefinedType)
+            {
+                return e.MapDefaultExpressionsFromDefinition(userDefinedType);
+            }
+
+            ErrorHandler.Throw("Struct literal cannot be assigned to this type", e);
+            throw ErrorHandler.FailedToExit;
         }
 
         private static SemanticType VisitArrayLiteralExpression(ArrayLiteralExpression e, Context context)

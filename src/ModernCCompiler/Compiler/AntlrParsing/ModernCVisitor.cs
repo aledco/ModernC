@@ -338,6 +338,12 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitIdExpression([NotNull] ModernCParser.IdExpressionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.complexLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitComplexLiteral([NotNull] ModernCParser.ComplexLiteralContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.arrayLiteral"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -349,6 +355,18 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitExpressionList([NotNull] ModernCParser.ExpressionListContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.structLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStructLiteral([NotNull] ModernCParser.StructLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.structLiteralField"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStructLiteralField([NotNull] ModernCParser.StructLiteralFieldContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.id"/>.
 	/// </summary>

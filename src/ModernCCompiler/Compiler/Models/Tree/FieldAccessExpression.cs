@@ -9,5 +9,10 @@
         {
             Id = id;
         }
+
+        public override Expression Copy(Span span)
+        {
+            return new FieldAccessExpression(span, Left, Id);
+        }
     }
 }

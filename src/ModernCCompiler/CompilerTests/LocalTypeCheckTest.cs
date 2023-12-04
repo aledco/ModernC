@@ -50,6 +50,8 @@ public class LocalTypeCheckTest
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+
+            Globals.Clear();
         }
     }
 
@@ -81,6 +83,8 @@ public class LocalTypeCheckTest
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+
+            Globals.Clear();
         }
     }
 

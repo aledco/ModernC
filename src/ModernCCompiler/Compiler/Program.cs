@@ -8,11 +8,12 @@ using Compiler.VirtualMachine;
 
 /*
  * TODO:
- * - add more struct field access tests
- * - add more global variable definitions tests
- * - implement move semantics for complex types and a way to pass structs / return structs from functions
- * - implement struct literals
- * - implement structs first, then type aliases, then pointers, then arrays and strings, then unions
+ * - make full program tests
+ * - add printing for structs
+ * - disallow variable definitions without initialization?
+ * - allow global variables to be used as struct defaults?
+ * - then type aliases, then pointers, then arrays and strings, then unions
+ * - consider having := or <- as assignment
  * - enforce some kind of order to global entities
  * - implement arrays by the spec below
  * - implement arrays as a struct that hold it's size --or-- have a construct similar to generics that allows to a placeholder in the type
@@ -64,6 +65,15 @@ using Compiler.VirtualMachine;
  * - Complex types have automatic dereferencing, for example, you can call a pointer to a function, or index a pointer to a pointer to an array
  * - Cannot return pointers, must use an out parameter (unless dynamic)
  * - Will have a dynamic pointer which means it points to memory on the heap
+ * 
+ * Move Semantics:
+ * - complex types (arrays, structs) will be copied when returned or [asssed into functions
+ * - for now, these types cannot be reassigned, maybe a move instruction will be implemented for that
+ * - actually, maybe a move instruction should be used for functions too
+ * - places that need to worry about it are
+ *      - call expression
+ *      - return statement
+ * - values that require move semantics return an adrress through RValue
  */
 namespace Compiler
 {

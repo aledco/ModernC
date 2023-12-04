@@ -14,5 +14,15 @@
             Id = id;
             DefaultExpression = expression;
         }
+
+        public StructLiteralField CreateDefaultLiteralField(Span span)
+        {
+            if (DefaultExpression == null) 
+            {
+                throw new Exception("DefaultExpression was null");
+            }
+
+            return new StructLiteralField(span, new IdNode(span, Id.Value), DefaultExpression.Copy(span));
+        }
     }
 }

@@ -10,5 +10,10 @@
             Array = array;
             Index = index;
         }
+
+        public override Expression Copy(Span span)
+        {
+            return new ArrayIndexExpression(span, Array, Index);
+        }
     }
 }

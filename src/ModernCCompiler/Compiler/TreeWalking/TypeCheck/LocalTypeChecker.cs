@@ -18,6 +18,8 @@ namespace Compiler.TreeWalking.TypeCheck
             public Stack<LoopStatement> EnclosingLoops { get; set; } = new();
             public bool LValue { get; set; } = false;
             public FunctionDefinition? RValueFunction { get; set; }
+
+            public SemanticType? VariableAssignmentType { get; set; }
         }
 
         public static void Walk(ProgramRoot program)
@@ -32,6 +34,7 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 VisitDefinition(definition, context);
             }
+
             foreach (var functionDefinition in program.FunctionDefinitions)
             {
                 VisitFunctionDefinition(functionDefinition, context);
@@ -52,14 +55,13 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static void VisitStructDefinition(StructDefinition structDefinition, Context context)
         {
+            if (structDefinition.IsCircular())
+            {
+                ErrorHandler.Throw("Struct's cannot be circular, consider using a pointer instead", structDefinition);
+            }
+
             foreach (var field in structDefinition.Fields)
             {
-                var type = field.Type.ToSemanticType();
-                if (type is StructType structType && structType.TypeEquals(structDefinition.Type.ToSemanticType()))
-                {
-                    ErrorHandler.Throw("Recursive structures are not allowed, use a pointer instead", structDefinition);
-                }
-
                 VisitStructFieldDefinition(field, context);
             }
         }
@@ -73,6 +75,7 @@ namespace Compiler.TreeWalking.TypeCheck
                 {
                     case UnaryOperatorExpression:
                     case ArrayLiteralExpression:
+                    case StructLiteralExpression:
                     case IntLiteralExpression:
                     case ByteLiteralExpression:
                     case FloatLiteralExpression:
@@ -197,6 +200,10 @@ namespace Compiler.TreeWalking.TypeCheck
         private static void VisitAssignmentStatement(AssignmentStatement statement, Context context)
         {
             var rightType = VisitExpression(statement.Right, context);
+            if (rightType.IsComplex)
+            {
+                ErrorHandler.Throw("Complex types cannot be reassigned.");
+            }
 
             context.LValue = true;
             var leftType = VisitExpression(statement.Left, context);
@@ -230,11 +237,16 @@ namespace Compiler.TreeWalking.TypeCheck
             }
         }
 
-
         private static void VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement statement, Context context)
         {
             var type = statement.Type.ToSemanticType();
+            context.VariableAssignmentType = type;
             var expressionType = VisitExpression(statement.Expression, context);
+            if (expressionType.IsComplex && statement.Expression is not ComplexLiteralExpression) // and not literal
+            {
+                ErrorHandler.Throw("Complex types cannot be reassigned.");
+            }
+
             switch (type)
             {
                 case RealType when expressionType is NumberType:
@@ -258,7 +270,8 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static void VisitCallStatement(CallStatement s, Context context)
         {
-            VisitCallExpression(s.CallExpression, context);
+            s.CallExpression.IgnoreReturn = true;
+            VisitExpression(s.CallExpression, context);
         }
 
         private static void VisitIfStatement(IfStatement s, Context context)
@@ -402,6 +415,7 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 BinaryOperatorExpression e => VisitBinaryOperatorExpression(e, context),
                 CallExpression e => VisitCallExpression(e, context),
+                StructLiteralExpression e => VisitStructLiteralExpression(e, context),
                 ArrayIndexExpression e => VisitArrayIndexExpression(e, context),
                 FieldAccessExpression e => VisitFieldAccessExpression(e, context),
                 ReadExpression => new ByteType(),
@@ -415,7 +429,7 @@ namespace Compiler.TreeWalking.TypeCheck
                 _ => throw new NotImplementedException($"Unknown expression: {expression}"),
             };
 
-            if (expression.Type is VoidType)
+            if (expression.Type is VoidType && expression is not CallExpression)
             {
                 ErrorHandler.Throw("Expressions can not have a type of void.", expression);
             }
@@ -441,6 +455,17 @@ namespace Compiler.TreeWalking.TypeCheck
                     ErrorHandler.Throw("Field access expression is not valid for this type", e);
                     throw new Exception("ErrorHandler failed to exit application");
             }
+        }
+
+        private static SemanticType VisitStructLiteralExpression(StructLiteralExpression e, Context context)
+        {
+            if (context.VariableAssignmentType is UserDefinedType userDefinedType)
+            {
+                return e.MapDefaultExpressionsFromDefinition(userDefinedType);
+            }
+
+            ErrorHandler.Throw("Struct literal cannot be assigned to this type", e);
+            throw ErrorHandler.FailedToExit;
         }
 
         private static SemanticType VisitCallExpression(CallExpression e, Context context)

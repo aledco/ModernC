@@ -1,6 +1,4 @@
-﻿using Compiler.Models.Symbols;
-
-namespace Compiler.Models.Tree
+﻿namespace Compiler.Models.Tree
 {
     public class IdExpression : Expression
     {
@@ -9,6 +7,11 @@ namespace Compiler.Models.Tree
         public IdExpression(Span span, IdNode id) : base(span)
         {
             Id = id;
+        }
+
+        public override Expression Copy(Span span)
+        {
+            return new IdExpression(span, Id);
         }
     }
 }

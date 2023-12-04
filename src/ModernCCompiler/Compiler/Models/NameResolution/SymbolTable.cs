@@ -1,6 +1,7 @@
 ﻿using Compiler.ErrorHandling;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Tree;
+using System;
 
 namespace Compiler.Models.NameResolution
 {
@@ -38,6 +39,18 @@ namespace Compiler.Models.NameResolution
             return _typeTable[typeNode.Id.Value].Type;
         }
 
+        public static bool TryLookupType(UserDefinedTypeNode typeNode, out UserDefinedType type)
+        {
+            if (!_typeTable.ContainsKey(typeNode.Id.Value))
+            {
+                type = default!;
+                return false;
+            }
+
+            type = _typeTable[typeNode.Id.Value].Type;
+            return true;
+        }
+
         public static Definition LookupDefinition(UserDefinedTypeNode typeNode)
         {
             if (!_typeTable.ContainsKey(typeNode.Id.Value))
@@ -48,14 +61,76 @@ namespace Compiler.Models.NameResolution
             return _typeTable[typeNode.Id.Value].Definition;
         }
 
-        public static Definition LookupDefinition(UserDefinedType type)
+        public static bool TryLookupTypeAndDefinition<T, D>(UserDefinedTypeNode typeNode, out T type, out D definition)
+        {
+            if (!_typeTable.ContainsKey(typeNode.Id.Value))
+            {
+                ErrorHandler.Throw("Type is not defined", typeNode);
+            }
+
+            var value = _typeTable[typeNode.Id.Value];
+            if (value.Type is T t && value.Definition is D d)
+            {
+                type = t;
+                definition = d;
+                return true;
+            }
+
+            type = default!;
+            definition = default!;
+            return false;
+        }
+
+        public static Definition LookupDefinition(UserDefinedType type, Span? span = null)
         {
             if (!_typeTable.ContainsKey(type.Value))
             {
-                throw new Exception($"Symbol table did not have type {type.Value}");
+                if (span != null)
+                {
+                    ErrorHandler.Throw($"Type {type.Value} is not defined", span);
+                }
+
+                ErrorHandler.Throw($"Type {type.Value} is not defined");
+                throw ErrorHandler.FailedToExit;
             }
 
             return _typeTable[type.Value].Definition;
+        }
+
+        public static (T Type, D Definition) LookupTypeAndDefinition<T, D>(UserDefinedType type, Span? span = null) 
+            where T : UserDefinedType 
+            where D : Definition
+        {
+            if (!_typeTable.ContainsKey(type.Value))
+            {
+                ErrorHandler.Throw($"Type {type.Value} is not defined", span);
+            }
+
+            var value = _typeTable[type.Value];
+
+            T typeInstance;
+            if (value.Type is T t)
+            {
+                typeInstance = t;
+            }
+            else
+            {
+                ErrorHandler.Throw("Types are not compatable", span);
+                throw ErrorHandler.FailedToExit;
+            }
+
+            D definition;
+            if (value.Definition is D d)
+            {
+                definition = d;
+            }
+            else
+            {
+                ErrorHandler.Throw("Types are not compatable", span);
+                throw ErrorHandler.FailedToExit;
+            }
+
+            return (typeInstance, definition);
         }
 
         public static bool TypeExists(string name)

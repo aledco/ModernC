@@ -20,5 +20,13 @@
         /// <param name="other">The other type</param>
         /// <returns>True if equal.</returns>
         public abstract bool TypeEquals(SemanticType other);
+
+        public bool IsComplex
+        {
+            get
+            {
+                return this is not VoidType && GetSizeInWords() > 1;
+            }
+        }
     }
 }

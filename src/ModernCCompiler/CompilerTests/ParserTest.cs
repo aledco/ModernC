@@ -44,6 +44,8 @@ public class ParserTest
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+
+            Globals.Clear();
         }
     }
 
@@ -65,6 +67,8 @@ public class ParserTest
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+
+            Globals.Clear();
         }
 
         testType = "LocalSemanticErrors";
@@ -79,6 +83,8 @@ public class ParserTest
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+
+            Globals.Clear();
         }
     }
 }

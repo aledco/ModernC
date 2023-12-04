@@ -544,6 +544,18 @@ public class ModernCBaseListener implements ModernCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterFieldAccessExpressionTail(ModernCParser.FieldAccessExpressionTailContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitFieldAccessExpressionTail(ModernCParser.FieldAccessExpressionTailContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterReadExpression(ModernCParser.ReadExpressionContext ctx) { }
 	/**
 	 * {@inheritDoc}

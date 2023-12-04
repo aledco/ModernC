@@ -8,5 +8,10 @@
         {
             Value = value;
         }
+
+        public override Expression Copy(Span span)
+        {
+            return new ByteLiteralExpression(span, Value);
+        }
     }
 }

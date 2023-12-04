@@ -8,6 +8,9 @@ using Compiler.VirtualMachine.Instructions;
 
 namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 {
+    /// <summary>
+    /// Generates code for the virtual machine.
+    /// </summary>
     public static class CodeGenerator
     {
         private static int _labelId = 0;
@@ -206,7 +209,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             {
                 case AssignmentOperator.Equals:
                     instructions.AddRange(ExpressionLValue(s.Left));
-                    
                     break;
                 case AssignmentOperator.PlusEquals:
                     instructions.AddRange(ExpressionRValue(s.Left));
@@ -331,9 +333,24 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 throw new Exception("Symbol was null");
             }
 
-            var instructions = ExpressionRValue(s.Expression);
-            if (s.Expression is not ArrayLiteralExpression)
+            var instructions = new List<IInstruction>();
+            if (s.Expression is ComplexLiteralExpression complexLiteral)
             {
+                if (s.Id.Symbol.IsGlobal)
+                {
+                    instructions.Add(new DeclareGlobal(s.Id.Symbol.Name, s.Id.Symbol.Type.GetSizeInWords()));
+                    instructions.Add(new LoadLabel(complexLiteral.Register, s.Id.Symbol.Name));
+                    instructions.AddRange(MakeComplexLiteral(complexLiteral));
+                }
+                else
+                {
+                    instructions.Add(new AddImmediate(complexLiteral.Register, Registers.FramePointer, s.Id.Symbol.Offset));
+                    instructions.AddRange(MakeComplexLiteral(complexLiteral));
+                }
+            }
+            else
+            {
+                instructions.AddRange(ExpressionRValue(s.Expression));
                 if (s.Id.Symbol.IsGlobal)
                 {
                     instructions.Add(new DeclareGlobal(s.Id.Symbol.Name, s.Id.Symbol.Type.GetSizeInWords()));
@@ -484,7 +501,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             if (s.Expression != null)
             {
                 instructions.AddRange(ExpressionRValue(s.Expression));
-                instructions.Add(new Store("FP", s.Expression.Register, -1));
+                instructions.Add(new Store(Registers.FramePointer, s.Expression.Register, -1));
             }
 
             instructions.Add(new Jump(s.EnclosingFunction.ReturnLabel));
@@ -509,7 +526,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 FieldAccessExpression e => FieldAccessExpressionRValue(e),
                 ReadExpression e => ReadExpressionRValue(e),
                 IdExpression e => IdExpressionRValue(e),
-                ArrayLiteralExpression e => ArrayLiteralExpressionRValue(e),
                 IntLiteralExpression e => IntLiteralExpressionRValue(e),
                 ByteLiteralExpression e => ByteLiteralExpressionRValue(e),
                 FloatLiteralExpression e => FloatLiteralExpressionRValue(e),
@@ -717,24 +733,30 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> CallExpressionRValue(CallExpression e)
         {
-            var instructions = ExpressionRValue(e.Function);
-            instructions.Add(new AddImmediate(Registers.StackPointer, Registers.StackPointer, e.ArgumentList.Arguments.Count + 1));
-
-            for (var i = 0; i < e.ArgumentList.Arguments.Count; i++)
+            if (e.Function.Type is FunctionType functionType)
             {
-                var arg = e.ArgumentList.Arguments[i];
-                instructions.AddRange(ExpressionRValue(arg));
-                instructions.Add(new Store(Registers.StackPointer, arg.Register, -i - 2));
+                var instructions = ExpressionRValue(e.Function);
+                var argSize = e.ArgumentList.Arguments.Sum(a => a.Type!.GetSizeInWords());
+                var returnSize = functionType.ReturnType is VoidType ? 1 : functionType.ReturnType.GetSizeInWords();
+                instructions.Add(new AddImmediate(Registers.StackPointer, Registers.StackPointer, argSize + returnSize));
+                for (var i = 0; i < e.ArgumentList.Arguments.Count; i++)
+                {
+                    var arg = e.ArgumentList.Arguments[i];
+                    instructions.AddRange(ExpressionRValue(arg));
+                    instructions.Add(new Store(Registers.StackPointer, arg.Register, -i - returnSize - 1));
+                }
+
+                instructions.Add(new CallIndirect(e.Function.Register));
+                if (!e.IgnoreReturn && functionType.ReturnType is not VoidType)
+                {
+                    instructions.Add(new Load(e.Register, Registers.StackPointer, -1));
+                }
+
+                instructions.Add(new AddImmediate(Registers.StackPointer, Registers.StackPointer, -argSize - returnSize));
+                return instructions;
             }
 
-            instructions.AddRange(new IInstruction[]
-            {
-                new CallIndirect(e.Function.Register),
-                new Load(e.Register, Registers.StackPointer, -1),
-                new AddImmediate(Registers.StackPointer, Registers.StackPointer, -e.ArgumentList.Arguments.Count - 1)
-            });
-
-            return instructions;
+            throw new Exception("Function did not have function type");     
         }
 
         private static List<IInstruction> ArrayIndexExpressionRVaule(ArrayIndexExpression e)
@@ -797,24 +819,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             {
                 new Load(e.Register, Registers.FramePointer, e.Id.Symbol.Offset),
             };
-        }
-
-        private static List<IInstruction> ArrayLiteralExpressionRValue(ArrayLiteralExpression e)
-        {
-            // TODO fix this once done with structs and arrays
-            var instructions = new List<IInstruction>();
-            for (var i = 0; i < e.Elements.Count; i++)
-            {
-                var elem = e.Elements[i];
-                instructions.AddRange(ExpressionRValue(elem));
-                if (elem.Type != null && elem.Type is not ArrayType)
-                {
-                    var offset = e.Offset + (i * elem.Type.GetSizeInWords());
-                    instructions.Add(new Store(Registers.FramePointer, elem.Register, offset));
-                }
-            }
-
-            return instructions;
         }
 
         private static List<IInstruction> IntLiteralExpressionRValue(IntLiteralExpression e)
@@ -997,6 +1001,46 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             else
             {
                 instructions.Add(new JumpIfZero(expression.Register, label));
+            }
+
+            return instructions;
+        }
+
+        private static List<IInstruction> MakeComplexLiteral(ComplexLiteralExpression expression)
+        {
+            return expression switch
+            {
+                StructLiteralExpression e => MakeStructLiteral(e),
+                ArrayLiteralExpression e => MakeArrayLiteral(e),
+                _ => throw new NotImplementedException()
+            };
+        }
+
+        private static List<IInstruction> MakeStructLiteral(StructLiteralExpression e)
+        {
+            var instructions = new List<IInstruction>();
+            foreach (var field in e.Fields)
+            {
+                instructions.AddRange(ExpressionRValue(field.Expression));
+                instructions.Add(new Store(e.Register, field.Expression.Register, field.Offset));
+            }
+
+            return instructions;
+        }
+
+        private static List<IInstruction> MakeArrayLiteral(ArrayLiteralExpression e)
+        {
+            // TODO fix this once done with structs and arrays
+            var instructions = new List<IInstruction>();
+            for (var i = 0; i < e.Elements.Count; i++)
+            {
+                var elem = e.Elements[i];
+                instructions.AddRange(ExpressionRValue(elem));
+                if (elem.Type != null && elem.Type is not ArrayType)
+                {
+                    var offset = e.Offset + (i * elem.Type.GetSizeInWords());
+                    instructions.Add(new Store(Registers.FramePointer, elem.Register, offset));
+                }
             }
 
             return instructions;

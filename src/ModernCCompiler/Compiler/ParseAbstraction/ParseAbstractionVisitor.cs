@@ -259,10 +259,6 @@ namespace Compiler.ParseAbstraction
             {
                 right = VisitExpression(expressions[1]);
             }
-            else if (context.arrayLiteral() != null)
-            {
-                right = VisitArrayLiteral(context.arrayLiteral());
-            }
             else
             {
                 throw new NotImplementedException();
@@ -288,10 +284,6 @@ namespace Compiler.ParseAbstraction
             if (context.expression() != null)
             {
                 expression = VisitExpression(context.expression());
-            }
-            else if (context.arrayLiteral() != null)
-            {
-                expression = VisitArrayLiteral(context.arrayLiteral());
             }
             else
             {
@@ -647,6 +639,17 @@ namespace Compiler.ParseAbstraction
             return new IdExpression(span, id);
         }
 
+        public override ComplexLiteralExpression VisitComplexLiteral([NotNull] ComplexLiteralContext context)
+        {
+            var ast = base.VisitComplexLiteral(context);
+            if (ast is ComplexLiteralExpression expression)
+            {
+                return expression;
+            }
+
+            throw new Exception($"Tried to parse {context.GetText()} as complex literal");
+        }
+
         public override ArrayLiteralExpression VisitArrayLiteral([NotNull] ArrayLiteralContext context)
         {
             throw new NotImplementedException();
@@ -656,6 +659,24 @@ namespace Compiler.ParseAbstraction
             //    .ToList();
             //return new ArrayLiteralExpression(span, elements);
         }
+
+        public override StructLiteralExpression VisitStructLiteral([NotNull] StructLiteralContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var fields = context.structLiteralField()
+                .Select(VisitStructLiteralField)
+                .ToList();
+            return new StructLiteralExpression(span, fields);
+        }
+
+        public override StructLiteralField VisitStructLiteralField([NotNull] StructLiteralFieldContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var id = VisitId(context.id());
+            var expression = VisitExpression(context.expression());
+            return new StructLiteralField(span, id, expression);
+        }
+
         public override IdNode VisitId([NotNull] IdContext context)
         {
             var span = GetSpanOfContext(context);
