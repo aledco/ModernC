@@ -11,6 +11,7 @@ namespace Compiler.Models.Symbols
         public Scope EnclosingScope { get; }
         public SemanticType Type { get; }
         public bool IsGlobal { get => !EnclosingScope.HasParent(); }
+        public bool IsDefinedGlobalFunction { get; set; }
 
         [JsonIgnore]
         public FunctionDefinition? EnclosingFunction { get; set; }

@@ -14,5 +14,10 @@ namespace Compiler.Models.Tree
             LeftOperand = left;
             RightOperand = right;
         }
+
+        public override Expression Copy(Span span)
+        {
+            return new BinaryOperatorExpression(span, Operator, LeftOperand, RightOperand);
+        }
     }
 }

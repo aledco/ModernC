@@ -1,9 +1,9 @@
 ﻿using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
+using Compiler.ErrorHandling;
 using Compiler.Models;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
-using System.Diagnostics;
 using static ModernCParser;
 
 namespace Compiler.ParseAbstraction
@@ -15,11 +15,41 @@ namespace Compiler.ParseAbstraction
     {
         public override ProgramRoot VisitProgram([NotNull] ProgramContext context)
         {
-            var span = GetSpanOfContext(context);
-            var functionDefinitions = context.functionDefinition()
+            Span span;
+            try
+            {
+                span = GetSpanOfContext(context);
+            }
+            catch
+            {
+                ErrorHandler.Throw("An empty program has no meaning");
+                throw;
+            }
+
+            var functionDefinitons = context.functionDefinition()
                 .Select(VisitFunctionDefinition)
                 .ToList();
-            return new ProgramRoot(span, functionDefinitions);
+            var definitions = context.definition()
+                .Select(VisitDefinition)
+                .ToList();
+            var statements = context.topLevelStatement()
+                .Select(VisitTopLevelStatement)
+                .ToList();
+            return new ProgramRoot(span, statements, definitions, functionDefinitons);
+        }
+
+        public override Statement VisitTopLevelStatement([NotNull] TopLevelStatementContext context)
+        {
+            if (context.variableDefinitionStatement() != null)
+            {
+                return VisitVariableDefinitionStatement(context.variableDefinitionStatement());
+            }
+            else if (context.variableDefinitionAndAssignmentStatement() != null)
+            {
+                return VisitVariableDefinitionAndAssignmentStatement(context.variableDefinitionAndAssignmentStatement());
+            }
+
+            throw new Exception($"Could not parse {context.GetText()} as top level statement");
         }
 
         public override FunctionDefinition VisitFunctionDefinition([NotNull] FunctionDefinitionContext context)
@@ -43,11 +73,27 @@ namespace Compiler.ParseAbstraction
             {
                 return VisitPrimitiveType(context.primitiveType());
             }
+            else if (context.type() != null)
+            {
+                var elementType = VisitType(context.type());
+                var size = VisitIntLiteral(context.intLiteral());
+                if (size.Value < 1)
+                {
+                    ErrorHandler.Throw("Array size must be greater than 0", size);
+                }
+
+                throw new NotImplementedException();
+                //return new ArrayTypeNode(span, elementType, size.Value);
+            }
             else if (context.functionType() != null)
             {
                 return VisitFunctionType(context.functionType());
             }
-            
+            else if (context.userDefinedType() != null)
+            {
+                return VisitUserDefinedType(context.userDefinedType());
+            }
+
             throw new NotImplementedException();
         }
 
@@ -83,6 +129,13 @@ namespace Compiler.ParseAbstraction
             return new FunctionTypeNode(span, types);
         }
 
+        public override UserDefinedTypeNode VisitUserDefinedType([NotNull] UserDefinedTypeContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var id = VisitId(context.id());
+            return new UserDefinedTypeNode(span, id);
+        }
+
         public override ParameterList VisitParameterList([NotNull] ParameterListContext context)
         {
             var span = GetSpanOfContext(context);
@@ -98,6 +151,43 @@ namespace Compiler.ParseAbstraction
             var type = VisitType(context.type());
             var id = VisitId(context.id());
             return new Parameter(span, type, id);
+        }
+
+        public override StructFieldDefinition VisitStructFieldDefinition([NotNull] StructFieldDefinitionContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var type = VisitType(context.type());
+            var id = VisitId(context.id());
+
+            Expression? expression = null;
+            if (context.expression() != null)
+            {
+                expression = VisitExpression(context.expression());
+            }
+
+            return new StructFieldDefinition(span, type, id, expression);
+        }
+
+        public override Definition VisitDefinition([NotNull] DefinitionContext context)
+        {
+            var ast = base.VisitDefinition(context);
+            if (ast is Definition definition)
+            {
+                return definition;
+            }
+
+            throw new Exception($"Tried to parse {context.GetText()} as a definition");
+        }
+
+        public override StructDefinition VisitStructDefinition([NotNull] StructDefinitionContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var userDefinedType = VisitUserDefinedType(context.userDefinedType());
+            var fields = context.structFieldDefinition()
+                .Select(VisitStructFieldDefinition)
+                .ToList();
+            var structType = new StructTypeNode(userDefinedType.Span, userDefinedType.Id, fields);
+            return new StructDefinition(span, structType, fields);
         }
 
         public override CompoundStatement VisitCompoundStatement([NotNull] CompoundStatementContext context)
@@ -162,11 +252,18 @@ namespace Compiler.ParseAbstraction
         {
             var span = GetSpanOfContext(context);
             var expressions = context.expression();
-            Debug.Assert(expressions.Length == 2);
-
             var left = VisitExpression(expressions[0]);
             var op = GetAssignmentOperator(context.GetChild(1).GetText());
-            var right = VisitExpression(expressions[1]);
+            Expression right;
+            if (expressions.Length == 2)
+            {
+                right = VisitExpression(expressions[1]);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+
             return new AssignmentStatement(span, left, op, right);
         }
 
@@ -183,15 +280,32 @@ namespace Compiler.ParseAbstraction
             var span = GetSpanOfContext(context);
             var type = VisitType(context.type());
             var id = VisitId(context.id());
-            var expression = VisitExpression(context.expression());
+            Expression expression;
+            if (context.expression() != null)
+            {
+                expression = VisitExpression(context.expression());
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+
             return new VariableDefinitionAndAssignmentStatement(span, type, id, expression);
         }
 
         public override CallStatement VisitCallStatement([NotNull] CallStatementContext context)
         {
             var span = GetSpanOfContext(context);
-            var callExpression = VisitCallExpression(context.callExpression());
-            return new CallStatement(span, callExpression);
+            var expression = VisitTailedExpression(context.tailedExpression());
+            if (expression is CallExpression callExpression)
+            {
+                return new CallStatement(span, callExpression);
+            }
+            else
+            {
+                ErrorHandler.Throw("Expression cannot be used as a statement", expression);
+                throw new Exception("Error handler failed to quit application");
+            }
         }
 
         public override IfStatement VisitIfStatement([NotNull] IfStatementContext context)
@@ -379,12 +493,46 @@ namespace Compiler.ParseAbstraction
             return new UnaryOperatorExpression(span, op, expression);
         }
 
-        public override CallExpression VisitCallExpression([NotNull] CallExpressionContext context)
+        public override TailedExpression VisitTailedExpression([NotNull] TailedExpressionContext context)
         {
             var span = GetSpanOfContext(context);
-            var function = VisitIdExpression(context.idExpression());
-            var args = context.argumentList() != null ? VisitArgumentList(context.argumentList()) : null;
-            return new CallExpression(span, function, args);
+            Expression expression;
+            if (context.idExpression() != null)
+            {
+                expression = VisitIdExpression(context.idExpression());
+            }
+            else if (context.tailedExpression() != null)
+            {
+                expression = VisitTailedExpression(context.tailedExpression());
+            }
+            else
+            {
+                throw new Exception($"Could not parse tailed expression: {context.GetText()}");
+            }
+
+            if (context.callExpressionTail() != null)
+            {
+                var tailContext = context.callExpressionTail();
+                var argList = tailContext.argumentList() != null ? VisitArgumentList(tailContext.argumentList()) : null;
+                return new CallExpression(span, expression, argList);
+            }
+            else if (context.arrayExpressionTail() != null)
+            {
+                throw new NotImplementedException();
+
+                //var tailContext = context.arrayExpressionTail();
+                //var index = VisitExpression(tailContext.expression());
+                //return new ArrayIndexExpression(span, expression, index);
+            }
+            else if (context.fieldAccessExpressionTail() != null)
+            {
+                var id = VisitId(context.fieldAccessExpressionTail().id());
+                return new FieldAccessExpression(span, expression, id);
+            }
+            else
+            {
+                throw new Exception($"Could not parse tailed expression: {context.GetText()}");
+            }
         }
 
         public override ArgumentList VisitArgumentList([NotNull] ArgumentListContext context)
@@ -491,6 +639,44 @@ namespace Compiler.ParseAbstraction
             return new IdExpression(span, id);
         }
 
+        public override ComplexLiteralExpression VisitComplexLiteral([NotNull] ComplexLiteralContext context)
+        {
+            var ast = base.VisitComplexLiteral(context);
+            if (ast is ComplexLiteralExpression expression)
+            {
+                return expression;
+            }
+
+            throw new Exception($"Tried to parse {context.GetText()} as complex literal");
+        }
+
+        public override ArrayLiteralExpression VisitArrayLiteral([NotNull] ArrayLiteralContext context)
+        {
+            throw new NotImplementedException();
+            //var span = GetSpanOfContext(context);
+            //var elements = context.expressionList().expression()
+            //    .Select(VisitExpression)
+            //    .ToList();
+            //return new ArrayLiteralExpression(span, elements);
+        }
+
+        public override StructLiteralExpression VisitStructLiteral([NotNull] StructLiteralContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var fields = context.structLiteralField()
+                .Select(VisitStructLiteralField)
+                .ToList();
+            return new StructLiteralExpression(span, fields);
+        }
+
+        public override StructLiteralField VisitStructLiteralField([NotNull] StructLiteralFieldContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var id = VisitId(context.id());
+            var expression = VisitExpression(context.expression());
+            return new StructLiteralField(span, id, expression);
+        }
+
         public override IdNode VisitId([NotNull] IdContext context)
         {
             var span = GetSpanOfContext(context);
@@ -581,3 +767,4 @@ namespace Compiler.ParseAbstraction
         }
     }
 }
+

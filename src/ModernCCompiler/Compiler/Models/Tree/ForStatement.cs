@@ -1,4 +1,6 @@
-﻿namespace Compiler.Models.Tree
+﻿using Compiler.Models.NameResolution;
+
+namespace Compiler.Models.Tree
 {
     public class ForStatement : LoopStatement
     {
@@ -6,6 +8,7 @@
         public Expression Expression { get; }
         public Statement UpdateStatement { get; }
         public CompoundStatement Body { get; }
+        public Scope? Scope { get; set; }
 
         public ForStatement(
             Span span, 

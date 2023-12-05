@@ -1,6 +1,7 @@
 using Compiler.ErrorHandling;
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking.TypeCheck;
+using Compiler.Utils;
 using System.Text.Json;
 
 namespace CompilerTests;
@@ -9,14 +10,20 @@ namespace CompilerTests;
 /// Tests the top level type checker.
 /// </summary>
 [TestClass]
-public class TopLevelTypeCheckTest
+public class GlobalTypeCheckTest
 {
-    private readonly string _component = "TopLevelTypeCheck";
+    private readonly string _component = "GlobalTypeCheck";
 
     [TestInitialize]
     public void Setup()
     {
-        ErrorHandler.Testing = true;
+        ErrorHandler.ThrowExceptions = true;
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        Globals.Clear();
     }
 
     /// <summary>
@@ -29,7 +36,7 @@ public class TopLevelTypeCheckTest
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
-            TopLevelTypeChecker.Walk(tree);
+            GlobalTypeChecker.Walk(tree);
             Assert.IsNotNull(tree.GlobalScope);
             foreach (var functionDefinition in tree.FunctionDefinitions)
             {
@@ -44,6 +51,8 @@ public class TopLevelTypeCheckTest
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+
+            Globals.Clear();
         }
     }
 
@@ -51,21 +60,23 @@ public class TopLevelTypeCheckTest
     /// Top Level Semantic Errors tests should throw an exception.
     /// </summary>
     [TestMethod]
-    public void TestAllTopLevelSemanticErrors()
+    public void TestAllGlobalSemanticErrors()
     {
-        var testType = "TopLevelSemanticErrors";
+        var testType = "GlobalSemanticErrors";
         foreach (var (_, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
             try
             {
-                TopLevelTypeChecker.Walk(tree);
+                GlobalTypeChecker.Walk(tree);
                 Assert.Fail();
             }
             catch
             {
                 Assert.IsTrue(true);
             }
+
+            Globals.Clear();
         }
     }
 
@@ -79,7 +90,7 @@ public class TopLevelTypeCheckTest
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
-            TopLevelTypeChecker.Walk(tree);
+            GlobalTypeChecker.Walk(tree);
             Assert.IsNotNull(tree.GlobalScope);
             foreach (var functionDefinition in tree.FunctionDefinitions)
             {
@@ -92,6 +103,8 @@ public class TopLevelTypeCheckTest
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+
+            Globals.Clear();
         }
     }
 }

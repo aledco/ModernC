@@ -11,31 +11,26 @@
             Parameters = parameters;
         }
 
-        public static bool operator ==(FunctionType type, SemanticType otherType)
+        public override int GetSizeInBytes()
         {
-            if (otherType is FunctionType other && 
-                type.ReturnType == other.ReturnType && 
-                type.Parameters.Count == other.Parameters.Count) 
+            return 4;
+        }
+
+        public override int GetSizeInWords()
+        {
+            return 1;
+        }
+
+        public override bool TypeEquals(SemanticType other)
+        {
+            if (other is FunctionType otherType &&
+                ReturnType.TypeEquals(otherType.ReturnType) &&
+                Parameters.Count == otherType.Parameters.Count)
             {
-                return type.Parameters.Zip(other.Parameters).All(t => t.First == t.Second);
+                return Parameters.Zip(otherType.Parameters).All(t => t.First.TypeEquals(t.Second));
             }
 
             return false;
-        }
-
-        public static bool operator !=(FunctionType type, SemanticType other)
-        {
-            return !(type == other);
-        }
-
-        public override bool Equals(object? obj)
-        {
-            return obj is SemanticType type && this == type;
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
         }
     }
 }

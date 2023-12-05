@@ -6,6 +6,7 @@ namespace Compiler.Models.Tree
     {
         public TypeNode Type { get; }
         public IdNode Id { get; }
+        public AssignmentOperator Operator { get; }
         public Expression Expression { get; }
 
         public VariableDefinitionAndAssignmentStatement(Span span, TypeNode type, IdNode id, Expression expression) : base(span)

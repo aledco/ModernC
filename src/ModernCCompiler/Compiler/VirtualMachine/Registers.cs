@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Compiler.VirtualMachine
+﻿namespace Compiler.VirtualMachine
 {
     public class Registers
     {
@@ -17,8 +15,8 @@ namespace Compiler.VirtualMachine
             _registers = new()
             {
                 [ProgramCounter] = 0,
-                [FramePointer] = 1,
-                [StackPointer] = 1,
+                [FramePointer] = Memory.GetProgramStackPointer(),
+                [StackPointer] = Memory.GetProgramStackPointer(),
                 [ReturnAddress] = 0,
                 [Temporary] = 0
             };

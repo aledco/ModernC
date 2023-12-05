@@ -2,14 +2,19 @@
 {
     public class ByteType : IntegralType
     {
-        public override bool Equals(object? obj)
+        public override int GetSizeInBytes()
         {
-            return obj is BoolType;
+            return 1;
         }
 
-        public override int GetHashCode()
+        public override int GetSizeInWords()
         {
-            return base.GetHashCode();
+            return 1;
+        }
+
+        public override bool TypeEquals(SemanticType other)
+        {
+            return other is NumberType;
         }
     }
 }
