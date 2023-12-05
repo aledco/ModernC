@@ -12,6 +12,7 @@ using VirtualMachine;
  *      - add code underlining to error messages and better error messages
  *      - comment code
  *      - make full program tests
+ *      - git CI
  * 
  * - structures to implement:
  *      - pointers (can't return normal pointers?)
