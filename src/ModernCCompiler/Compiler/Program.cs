@@ -9,11 +9,10 @@ using Compiler.VirtualMachine;
 /*
  * TODO:
  * - make full program tests
- * - add printing for structs
  * - disallow variable definitions without initialization?
- * - allow global variables to be used as struct defaults?
  * - then type aliases, then pointers, then arrays and strings, then unions
- * - consider having := or <- as assignment
+ * - <- as move operator and allow complex types to be reassigned.
+ * - consider having := as assignment
  * - enforce some kind of order to global entities
  * - implement arrays by the spec below
  * - implement arrays as a struct that hold it's size --or-- have a construct similar to generics that allows to a placeholder in the type
@@ -24,6 +23,7 @@ using Compiler.VirtualMachine;
  *      - uchar? alias for u16
  *          - come up with better name
  *      - make functions use func and -> return syntax, change type to have return last
+ * - set up CI for git?
  * - rewrite param list and arg list like array literal
  * - move virtual machine to it's own project
  * - byte strings

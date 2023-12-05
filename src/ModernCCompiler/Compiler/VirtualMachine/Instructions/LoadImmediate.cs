@@ -6,7 +6,8 @@ namespace Compiler.VirtualMachine.Instructions
     {
         private readonly string _dst;
         private readonly int _val;
-        private readonly float? _oval = null;
+        private readonly float? _fval = null;
+        private readonly char? _cval = null;
 
         public LoadImmediate(string dst, int val)
         {
@@ -18,7 +19,14 @@ namespace Compiler.VirtualMachine.Instructions
         {
             _dst = dst;
             _val = ToInt(val);
-            _oval = val;
+            _fval = val;
+        }
+
+        public LoadImmediate(string dst, char val)
+        {
+            _dst = dst;
+            _val = val;
+            _cval = val;
         }
 
         public void Execute(Memory memory, Registers registers, Dictionary<string, int> labels, TextReader inStream, TextWriter outStream)
@@ -28,14 +36,28 @@ namespace Compiler.VirtualMachine.Instructions
 
         public string ToCode()
         {
-            if (_oval == null)
+            if (_cval.HasValue)
             {
-                return $"li {_dst} {_val}";
+                return $"li {_dst} '{GetCharRepr(_cval.Value)}'";
+                
+            }
+            else if (_fval.HasValue)
+            {
+                return $"li {_dst} {_fval}";
             }
             else
             {
-                return $"li {_dst} {_oval}";
+                return $"li {_dst} {_val}";
             }
+        }
+
+        private static string GetCharRepr(char c)
+        {
+            return c switch
+            {
+                '\n' => @"\n",
+                _ => c.ToString(),
+            };
         }
     }
 }

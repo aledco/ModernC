@@ -16,6 +16,7 @@ namespace Compiler.Models.Tree
             return Left switch
             {
                 IdExpression e => e.Id.Symbol?.Type,
+                FieldAccessExpression e => e.Type,
                 TailedExpression e => e.GetOperatingType(),
                 _ => throw new NotImplementedException()
             };

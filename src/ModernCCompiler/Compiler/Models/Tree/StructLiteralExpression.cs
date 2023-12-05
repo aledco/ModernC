@@ -8,15 +8,16 @@ namespace Compiler.Models.Tree
     {
         public IList<StructLiteralField> Fields { get; }
         public StructDefinition? StructDefinition { get; private set; }
+        public int Offset { get; set; }
 
         public StructLiteralExpression(Span span, IList<StructLiteralField> fields) : base(span)
         {
             Fields = fields;
         }
 
-        public SemanticType MapDefaultExpressionsFromDefinition(UserDefinedType userDefinedType)
+        public SemanticType MapDefaultExpressionsFromDefinition(StructType type, StructDefinition definition)
         {
-            var (type, definition) = SymbolTable.LookupTypeAndDefinition<StructType, StructDefinition>(userDefinedType, Span);
+            
             StructDefinition = definition;
             foreach (var fieldDefinition in definition.Fields)
             {
@@ -49,7 +50,9 @@ namespace Compiler.Models.Tree
 
         public override Expression Copy(Span span)
         {
-            return new StructLiteralExpression(span, Fields);
+            var structLiteral = new StructLiteralExpression(span, Fields);
+            structLiteral.StructDefinition = StructDefinition;
+            return structLiteral;
         }
     }
 }

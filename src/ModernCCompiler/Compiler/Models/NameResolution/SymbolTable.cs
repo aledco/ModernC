@@ -81,6 +81,22 @@ namespace Compiler.Models.NameResolution
             return false;
         }
 
+        public static UserDefinedType LookupType(UserDefinedType type, Span? span = null)
+        {
+            if (!_typeTable.ContainsKey(type.Value))
+            {
+                if (span != null)
+                {
+                    ErrorHandler.Throw($"Type {type.Value} is not defined", span);
+                }
+
+                ErrorHandler.Throw($"Type {type.Value} is not defined");
+                throw ErrorHandler.FailedToExit;
+            }
+
+            return _typeTable[type.Value].Type;
+        }
+
         public static Definition LookupDefinition(UserDefinedType type, Span? span = null)
         {
             if (!_typeTable.ContainsKey(type.Value))

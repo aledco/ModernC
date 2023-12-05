@@ -403,7 +403,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 VisitExpression(field.Expression, context, offset);
                 context.DropRegister(field.Expression.Register);
             }
-
+            
             context.DropRegister(e.Register);
             return 0;
         }

@@ -24,7 +24,10 @@ namespace Compiler.TreeWalking.TypeCheck
 
         public static void Walk(ProgramRoot program)
         {
-            var context = new Context();
+            var context = new Context
+            {
+                Scope = program.GlobalScope
+            };
             VisitProgramRoot(program, context);
         }
 
@@ -62,6 +65,7 @@ namespace Compiler.TreeWalking.TypeCheck
 
             foreach (var field in structDefinition.Fields)
             {
+                context.VariableAssignmentType = field.Type.ToSemanticType();
                 VisitStructFieldDefinition(field, context);
             }
         }
@@ -71,21 +75,6 @@ namespace Compiler.TreeWalking.TypeCheck
             var type = field.Type.ToSemanticType();
             if (field.DefaultExpression != null)
             {
-                switch (field.DefaultExpression)
-                {
-                    case UnaryOperatorExpression:
-                    case ArrayLiteralExpression:
-                    case StructLiteralExpression:
-                    case IntLiteralExpression:
-                    case ByteLiteralExpression:
-                    case FloatLiteralExpression:
-                    case BoolLiteralExpression: // TODO add id expressions for globals
-                        break;
-                    default:
-                        ErrorHandler.Throw("Expression cannot be a field default expression", field.DefaultExpression);
-                        break;
-                }
-
                 var expressionType = VisitExpression(field.DefaultExpression, context);
                 if (!type.TypeEquals(expressionType))
                 {
@@ -242,7 +231,7 @@ namespace Compiler.TreeWalking.TypeCheck
             var type = statement.Type.ToSemanticType();
             context.VariableAssignmentType = type;
             var expressionType = VisitExpression(statement.Expression, context);
-            if (expressionType.IsComplex && statement.Expression is not ComplexLiteralExpression) // and not literal
+            if (expressionType.IsComplex && statement.Expression is not ComplexLiteralExpression)
             {
                 ErrorHandler.Throw("Complex types cannot be reassigned.");
             }
@@ -440,6 +429,11 @@ namespace Compiler.TreeWalking.TypeCheck
         private static SemanticType VisitFieldAccessExpression(FieldAccessExpression e, Context context)
         {
             var type = VisitExpression(e.Left, context);
+            if (type is UserDefinedType userDefinedType)
+            {
+                type = SymbolTable.LookupType(userDefinedType, e.Span);
+            }
+
             switch (type)
             {
                 case StructType t:
@@ -461,9 +455,27 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             if (context.VariableAssignmentType is UserDefinedType userDefinedType)
             {
-                return e.MapDefaultExpressionsFromDefinition(userDefinedType);
-            }
+                var (structType, definition) = SymbolTable.LookupTypeAndDefinition<StructType, StructDefinition>(userDefinedType, e.Span);
+                foreach (var field in e.Fields)
+                {
+                    var fieldDefinition = definition.Fields.Where(f => field.Id.Value == f.Id.Value).FirstOrDefault();
+                    if (fieldDefinition == null)
+                    {
+                        ErrorHandler.Throw("Struct does not have a definition for this field", e);
+                    }
 
+                    var fieldDefinitionType = fieldDefinition!.Type.ToSemanticType();
+                    context.VariableAssignmentType = fieldDefinitionType;
+                    var type = VisitExpression(field.Expression, context);
+                    if (!fieldDefinition!.Type.ToSemanticType().TypeEquals(type))
+                    {
+                        ErrorHandler.Throw("Type does not match field definition", e);
+                    }
+                }
+
+                return e.MapDefaultExpressionsFromDefinition(structType, definition);
+            }
+            
             ErrorHandler.Throw("Struct literal cannot be assigned to this type", e);
             throw ErrorHandler.FailedToExit;
         }

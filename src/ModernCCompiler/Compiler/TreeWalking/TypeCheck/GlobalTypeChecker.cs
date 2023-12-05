@@ -198,7 +198,25 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             if (context.VariableAssignmentType is UserDefinedType userDefinedType)
             {
-                return e.MapDefaultExpressionsFromDefinition(userDefinedType);
+                var (structType, definition) = SymbolTable.LookupTypeAndDefinition<StructType, StructDefinition>(userDefinedType, e.Span);
+                foreach (var field in e.Fields)
+                {
+                    var fieldDefinition = definition.Fields.Where(f => field.Id.Value == f.Id.Value).FirstOrDefault();
+                    if (fieldDefinition == null)
+                    {
+                        ErrorHandler.Throw("Struct does not have a definition for this field", e);
+                    }
+
+                    var fieldDefinitionType = fieldDefinition!.Type.ToSemanticType();
+                    context.VariableAssignmentType = fieldDefinitionType;
+                    var type = VisitExpression(field.Expression, context);
+                    if (!fieldDefinition!.Type.ToSemanticType().TypeEquals(type))
+                    {
+                        ErrorHandler.Throw("Type does not match field definition", e);
+                    }
+                }
+
+                return e.MapDefaultExpressionsFromDefinition(structType, definition);
             }
 
             ErrorHandler.Throw("Struct literal cannot be assigned to this type", e);

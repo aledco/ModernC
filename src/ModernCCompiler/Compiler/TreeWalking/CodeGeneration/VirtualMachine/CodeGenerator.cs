@@ -1,4 +1,5 @@
 ﻿using Compiler.ErrorHandling;
+using Compiler.Models;
 using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Operators;
@@ -120,22 +121,37 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> VisitPrintStatement(PrintStatement s)
         {
-            var instructions = ExpressionRValue(s.Expression);
+            if (s.Expression is ComplexLiteralExpression)
+            {
+                ErrorHandler.Throw("Printing complex literals is not supported, store in a variable then print the variable", s);
+            }
+
+            var instructions = new List<IInstruction>();
             switch (s.Expression.Type)
             {
                 case IntType:
+                    instructions.AddRange(ExpressionRValue(s.Expression));
                     instructions.Add(new PrintInt(s.Expression.Register));
                     break;
                 case ByteType:
+                    instructions.AddRange(ExpressionRValue(s.Expression));
                     instructions.Add(new PrintByte(s.Expression.Register));
                     break;
                 case FloatType:
+                    instructions.AddRange(ExpressionRValue(s.Expression));
                     instructions.Add(new PrintFloat(s.Expression.Register));
                     break;
                 case BoolType:
+                    instructions.AddRange(ExpressionRValue(s.Expression));
                     instructions.Add(new PrintBool(s.Expression.Register));
                     break;
+                case StructType t:
+                    var definition = SymbolTable.LookupDefinition(t) as StructDefinition;
+                    instructions.AddRange(ExpressionLValue(s.Expression));
+                    instructions.AddRange(PrintStruct(s.Expression.Register, definition!, s.Span));
+                    break;
                 case FunctionType:
+                    instructions.AddRange(ExpressionRValue(s.Expression));
                     instructions.Add(new PrintPointer(s.Expression.Register));
                     break;
                 default:
@@ -143,6 +159,96 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     break;
             }
             
+            return instructions;
+        }
+
+        private static IList<IInstruction> PrintSpaces(int spaces)
+        {
+            var instructions = new List<IInstruction>();
+            for (int i = 0; i < spaces; i++)
+            {
+                instructions.Add(new LoadImmediate(Registers.Temporary, ' '));
+                instructions.Add(new PrintByte(Registers.Temporary));
+            }
+
+            return instructions;
+        }
+
+        private static IList<IInstruction> PrintStruct(string lvalRegister, StructDefinition definition, Span span, int spaces = 0)
+        {
+
+            var instructions = new List<IInstruction>();
+            foreach (var c in definition.Type.ToSemanticType().Value)
+            {
+                instructions.Add(new LoadImmediate(Registers.Temporary, c));
+                instructions.Add(new PrintByte(Registers.Temporary));
+            }
+
+            instructions.Add(new LoadImmediate(Registers.Temporary, ' '));
+            instructions.Add(new PrintByte(Registers.Temporary));
+            instructions.Add(new LoadImmediate(Registers.Temporary, '{'));
+            instructions.Add(new PrintByte(Registers.Temporary));
+            instructions.Add(new LoadImmediate(Registers.Temporary, '\n'));
+            instructions.Add(new PrintByte(Registers.Temporary));
+
+            foreach (var field in definition.Fields)
+            {
+                instructions.AddRange(PrintSpaces(spaces + 4));
+                foreach (var c in field.Id.Value)
+                {
+                    instructions.Add(new LoadImmediate(Registers.Temporary, c));
+                    instructions.Add(new PrintByte(Registers.Temporary));
+                }
+
+                instructions.Add(new LoadImmediate(Registers.Temporary, ' '));
+                instructions.Add(new PrintByte(Registers.Temporary));
+                instructions.Add(new LoadImmediate(Registers.Temporary, '='));
+                instructions.Add(new PrintByte(Registers.Temporary));
+                instructions.Add(new LoadImmediate(Registers.Temporary, ' '));
+                instructions.Add(new PrintByte(Registers.Temporary));
+
+                switch (field.Type.ToSemanticType())
+                {
+                    case IntType:
+                        instructions.Add(new Load(Registers.Temporary, lvalRegister, field.Offset));
+                        instructions.Add(new PrintInt(Registers.Temporary));
+                        break;
+                    case ByteType:
+                        instructions.Add(new Load(Registers.Temporary, lvalRegister, field.Offset));
+                        instructions.Add(new PrintByte(Registers.Temporary));
+                        break;
+                    case FloatType:
+                        instructions.Add(new Load(Registers.Temporary, lvalRegister, field.Offset));
+                        instructions.Add(new PrintFloat(Registers.Temporary));
+                        break;
+                    case BoolType:
+                        instructions.Add(new Load(Registers.Temporary, lvalRegister, field.Offset));
+                        instructions.Add(new PrintBool(Registers.Temporary));
+                        break;
+                    case StructType t:
+                        var fieldDefiniton = SymbolTable.LookupDefinition(t) as StructDefinition;
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, field.Offset));
+                        instructions.AddRange(PrintStruct(lvalRegister, fieldDefiniton!, span, spaces + field.Id.Value.Length + 7));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -field.Offset));
+                        break;
+                    case FunctionType:
+                        instructions.Add(new Load(Registers.Temporary, lvalRegister, field.Offset));
+                        instructions.Add(new PrintPointer(Registers.Temporary));
+                        break;
+                    default:
+                        ErrorHandler.Throw("Cannot print expression", span);
+                        break;
+                }
+
+                instructions.Add(new LoadImmediate(Registers.Temporary, ','));
+                instructions.Add(new PrintByte(Registers.Temporary));
+                instructions.Add(new LoadImmediate(Registers.Temporary, '\n'));
+                instructions.Add(new PrintByte(Registers.Temporary));
+            }
+
+            instructions.AddRange(PrintSpaces(spaces));
+            instructions.Add(new LoadImmediate(Registers.Temporary, '}'));
+            instructions.Add(new PrintByte(Registers.Temporary));
             return instructions;
         }
 
@@ -769,7 +875,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> FieldAccessExpressionRValue(FieldAccessExpression e)
         {
             var instructions = ExpressionLValue(e.Left);
-            // TODO may need to do something differen for complex types
             instructions.Add(new Load(e.Register, e.Left.Register, e.Offset));
             return instructions;
         }
@@ -906,7 +1011,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> FieldAccessExpressionLValue(FieldAccessExpression e)
         {
             var instructions = ExpressionLValue(e.Left);
-            // TODO may need to do something differen for complex types
             instructions.Add(new AddImmediate(e.Register, e.Left.Register, e.Offset));
             return instructions;
         }
@@ -1006,6 +1110,12 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return instructions;
         }
 
+        /// <summary>
+        /// Makes a complex literal. At the moment it is epected that the address of the memory where this literal will be stored is in expression.Register.
+        /// </summary>
+        /// <param name="expression">The literal.</param>
+        /// <returns>The instructions.</returns>
+        /// <exception cref="NotImplementedException"></exception>
         private static List<IInstruction> MakeComplexLiteral(ComplexLiteralExpression expression)
         {
             return expression switch
@@ -1021,8 +1131,16 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             var instructions = new List<IInstruction>();
             foreach (var field in e.Fields)
             {
-                instructions.AddRange(ExpressionRValue(field.Expression));
-                instructions.Add(new Store(e.Register, field.Expression.Register, field.Offset));
+                if (field.Expression is ComplexLiteralExpression complexLiteral)
+                {
+                    instructions.Add(new AddImmediate(complexLiteral.Register, e.Register, field.Offset));
+                    instructions.AddRange(MakeComplexLiteral(complexLiteral));
+                }
+                else
+                {
+                    instructions.AddRange(ExpressionRValue(field.Expression));
+                    instructions.Add(new Store(e.Register, field.Expression.Register, field.Offset));
+                }
             }
 
             return instructions;

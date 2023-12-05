@@ -11,12 +11,12 @@
 
         public override int GetSizeInBytes()
         {
-            throw new NotImplementedException();
+            return SymbolTable.LookupType(this).GetSizeInBytes();
         }
 
         public override int GetSizeInWords()
         {
-            throw new NotImplementedException();
+            return SymbolTable.LookupType(this).GetSizeInWords();
         }
 
         public override bool TypeEquals(SemanticType other)

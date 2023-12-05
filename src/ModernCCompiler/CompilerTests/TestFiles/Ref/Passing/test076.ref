@@ -1,0 +1,8 @@
+Test {
+    x = 0,
+    y = ?,
+    innerTest = InnerTest {
+                    n = 100,
+                    g = false,
+                },
+}

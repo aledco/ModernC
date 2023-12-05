@@ -25,7 +25,14 @@
         {
             get
             {
-                return this is not VoidType && GetSizeInWords() > 1;
+                try
+                {
+                    return this is not VoidType && GetSizeInWords() > 1;
+                }
+                catch
+                {
+                    return true;
+                }
             }
         }
     }
