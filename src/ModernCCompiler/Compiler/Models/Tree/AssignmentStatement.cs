@@ -14,5 +14,10 @@ namespace Compiler.Models.Tree
             Left = left;
             Right = right;
         }
+
+        public override bool AllPathsReturn()
+        {
+            return false;
+        }
     }
 }

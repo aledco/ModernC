@@ -1,8 +1,8 @@
+using Compiler;
 using Compiler.ErrorHandling;
 using Compiler.Models.Tree;
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking.TypeCheck;
-using Compiler.Utils;
 using System.Text.Json;
 
 namespace CompilerTests;
@@ -24,7 +24,7 @@ public class LocalTypeCheckTest
     [TestCleanup]
     public void Cleanup()
     {
-        Globals.Clear();
+        GlobalManager.Clear();
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public class LocalTypeCheckTest
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
 
-            Globals.Clear();
+            GlobalManager.Clear();
         }
     }
 
@@ -84,7 +84,7 @@ public class LocalTypeCheckTest
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
 
-            Globals.Clear();
+            GlobalManager.Clear();
         }
     }
 

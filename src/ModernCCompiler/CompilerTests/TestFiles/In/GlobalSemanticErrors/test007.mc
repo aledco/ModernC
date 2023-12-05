@@ -1,6 +1,6 @@
 int x = 10;
 
-int main() {
+func main() -> int {
 	return 0;
 }
 

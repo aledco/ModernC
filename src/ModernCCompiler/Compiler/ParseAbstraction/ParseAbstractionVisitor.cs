@@ -55,11 +55,22 @@ namespace Compiler.ParseAbstraction
         public override FunctionDefinition VisitFunctionDefinition([NotNull] FunctionDefinitionContext context)
         {
             var span = GetSpanOfContext(context);
-            var returnType = VisitType(context.type());
             var id = VisitId(context.id());
-            var parameters = context.parameterList() != null ? VisitParameterList(context.parameterList()) : new ParameterList();
+            var parameters = context.parameterList()?
+                .parameter()
+                .Select(VisitParameter)
+                .ToList();
+            var returnType = VisitType(context.type());
             var body = VisitCompoundStatement(context.compoundStatement());
-            return new FunctionDefinition(span, returnType, id, parameters, body);
+            return new FunctionDefinition(span, id, parameters ?? new List<Parameter>(), returnType, body);
+        }
+
+        public override Parameter VisitParameter([NotNull] ParameterContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var type = VisitType(context.type());
+            var id = VisitId(context.id());
+            return new Parameter(span, type, id);
         }
 
         public override TypeNode VisitType([NotNull] TypeContext context)
@@ -82,8 +93,7 @@ namespace Compiler.ParseAbstraction
                     ErrorHandler.Throw("Array size must be greater than 0", size);
                 }
 
-                throw new NotImplementedException();
-                //return new ArrayTypeNode(span, elementType, size.Value);
+                return new ArrayTypeNode(span, elementType, size.Value);
             }
             else if (context.functionType() != null)
             {
@@ -134,23 +144,6 @@ namespace Compiler.ParseAbstraction
             var span = GetSpanOfContext(context);
             var id = VisitId(context.id());
             return new UserDefinedTypeNode(span, id);
-        }
-
-        public override ParameterList VisitParameterList([NotNull] ParameterListContext context)
-        {
-            var span = GetSpanOfContext(context);
-            var parameters = context.parameter()
-                .Select(VisitParameter)
-                .ToList();
-            return new ParameterList(span, parameters);
-        }
-
-        public override Parameter VisitParameter([NotNull] ParameterContext context)
-        {
-            var span = GetSpanOfContext(context);
-            var type = VisitType(context.type());
-            var id = VisitId(context.id());
-            return new Parameter(span, type, id);
         }
 
         public override StructFieldDefinition VisitStructFieldDefinition([NotNull] StructFieldDefinitionContext context)
@@ -513,8 +506,11 @@ namespace Compiler.ParseAbstraction
             if (context.callExpressionTail() != null)
             {
                 var tailContext = context.callExpressionTail();
-                var argList = tailContext.argumentList() != null ? VisitArgumentList(tailContext.argumentList()) : null;
-                return new CallExpression(span, expression, argList);
+                var args = tailContext.argumentList()?
+                    .expression()
+                    .Select(VisitExpression)
+                    .ToList();
+                return new CallExpression(span, expression, args ?? new List<Expression>());
             }
             else if (context.arrayExpressionTail() != null)
             {
@@ -533,15 +529,6 @@ namespace Compiler.ParseAbstraction
             {
                 throw new Exception($"Could not parse tailed expression: {context.GetText()}");
             }
-        }
-
-        public override ArgumentList VisitArgumentList([NotNull] ArgumentListContext context)
-        {
-            var span = GetSpanOfContext(context);
-            var arguments = context.expression()
-                .Select(VisitExpression)
-                .ToList();
-            return new ArgumentList(span, arguments);
         }
 
         public override ReadExpression VisitReadExpression([NotNull] ReadExpressionContext context)
@@ -728,7 +715,7 @@ namespace Compiler.ParseAbstraction
             };
         }
 
-        private IncrementOperator GetIncrementOperator(string op)
+        private static IncrementOperator GetIncrementOperator(string op)
         {
             return op switch
             {

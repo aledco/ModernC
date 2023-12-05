@@ -2,7 +2,7 @@
 
 namespace Compiler.Models.Tree
 {
-    public class ForStatement : LoopStatement
+    public class ForStatement : LoopingStatement
     {
         public Statement InitialStatement { get; }
         public Expression Expression { get; }
@@ -31,6 +31,11 @@ namespace Compiler.Models.Tree
         public override string GetExitLabel()
         {
             return $"for_exit_{LabelId}";
+        }
+
+        public override bool AllPathsReturn()
+        {
+            return false;
         }
     }
 }

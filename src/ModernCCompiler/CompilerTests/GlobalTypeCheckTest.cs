@@ -1,7 +1,7 @@
+using Compiler;
 using Compiler.ErrorHandling;
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking.TypeCheck;
-using Compiler.Utils;
 using System.Text.Json;
 
 namespace CompilerTests;
@@ -23,7 +23,7 @@ public class GlobalTypeCheckTest
     [TestCleanup]
     public void Cleanup()
     {
-        Globals.Clear();
+        GlobalManager.Clear();
     }
 
     /// <summary>
@@ -52,7 +52,7 @@ public class GlobalTypeCheckTest
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
 
-            Globals.Clear();
+            GlobalManager.Clear();
         }
     }
 
@@ -76,7 +76,7 @@ public class GlobalTypeCheckTest
                 Assert.IsTrue(true);
             }
 
-            Globals.Clear();
+            GlobalManager.Clear();
         }
     }
 
@@ -104,7 +104,7 @@ public class GlobalTypeCheckTest
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
 
-            Globals.Clear();
+            GlobalManager.Clear();
         }
     }
 }

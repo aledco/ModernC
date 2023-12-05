@@ -1,4 +1,4 @@
-int main() {
+func main() -> int {
     int x = 0;
 
     while x < 10 {

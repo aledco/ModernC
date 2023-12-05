@@ -22,5 +22,13 @@
             ElifBodies = elifBodies;
             ElseBody = elseBody;
         }
+
+        public override bool AllPathsReturn()
+        {
+            return // All paths return if all if / elif / else bodies return.
+                IfBody.AllPathsReturn() 
+                && ElifBodies.All(b  => b.AllPathsReturn()) 
+                && (ElseBody != null && ElseBody.AllPathsReturn());
+        }
     }
 }

@@ -1,8 +1,8 @@
-int main() {
+func main() -> int {
 	print f();
 	return 0;
 }
 
-int f() {
+func f() -> int {
 	return 10;
 }

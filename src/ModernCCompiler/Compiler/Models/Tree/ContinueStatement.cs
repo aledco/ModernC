@@ -2,10 +2,15 @@
 {
     public class ContinueStatement : Statement
     {
-        public LoopStatement? EnclosingLoop { get; set; }
+        public LoopingStatement? EnclosingLoop { get; set; }
 
         public ContinueStatement(Span span) : base(span)
         {
+        }
+
+        public override bool AllPathsReturn()
+        {
+            return false;
         }
     }
 }

@@ -1,4 +1,4 @@
-int main() {
+func main() -> int {
 	if f() {
 		print 1;
 	} else {
@@ -8,6 +8,6 @@ int main() {
 	return 0;
 }
 
-bool f() {
+func f() -> bool {
 	return true;
 }

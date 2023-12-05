@@ -2,7 +2,7 @@ struct Test {
 	int x;
 }
 
-int main() {
+func main() -> int {
 	Test test;
 	test = { x = 10 };
 	return 0;

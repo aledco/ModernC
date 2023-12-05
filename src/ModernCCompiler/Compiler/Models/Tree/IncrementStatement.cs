@@ -12,5 +12,10 @@ namespace Compiler.Models.Tree
             Left = left;
             Operator = op;
         }
+
+        public override bool AllPathsReturn()
+        {
+            return false;
+        }
     }
 }

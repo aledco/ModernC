@@ -1,7 +1,7 @@
 int age = 22;
 int iters = 15;
 
-int main() {
+func main() -> int {
     for int i = 0; i < iters; i++ {
         genevieve();
         print ' ';
@@ -22,9 +22,11 @@ int main() {
         print '.';
         print '\n';
     }
+
+    return 0;
 }
 
-void genevieve() {
+func genevieve() -> void {
     print 'G';
     print 'e';
     print 'n';

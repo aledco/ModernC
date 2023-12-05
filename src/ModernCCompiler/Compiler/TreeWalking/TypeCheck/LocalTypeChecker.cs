@@ -15,7 +15,7 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             public Scope? Scope { get; set; }
             public FunctionDefinition? EnclosingFunction { get; set; }
-            public Stack<LoopStatement> EnclosingLoops { get; set; } = new();
+            public Stack<LoopingStatement> EnclosingLoops { get; set; } = new();
             public bool LValue { get; set; } = false;
             public FunctionDefinition? RValueFunction { get; set; }
 
@@ -92,6 +92,11 @@ namespace Compiler.TreeWalking.TypeCheck
 
             context.Scope = functionDefinition.FunctionScope;
             context.EnclosingFunction = functionDefinition;
+            if (functionDefinition.ReturnType.ToSemanticType() is not VoidType && !functionDefinition.Body.AllPathsReturn())
+            {
+                ErrorHandler.Throw("Not all code paths return", functionDefinition);
+            }
+
             VisitCompoundStatement(functionDefinition.Body, context);
         }
 
@@ -485,7 +490,9 @@ namespace Compiler.TreeWalking.TypeCheck
             e.Type = VisitExpression(e.Function, context);
             if (e.Type is FunctionType functionType)
             {
-                var argTypes = VisitArgumentList(e.ArgumentList, context);
+                var argTypes = e.Arguments
+                    .Select(a => VisitExpression(a, context))
+                    .ToList();
                 if (argTypes.Count != functionType.Parameters.Count)
                 {
                     ErrorHandler.Throw($"Function was called with an incorrect number of arguments.", e);
@@ -521,13 +528,6 @@ namespace Compiler.TreeWalking.TypeCheck
 
             ErrorHandler.Throw("Expression cannot be indexed like an array", e);
             throw new Exception("Error handler did not stop execution");
-        }
-
-        private static IList<SemanticType> VisitArgumentList(ArgumentList argumentList, Context context)
-        {
-            return argumentList.Arguments
-                .Select(a => VisitExpression(a, context))
-                .ToList();
         }
 
         private static SemanticType VisitBinaryOperatorExpression(BinaryOperatorExpression e, Context context)

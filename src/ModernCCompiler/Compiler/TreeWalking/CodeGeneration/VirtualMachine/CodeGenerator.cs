@@ -4,8 +4,8 @@ using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
-using Compiler.VirtualMachine;
-using Compiler.VirtualMachine.Instructions;
+using VirtualMachine;
+using VirtualMachine.Instructions;
 
 namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 {
@@ -485,8 +485,8 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
             if (s.ElifExpressions.Count > 0 || s.ElseBody != null) 
             {
-                var nextLabel = (int n) => $"elif_{n}_{labelId}";
-                
+                string nextLabel(int n) => $"elif_{n}_{labelId}";
+
                 instructions.AddRange(Flow(s.IfExpression, nextLabel(0), false));
                 instructions.AddRange(VisitCompoundStatement(s.IfBody));
                 instructions.Add(new Jump(exitLabel));
@@ -842,12 +842,12 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             if (e.Function.Type is FunctionType functionType)
             {
                 var instructions = ExpressionRValue(e.Function);
-                var argSize = e.ArgumentList.Arguments.Sum(a => a.Type!.GetSizeInWords());
+                var argSize = e.Arguments.Sum(a => a.Type!.GetSizeInWords());
                 var returnSize = functionType.ReturnType is VoidType ? 1 : functionType.ReturnType.GetSizeInWords();
                 instructions.Add(new AddImmediate(Registers.StackPointer, Registers.StackPointer, argSize + returnSize));
-                for (var i = 0; i < e.ArgumentList.Arguments.Count; i++)
+                for (var i = 0; i < e.Arguments.Count; i++)
                 {
-                    var arg = e.ArgumentList.Arguments[i];
+                    var arg = e.Arguments[i];
                     instructions.AddRange(ExpressionRValue(arg));
                     instructions.Add(new Store(Registers.StackPointer, arg.Register, -i - returnSize - 1));
                 }

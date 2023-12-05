@@ -99,7 +99,9 @@ namespace Compiler.TreeWalking.TypeCheck
             context.Scope = functionDefinition.FunctionScope;
 
             var returnType = functionDefinition.ReturnType.ToSemanticType();
-            var parameterTypes = VisitParameterList(functionDefinition.ParameterList, context);
+            var parameterTypes = functionDefinition.Parameters
+                .Select(p => VisitParameter(p, context))
+                .ToList();
 
             globalScope?.AddSymbol(functionDefinition.Id, new FunctionType(returnType, parameterTypes));
             context.Scope = globalScope;
@@ -113,18 +115,12 @@ namespace Compiler.TreeWalking.TypeCheck
             functionDefinition.Id.Symbol.EnclosingFunction = functionDefinition;
         }
 
-        private static IList<SemanticType> VisitParameterList(ParameterList parameterList, Context context)
+        private static SemanticType VisitParameter(Parameter parameter, Context context)
         {
-            var parameterTypes = new List<SemanticType>();
-            foreach (var parameter in parameterList.Parameters)
-            {
-                var type = parameter.Type.ToSemanticType();
-                context.Scope?.AddSymbol(parameter.Id, type);
-                VisitIdNode(parameter.Id, context);
-                parameterTypes.Add(type);
-            }
-
-            return parameterTypes;
+            var type = parameter.Type.ToSemanticType();
+            context.Scope?.AddSymbol(parameter.Id, type);
+            VisitIdNode(parameter.Id, context);
+            return type;
         }
 
         private static SemanticType VisitExpression(Expression expression, Context context)

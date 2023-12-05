@@ -8,7 +8,7 @@ Test globalTest = {
 	y = true,
 };
 
-int main() {
+func main() -> int {
 	if globalTest.y {
 		globalTest.x = 15;
 	} else {

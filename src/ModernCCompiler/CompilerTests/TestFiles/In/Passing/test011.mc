@@ -1,13 +1,13 @@
-int main() {
-	func(void, int) h = f();
+func main() -> int {
+	func(int, void) h = f();
 	h(10);
 	return 0;
 }
 
-func(void, int) f() {
+func f() -> func(int, void) {
 	return g;
 }
 
-void g(int x) {
+func g(int x) -> void {
 	print x;
 }

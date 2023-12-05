@@ -3,13 +3,13 @@ struct Test {
     func(void) increment;
 }
 
-void increment() {
+func increment() -> void {
     test.x++;
 }
 
 Test test;
 
-int main() {
+func main() -> int {
     test.increment = increment;
     for int i = 0; i < 69; i++ {
             test.increment();

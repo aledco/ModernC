@@ -1,10 +1,10 @@
-int main() {
+func main() -> int {
 	func(int) g = f;
 	int x = g();
 	print x;
 	return 0;
 }
 
-void f() {
+func f() -> void {
 	print 'a';
 } 

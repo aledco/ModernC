@@ -1,4 +1,4 @@
-int main() {
+func main() -> int {
 	while 1 {
 		print 0;
 	}

@@ -10,5 +10,10 @@
             Type = type;
             Id = id;
         }
+
+        public override bool AllPathsReturn()
+        {
+            return false;
+        }
     }
 }

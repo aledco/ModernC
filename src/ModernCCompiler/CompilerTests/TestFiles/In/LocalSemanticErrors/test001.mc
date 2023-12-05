@@ -1,3 +1,3 @@
-int main() {
+func main() -> int {
 	return true;
 }

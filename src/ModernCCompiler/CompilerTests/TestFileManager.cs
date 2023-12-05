@@ -2,8 +2,16 @@
 {
     internal static class TestFileManager
     {
-        private static readonly string _projectPath = "C:\\LocalFiles\\ModernC\\src\\ModernCCompiler\\CompilerTests"; // TODO handle this better
+        private static readonly string _projectPath;
         
+        static TestFileManager()
+        {
+            string startupPath = AppDomain.CurrentDomain.BaseDirectory;
+            var pathItems = startupPath.Split(Path.DirectorySeparatorChar);
+            var pos = pathItems.Reverse().ToList().FindIndex(x => string.Equals("bin", x));
+            _projectPath = String.Join(Path.DirectorySeparatorChar.ToString(), pathItems.Take(pathItems.Length - pos - 1));
+        }
+
         public static string GetTestDir()
         {
             var baseDir = _projectPath;

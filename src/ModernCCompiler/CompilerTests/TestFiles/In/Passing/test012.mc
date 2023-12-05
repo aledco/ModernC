@@ -1,9 +1,9 @@
-int main() {
+func main() -> int {
     int x = f();
     print x;
     return 0;
 }
 
-int f() {
+func f() -> int {
     return 10;
 }

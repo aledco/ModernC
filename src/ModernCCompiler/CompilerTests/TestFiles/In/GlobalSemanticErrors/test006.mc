@@ -1,9 +1,9 @@
 int x = f();
 
-int f() {
+func f() -> int {
 	return 0;
 }
 
-int main() {
+func main() -> int {
 	return 0;
 }

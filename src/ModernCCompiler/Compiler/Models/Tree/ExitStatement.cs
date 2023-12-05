@@ -8,5 +8,10 @@
         {
             Expression = expression;
         }
+
+        public override bool AllPathsReturn()
+        {
+            return true;
+        }
     }
 }

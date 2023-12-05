@@ -1,8 +1,8 @@
-int main() {
+func main() -> int {
 	func(int) g = f;
 	g();
 	return 0;
 }
 
-void f() {
+func f() -> void {
 }

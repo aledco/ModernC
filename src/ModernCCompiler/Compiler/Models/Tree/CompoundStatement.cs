@@ -13,5 +13,11 @@ namespace Compiler.Models.Tree
         {
             Statements = statements;
         }
+
+        public override bool AllPathsReturn()
+        {
+            return Statements.Any(s => s.AllPathsReturn()); // all code paths return if any of the sub statements return.
+            // TODO drop any statements after a statement that returns?
+        }
     }
 }

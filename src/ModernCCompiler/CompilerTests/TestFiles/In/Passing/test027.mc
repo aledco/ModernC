@@ -1,4 +1,4 @@
-int main() {
+func main() -> int {
 	if true == true 
 			and false == false
 			and false < true

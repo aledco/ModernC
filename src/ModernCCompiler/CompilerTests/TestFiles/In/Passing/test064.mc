@@ -1,6 +1,6 @@
 bool cond = true;
 
-int main() {
+func main() -> int {
     int x;
     if cond {
         x = f();
@@ -12,10 +12,10 @@ int main() {
     return 0;
 }
 
-int f() {
+func f() -> int {
     return -1;
 }
 
-int g() {
+func g() -> int {
     return 1;
 }

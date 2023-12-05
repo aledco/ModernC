@@ -9,7 +9,7 @@ struct InnerTest {
     bool g = not true;
 }
 
-int main() {
+func main() -> int {
     Test test = {};
     println test;
     return 0;
