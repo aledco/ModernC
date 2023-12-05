@@ -1,6 +1,6 @@
 int x = 0;
 
-int main() {
+func main() -> int {
 	println x;
 	while x < 10 {
 		x++;
@@ -12,7 +12,7 @@ int main() {
 	return 0;
 }
 
-int f() {
+func f() -> int {
 	println x;
 	x *= 2;
 	return x;

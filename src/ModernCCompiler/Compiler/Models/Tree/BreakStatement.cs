@@ -2,10 +2,15 @@
 {
     public class BreakStatement : Statement
     {
-        public LoopStatement? EnclosingLoop { get; set; }
+        public LoopingStatement? EnclosingLoop { get; set; }
 
         public BreakStatement(Span span) : base(span)
         {
+        }
+
+        public override bool AllPathsReturn()
+        {
+            return false;
         }
     }
 }

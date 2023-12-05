@@ -1,7 +1,7 @@
-int main() {
+func main() -> int {
 	return 0;
 }
 
-void f(void x) {
+func f(void x) -> void {
 
 }

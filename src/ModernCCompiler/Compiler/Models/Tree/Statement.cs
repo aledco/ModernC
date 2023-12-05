@@ -23,5 +23,11 @@ namespace Compiler.Models.Tree
         protected Statement(Span span) : base(span)
         {
         }
+
+        /// <summary>
+        /// Checks if all code paths return.
+        /// </summary>
+        /// <returns>True if all code paths return.</returns>
+        public abstract bool AllPathsReturn();
     }
 }

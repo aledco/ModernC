@@ -1,2 +1,2 @@
-int main() {
+func main() -> int {
 }

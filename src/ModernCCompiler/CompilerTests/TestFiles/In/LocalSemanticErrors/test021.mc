@@ -13,6 +13,6 @@ struct Test3 {
     Test1 test;
 }
 
-int main() {
+func main() -> int {
     return 0;
 }

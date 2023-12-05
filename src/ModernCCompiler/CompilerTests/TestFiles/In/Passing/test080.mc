@@ -3,7 +3,7 @@ struct Test {
     int y;
 }
 
-int main() {
+func main() -> int {
     Test test = { y = 0, x = 0 };
     for int i = 0; i < 20; i++ {
         if i % 2 == 0 {

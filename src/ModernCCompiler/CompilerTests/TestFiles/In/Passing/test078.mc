@@ -8,7 +8,7 @@ struct Test {
 
 Test test = {};
 
-int main() {
+func main() -> int {
     println test.x;
     println test.y;
     return 0;

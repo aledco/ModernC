@@ -1,4 +1,4 @@
-int main() {
+func main() -> int {
     for int x = 0; x < 10; x++ {
         println x;
         if x == 5 { 

@@ -2,12 +2,12 @@ struct Test {
 	int x = 0;
 }
 
-int main() {
+func main() -> int {
 	Test test;
 	f(test);
 	return 0;
 }
 
-void f(Test test) {
+func f(Test test) -> void {
 	print test.x;
 }

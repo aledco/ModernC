@@ -5,9 +5,9 @@ namespace Compiler.Models.Tree
 {
     public class FunctionDefinition : AbstractSyntaxTree
     {
-        public TypeNode ReturnType { get; }
         public IdNode Id { get; }
-        public ParameterList ParameterList { get; }
+        public IList<Parameter> Parameters { get; }
+        public TypeNode ReturnType { get; }
         public CompoundStatement Body { get; }
 
         public Scope? FunctionScope { get; set; }
@@ -43,11 +43,11 @@ namespace Compiler.Models.Tree
             }
         }
 
-        public FunctionDefinition(Span span, TypeNode returnType, IdNode id, ParameterList parameterList, CompoundStatement body) : base(span)
+        public FunctionDefinition(Span span, IdNode id, IList<Parameter> parameters, TypeNode returnType, CompoundStatement body) : base(span)
         {
             ReturnType = returnType;
             Id = id;
-            ParameterList = parameterList;
+            Parameters = parameters;
             Body = body;
             RegisterPool = new List<string>();
         }

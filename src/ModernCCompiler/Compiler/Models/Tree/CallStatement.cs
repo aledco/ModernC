@@ -8,5 +8,10 @@
         {
             CallExpression = callExpression;
         }
+
+        public override bool AllPathsReturn()
+        {
+            return false;
+        }
     }
 }

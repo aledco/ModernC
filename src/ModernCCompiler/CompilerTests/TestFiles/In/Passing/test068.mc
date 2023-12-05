@@ -1,6 +1,6 @@
 Test test;
 
-int main() {
+func main() -> int {
     printTest();
 
     if test.b1 {
@@ -11,9 +11,10 @@ int main() {
     }
 
     printTest();
+    return 0;
 }
 
-void printTest() {
+func printTest() -> void {
     println test.x;
     println test.y;
 }

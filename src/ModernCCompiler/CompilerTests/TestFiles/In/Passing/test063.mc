@@ -1,4 +1,4 @@
-int main() {
+func main() -> int {
     print x;
     return 0;
 }

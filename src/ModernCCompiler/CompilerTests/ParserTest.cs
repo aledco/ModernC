@@ -1,6 +1,6 @@
+using Compiler;
 using Compiler.ErrorHandling;
 using Compiler.ParseAbstraction;
-using Compiler.Utils;
 using System.Text.Json;
 
 namespace CompilerTests;
@@ -22,7 +22,7 @@ public class ParserTest
     [TestCleanup]
     public void Cleanup()
     {
-        Globals.Clear();
+        GlobalManager.Clear();
     }
 
     /// <summary>
@@ -45,7 +45,7 @@ public class ParserTest
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
 
-            Globals.Clear();
+            GlobalManager.Clear();
         }
     }
 
@@ -68,7 +68,7 @@ public class ParserTest
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
 
-            Globals.Clear();
+            GlobalManager.Clear();
         }
 
         testType = "LocalSemanticErrors";
@@ -84,7 +84,7 @@ public class ParserTest
             var treeJson = JsonSerializer.Serialize(tree, options: options);
             TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
 
-            Globals.Clear();
+            GlobalManager.Clear();
         }
     }
 }

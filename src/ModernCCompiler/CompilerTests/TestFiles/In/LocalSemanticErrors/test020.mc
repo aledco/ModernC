@@ -3,6 +3,6 @@ struct Test {
     Test innerTest;
 }
 
-int main() {
+func main() -> int {
     return 0;
 }

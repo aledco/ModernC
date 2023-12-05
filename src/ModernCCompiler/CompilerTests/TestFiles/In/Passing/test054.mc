@@ -1,4 +1,4 @@
-int main() {
+func main() -> int {
     int x = 0;
     do {
         if x == 5 or x == 7 {

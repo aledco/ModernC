@@ -6,7 +6,7 @@ struct Test {
     byte y = yDefault;
 }
 
-int main() {
+func main() -> int {
     Test test = {};
     println test.x;
     println test.y;

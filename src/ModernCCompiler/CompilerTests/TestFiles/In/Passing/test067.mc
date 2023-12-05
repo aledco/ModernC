@@ -4,7 +4,7 @@ struct Test {
     int x = 5;
 }
 
-int main() {
+func main() -> int {
     println test.x;
     test.x = 12;
     println test.x;

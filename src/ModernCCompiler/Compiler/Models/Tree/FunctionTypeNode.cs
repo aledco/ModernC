@@ -14,8 +14,8 @@ namespace Compiler.Models.Tree
                 throw new Exception("Type list was empty");
             }
 
-            ReturnType = types.First();
-            types.RemoveAt(0);
+            ReturnType = types.Last();
+            types.RemoveAt(types.Count - 1);
             ParameterTypes = types;
         }
 

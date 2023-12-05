@@ -1,7 +1,7 @@
-int main() {
+func main() -> int {
 	return 0;
 }
 
-void f(int x, int y, bool z) {
+func f(int x, int y, bool z) -> void {
 	print x + y;
 }

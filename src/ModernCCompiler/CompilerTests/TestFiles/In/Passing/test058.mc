@@ -1,9 +1,9 @@
-int main() {
+func main() -> int {
     println factorial(5);
     return 0;
 }
 
-int factorial(int n) {
+func factorial(int n) -> int {
     if n <= 1 {
         return 1;
     }

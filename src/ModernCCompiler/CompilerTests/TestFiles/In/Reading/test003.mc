@@ -3,7 +3,7 @@ struct Test {
 	int iter;
 }
 
-int main() {
+func main() -> int {
 	for int i = 0; i < 3; i++ {
 		Test test = { iter = i, x = read };
 		print test.iter;

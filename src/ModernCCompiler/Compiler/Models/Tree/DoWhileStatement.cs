@@ -1,6 +1,6 @@
 ﻿namespace Compiler.Models.Tree
 {
-    public class DoWhileStatement : LoopStatement
+    public class DoWhileStatement : LoopingStatement
     {
         public CompoundStatement Body { get; }
 
@@ -20,6 +20,11 @@
         public override string GetExitLabel()
         {
             return $"do_while_exit_{LabelId}";
+        }
+
+        public override bool AllPathsReturn()
+        {
+            return Body.AllPathsReturn();
         }
     }
 }

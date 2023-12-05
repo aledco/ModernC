@@ -15,5 +15,10 @@ namespace Compiler.Models.Tree
             Id = id;
             Expression = expression;
         }
+
+        public override bool AllPathsReturn()
+        {
+            return false;
+        }
     }
 }

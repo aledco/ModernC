@@ -11,7 +11,7 @@ topLevelStatement
     | variableDefinitionAndAssignmentStatement ';';
 
 functionDefinition
-    : type id '(' parameterList? ')' compoundStatement;
+    : FUNC id '(' parameterList? ')' '->' type compoundStatement;
 
 parameterList
     : parameter (',' parameter)*;
@@ -225,7 +225,6 @@ INT_TYPE            : 'int';
 BYTE_TYPE           : 'byte';
 FLOAT_TYPE          : 'float';
 BOOL_TYPE           : 'bool';
-ARR                 : 'arr';
 FUNC                : 'func';
 
 // other keywords

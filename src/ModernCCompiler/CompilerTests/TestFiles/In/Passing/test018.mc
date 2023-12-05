@@ -1,4 +1,4 @@
-int main() {
+func main() -> int {
     if false {
         print 1;
     } elif true {

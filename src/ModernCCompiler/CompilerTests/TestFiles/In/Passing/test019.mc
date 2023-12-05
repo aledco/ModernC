@@ -1,4 +1,4 @@
-int main() {
+func main() -> int {
 	bool x = true or true and true or true;
 	bool y = false or not true;
 	if y {

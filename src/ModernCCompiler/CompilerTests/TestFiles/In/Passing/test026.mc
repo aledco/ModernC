@@ -1,4 +1,4 @@
-int main() {
+func main() -> int {
 	int x = 0;
 	if x >= -1 and x >= 0 {
 		print 1;

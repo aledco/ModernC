@@ -1,5 +1,5 @@
 int x = 1 + 1;
 
-int main() {
+func main() -> int {
 	return 0;
 }

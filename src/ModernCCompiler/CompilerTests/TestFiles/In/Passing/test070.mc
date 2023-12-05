@@ -3,7 +3,7 @@ struct Test {
     byte y;
 }
 
-int main() {
+func main() -> int {
     Test test = { x = 5, y = 'd' };
     println test.x;
     println test.y;

@@ -5,6 +5,9 @@ using Compiler.Models.Tree;
 
 namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 {
+    /// <summary>
+    /// Assigns registers and offsets to nodes in preperation for code generation.
+    /// </summary>
     public static class AssignRegistersAndOffsets
     {
         private class Context
@@ -100,25 +103,27 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static void VisitFunctionDefinition(FunctionDefinition function)
         {
             var context = new Context();
-            VisitParameterList(function.ParameterList, context, -2);
-            function.Size = VisitCompoundStatement(function.Body, context, 3);
+            int offset = -2; // to allow space for return value
+            foreach (var parameter in function.Parameters)
+            {
+                VisitParameter(parameter, context, offset);
+                offset--;
+            }
+
+            offset = 3; // to allow space for frame/stack pointer and return address
+            function.Size = VisitCompoundStatement(function.Body, context, offset);
             function.RegisterPool = context.GetRegisterPool();
         }
 
-        private static void VisitParameterList(ParameterList parameterList, Context _, int offset)
+        private static void VisitParameter(Parameter parameter, Context _, int offset)
         {
-            foreach (var parameter in parameterList.Parameters)
+            if (parameter.Id.Symbol != null)
             {
-                if (parameter.Id.Symbol != null)
-                {
-                    parameter.Id.Symbol.Offset = offset;
-                }
-                else
-                {
-                    throw new Exception("Parameter symbol was null");
-                }
-
-                offset--;
+                parameter.Id.Symbol.Offset = offset;
+            }
+            else
+            {
+                throw new Exception("Parameter symbol was null");
             }
         }
 
@@ -351,7 +356,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static int VisitCallExpression(CallExpression e, Context context, int offset)
         {
             VisitExpression(e.Function, context, offset);
-            foreach (var arg in e.ArgumentList.Arguments)
+            foreach (var arg in e.Arguments)
             {
                 VisitExpression(arg, context, offset);
                 context.DropRegister(arg.Register);

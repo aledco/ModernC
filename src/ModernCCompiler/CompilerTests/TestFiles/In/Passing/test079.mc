@@ -28,7 +28,7 @@ Test1 globalTest = {
 	}
 };
 
-int main() {
+func main() -> int {
 	Test1 localTest = { 
 		t2 = { 
 			t3 = { 

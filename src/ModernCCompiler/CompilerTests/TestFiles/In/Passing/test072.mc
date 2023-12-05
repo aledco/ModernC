@@ -4,7 +4,7 @@ struct Test {
 	byte z;
 }
 
-int main() {
+func main() -> int {
 	Test test = { x = 0, z = 0, };
 	if test.y {
 		test.x = 10;

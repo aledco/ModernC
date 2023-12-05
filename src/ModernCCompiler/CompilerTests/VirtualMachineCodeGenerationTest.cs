@@ -1,9 +1,9 @@
-﻿using Compiler.ErrorHandling;
+﻿using Compiler;
+using Compiler.ErrorHandling;
 using Compiler.ParseAbstraction;
 using Compiler.TreeWalking.CodeGeneration.VirtualMachine;
 using Compiler.TreeWalking.TypeCheck;
-using Compiler.Utils;
-using Compiler.VirtualMachine;
+using VirtualMachine;
 
 namespace CompilerTests
 {
@@ -21,7 +21,7 @@ namespace CompilerTests
         [TestCleanup]
         public void Cleanup()
         {
-            Globals.Clear();
+            GlobalManager.Clear();
         }
 
         [TestMethod]
@@ -47,7 +47,7 @@ namespace CompilerTests
                 var actual = TestFileManager.NormalizeText(outStream.ToString());
                 Assert.AreEqual(expected, actual);
 
-                Globals.Clear();
+                GlobalManager.Clear();
             }
         }
 
@@ -75,7 +75,7 @@ namespace CompilerTests
                 var actual = TestFileManager.NormalizeText(outStream.ToString());
                 Assert.AreEqual(actual, expected);
 
-                Globals.Clear();
+                GlobalManager.Clear();
             }
         }
     }
