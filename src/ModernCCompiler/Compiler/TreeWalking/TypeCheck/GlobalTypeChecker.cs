@@ -185,6 +185,10 @@ namespace Compiler.TreeWalking.TypeCheck
                     }
 
                     return e.Type;
+                case UnaryOperator.AddressOf:
+                case UnaryOperator.Dereference:
+                    ErrorHandler.Throw("Unary operator cannot be used globally", e);
+                    throw ErrorHandler.FailedToExit;
                 default:
                     throw new NotImplementedException();
             }

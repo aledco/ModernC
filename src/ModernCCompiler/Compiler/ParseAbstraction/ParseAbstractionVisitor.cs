@@ -86,14 +86,22 @@ namespace Compiler.ParseAbstraction
             }
             else if (context.type() != null)
             {
-                var elementType = VisitType(context.type());
-                var size = VisitIntLiteral(context.intLiteral());
-                if (size.Value < 1)
+                if (context.intLiteral() != null)
                 {
-                    ErrorHandler.Throw("Array size must be greater than 0", size);
-                }
+                    var elementType = VisitType(context.type());
+                    var size = VisitIntLiteral(context.intLiteral());
+                    if (size.Value < 1)
+                    {
+                        ErrorHandler.Throw("Array size must be greater than 0", size);
+                    }
 
-                return new ArrayTypeNode(span, elementType, size.Value);
+                    return new ArrayTypeNode(span, elementType, size.Value);
+                }
+                else
+                {
+                    var underlyingType = VisitType(context.type());
+                    return new PointerTypeNode(span, underlyingType);
+                }
             }
             else if (context.functionType() != null)
             {
@@ -696,6 +704,8 @@ namespace Compiler.ParseAbstraction
             return op switch
             {
                 "-" => UnaryOperator.Minus,
+                "&" => UnaryOperator.AddressOf,
+                "*" => UnaryOperator.Dereference,
                 "not" => UnaryOperator.Not,
                 _ => throw new NotImplementedException()
             };

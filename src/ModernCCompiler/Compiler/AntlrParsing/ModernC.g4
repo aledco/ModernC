@@ -32,9 +32,10 @@ structFieldDefinition
 type
     : VOID_TYPE
     | primitiveType
-    | type '[' intLiteral ']' // array type
     | functionType
-    | userDefinedType; // user-defined type
+    | userDefinedType
+    | type '[' intLiteral ']'
+    | type '*';
 
 primitiveType
     : INT_TYPE 
@@ -160,7 +161,7 @@ factor
     | '(' expression ')';
 
 unaryExpression
-    : ('-'|NOT) factor;
+    : ('-'|'&'|'*'|NOT) factor;
 
 tailedExpression
     : idExpression (callExpressionTail|arrayExpressionTail|fieldAccessExpressionTail)
@@ -219,41 +220,43 @@ id
  * Lexing rules
  */
 
+// operators
+OR                          : 'or';
+AND                         : 'and';
+NOT                         : 'not';
+
 // type keywords
-VOID_TYPE           : 'void';
-INT_TYPE            : 'int';
-BYTE_TYPE           : 'byte';
-FLOAT_TYPE          : 'float';
-BOOL_TYPE           : 'bool';
-FUNC                : 'func';
+VOID_TYPE                   : 'void';
+INT_TYPE                    : 'int';
+BYTE_TYPE                   : 'byte';
+FLOAT_TYPE                  : 'float';
+BOOL_TYPE                   : 'bool';
+FUNC                        : 'func';
 
 // other keywords
-PRINT               : 'print';
-PRINTLN             : 'println';
-READ                : 'read';
-IF                  : 'if';
-ELIF                : 'elif';
-ELSE                : 'else';
-WHILE               : 'while';
-DO                  : 'do';
-FOR                 : 'for';
-BREAK               : 'break';
-CONTINUE            : 'continue';
-RETURN              : 'return';
-OK                  : 'ok';
-EXIT                : 'exit';
-NOT                 : 'not';
-OR                  : 'or';
-AND                 : 'and';
-STRUCT              : 'struct';
+PRINT                        : 'print';
+PRINTLN                      : 'println';
+READ                         : 'read';
+IF                           : 'if';
+ELIF                         : 'elif';
+ELSE                         : 'else';
+WHILE                        : 'while';
+DO                           : 'do';
+FOR                          : 'for';
+BREAK                        : 'break';
+CONTINUE                     : 'continue';
+RETURN                       : 'return';
+OK                           : 'ok';
+EXIT                         : 'exit';
+STRUCT                       : 'struct';
 
-TRUE                : 'true';    
-FALSE               : 'false';
-FLOAT               : [0-9]* '.' [0-9]+;
-INT                 : [0-9]+;
-ID                  : [a-zA-Z_][a-zA-Z0-9_]*;
-ASCII_CHAR          : '\'' . '\'';
-ESCAPED_ASCII_CHAR  : '\'' '\\' . '\'';
-COMMENT             : '//' .*? '\n' -> skip;
-WHITESPACE          : (' '|'\t')+ -> skip ;
-NEWLINE             : ('\r'? '\n' | '\r')+ -> skip ;
+TRUE                         : 'true';    
+FALSE                        : 'false';
+FLOAT                        : [0-9]* '.' [0-9]+;
+INT                          : [0-9]+;
+ID                           : [a-zA-Z_][a-zA-Z0-9_]*;
+ASCII_CHAR                   : '\'' . '\'';
+ESCAPED_ASCII_CHAR           : '\'' '\\' . '\'';
+COMMENT                      : '//' .*? '\n' -> skip;
+WHITESPACE                   : (' '|'\t')+ -> skip ;
+NEWLINE                      : ('\r'? '\n' | '\r')+ -> skip ;

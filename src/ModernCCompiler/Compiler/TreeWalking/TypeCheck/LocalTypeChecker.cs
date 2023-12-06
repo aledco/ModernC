@@ -606,6 +606,16 @@ namespace Compiler.TreeWalking.TypeCheck
                     }
 
                     return e.Type;
+                case UnaryOperator.AddressOf:
+                    return new PointerType(e.Type);
+                case UnaryOperator.Dereference:
+                    if (e.Type is PointerType pointerType)
+                    {
+                        return pointerType.UnderlyingType;
+                    }
+
+                    ErrorHandler.Throw("Operator is only valid for pointer types");
+                    throw ErrorHandler.FailedToExit;
                 default:
                     throw new NotImplementedException();
             }

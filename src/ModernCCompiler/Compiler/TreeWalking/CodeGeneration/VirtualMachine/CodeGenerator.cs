@@ -832,6 +832,14 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     }
 
                     break;
+                case UnaryOperator.AddressOf:
+                    instructions.AddRange(ExpressionLValue(e.Operand));
+                    instructions.Add(new Move(e.Register, e.Operand.Register));
+                    break;
+                case UnaryOperator.Dereference:
+                    instructions.AddRange(ExpressionRValue(e.Operand));
+                    instructions.Add(new Load(e.Register, e.Operand.Register));
+                    break;
             }
 
             return instructions;
@@ -867,7 +875,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> ArrayIndexExpressionRVaule(ArrayIndexExpression e)
         {
-            var instructions = ArrayIndexExpressionLValue(e);
+            var instructions = ExpressionLValue(e);
             instructions.Add(new Load(e.Register, e.Register));
             return instructions;
         }
@@ -962,6 +970,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return expression switch
             {
                 IdExpression e => IdExpressionLValue(e),
+                UnaryOperatorExpression e => UnaryOperatorLValue(e),
                 ArrayIndexExpression e => ArrayIndexExpressionLValue(e),
                 FieldAccessExpression e => FieldAccessExpressionLValue(e),
                 Expression e => NoExpressionLValue(e),
@@ -988,6 +997,24 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 new AddImmediate(e.Register, Registers.FramePointer, e.Id.Symbol.Offset)
             };
         }
+
+        private static List<IInstruction> UnaryOperatorLValue(UnaryOperatorExpression e)
+        {
+            switch (e.Operator)
+            {
+                case UnaryOperator.Minus:
+                case UnaryOperator.Not:
+                case UnaryOperator.AddressOf:
+                    return NoExpressionLValue(e);
+                case UnaryOperator.Dereference:
+                    var instructions = ExpressionRValue(e.Operand);
+                    instructions.Add(new Move(e.Register, e.Operand.Register));
+                    return instructions;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
 
         private static List<IInstruction> ArrayIndexExpressionLValue(ArrayIndexExpression e)
         {

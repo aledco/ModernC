@@ -3,6 +3,8 @@
     public enum UnaryOperator
     {
         Minus,
-        Not
+        Not,
+        AddressOf,
+        Dereference
     }
 }
