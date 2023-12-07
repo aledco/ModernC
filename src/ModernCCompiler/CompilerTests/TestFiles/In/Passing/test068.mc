@@ -20,8 +20,8 @@ func printTest() -> void {
 }
 
 struct Test {
-    int x = 5;
-    float y = -2.2;
-    bool b1 = true;
-    bool b2 = false;
+    int x = 5,
+    float y = -2.2,
+    bool b1 = true,
+    bool b2 = false,
 }

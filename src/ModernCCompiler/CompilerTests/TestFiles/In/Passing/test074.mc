@@ -1,8 +1,8 @@
 struct Test {
-    int x;
-    bool y;
-    byte z = '$';
-    float a = -1.1;
+    int x,
+    bool y,
+    byte z = '$',
+    float a = -1.1,
 }
 
 func main() -> int {

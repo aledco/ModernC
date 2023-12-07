@@ -4,6 +4,7 @@ using Compiler.ErrorHandling;
 using Compiler.Models;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
+using System;
 using static ModernCParser;
 
 namespace Compiler.ParseAbstraction
@@ -252,19 +253,9 @@ namespace Compiler.ParseAbstraction
         public override AssignmentStatement VisitAssignmentStatement([NotNull] AssignmentStatementContext context)
         {
             var span = GetSpanOfContext(context);
-            var expressions = context.expression();
-            var left = VisitExpression(expressions[0]);
+            var left = VisitFactor(context.factor());
             var op = GetAssignmentOperator(context.GetChild(1).GetText());
-            Expression right;
-            if (expressions.Length == 2)
-            {
-                right = VisitExpression(expressions[1]);
-            }
-            else
-            {
-                throw new NotImplementedException();
-            }
-
+            var right = VisitExpression(context.expression());
             return new AssignmentStatement(span, left, op, right);
         }
 
@@ -297,7 +288,7 @@ namespace Compiler.ParseAbstraction
         public override CallStatement VisitCallStatement([NotNull] CallStatementContext context)
         {
             var span = GetSpanOfContext(context);
-            var expression = VisitTailedExpression(context.tailedExpression());
+            var expression = VisitExpression(context.expression());
             if (expression is CallExpression callExpression)
             {
                 return new CallStatement(span, callExpression);
@@ -472,7 +463,29 @@ namespace Compiler.ParseAbstraction
 
         public override Expression VisitFactor([NotNull] FactorContext context)
         {
-            if (context.expression() != null)
+            var span = GetSpanOfContext(context);
+            if (context.callExpressionFactor != null)
+            {
+                var factor = VisitFactor(context.callExpressionFactor);
+                var args = context.argumentList()?
+                    .expression()
+                    .Select(VisitExpression)
+                    .ToList();
+                return new CallExpression(span, factor, args ?? new List<Expression>());
+            }
+            else if (context.fieldAccessExpressionFactor != null)
+            {
+                var factor = VisitFactor(context.fieldAccessExpressionFactor);
+                var field = VisitId(context.id());
+                return new FieldAccessExpression(span, factor, field);
+            }
+            else if (context.arrayIndexExpressionFactor != null)
+            {
+                var factor = VisitFactor(context.arrayIndexExpressionFactor);
+                var index = VisitExpression(context.expression());
+                return new ArrayIndexExpression(span, factor, index);
+            }
+            else if (context.expression() != null)
             {
                 return VisitExpression(context.expression());
             }
@@ -492,51 +505,6 @@ namespace Compiler.ParseAbstraction
             var op = GetUnaryOperator(context.GetChild(0).GetText());
             var expression = VisitFactor(context.factor());
             return new UnaryOperatorExpression(span, op, expression);
-        }
-
-        public override TailedExpression VisitTailedExpression([NotNull] TailedExpressionContext context)
-        {
-            var span = GetSpanOfContext(context);
-            Expression expression;
-            if (context.idExpression() != null)
-            {
-                expression = VisitIdExpression(context.idExpression());
-            }
-            else if (context.tailedExpression() != null)
-            {
-                expression = VisitTailedExpression(context.tailedExpression());
-            }
-            else
-            {
-                throw new Exception($"Could not parse tailed expression: {context.GetText()}");
-            }
-
-            if (context.callExpressionTail() != null)
-            {
-                var tailContext = context.callExpressionTail();
-                var args = tailContext.argumentList()?
-                    .expression()
-                    .Select(VisitExpression)
-                    .ToList();
-                return new CallExpression(span, expression, args ?? new List<Expression>());
-            }
-            else if (context.arrayExpressionTail() != null)
-            {
-                throw new NotImplementedException();
-
-                //var tailContext = context.arrayExpressionTail();
-                //var index = VisitExpression(tailContext.expression());
-                //return new ArrayIndexExpression(span, expression, index);
-            }
-            else if (context.fieldAccessExpressionTail() != null)
-            {
-                var id = VisitId(context.fieldAccessExpressionTail().id());
-                return new FieldAccessExpression(span, expression, id);
-            }
-            else
-            {
-                throw new Exception($"Could not parse tailed expression: {context.GetText()}");
-            }
         }
 
         public override ReadExpression VisitReadExpression([NotNull] ReadExpressionContext context)

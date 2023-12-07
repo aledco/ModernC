@@ -1,5 +1,5 @@
 struct Test {
-    int x = 5;
+    int x = 5
 }
 
 func main() -> int {

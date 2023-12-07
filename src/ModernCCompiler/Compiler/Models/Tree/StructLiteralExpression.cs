@@ -15,7 +15,7 @@ namespace Compiler.Models.Tree
             Fields = fields;
         }
 
-        public SemanticType MapDefaultExpressionsFromDefinition(StructType type, StructDefinition definition)
+        public void MapDefaultExpressionsFromDefinition(StructType type, StructDefinition definition)
         {
             
             StructDefinition = definition;
@@ -35,8 +35,6 @@ namespace Compiler.Models.Tree
                     }
                 }
             }
-
-            return type;
         }
 
         public void MapOffsetsFromDefinition()

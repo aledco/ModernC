@@ -435,26 +435,6 @@ public partial class ModernCBaseVisitor<Result> : AbstractParseTreeVisitor<Resul
 	/// <return>The visitor result.</return>
 	public virtual Result VisitUnaryExpression([NotNull] ModernCParser.UnaryExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="ModernCParser.tailedExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitTailedExpression([NotNull] ModernCParser.TailedExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="ModernCParser.callExpressionTail"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitCallExpressionTail([NotNull] ModernCParser.CallExpressionTailContext context) { return VisitChildren(context); }
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.argumentList"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -474,16 +454,6 @@ public partial class ModernCBaseVisitor<Result> : AbstractParseTreeVisitor<Resul
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitArrayExpressionTail([NotNull] ModernCParser.ArrayExpressionTailContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="ModernCParser.fieldAccessExpressionTail"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitFieldAccessExpressionTail([NotNull] ModernCParser.FieldAccessExpressionTailContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.readExpression"/>.
 	/// <para>

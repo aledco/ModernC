@@ -8,12 +8,12 @@ using VirtualMachine;
 
 /*
  * TODO:
- * - pointers:
- *  - add semantic checks so that pointers cannot be returned from functions
- *  - add support for automatic dereferencing complex types, for example field access on a struct pointer
- *  - add semantic checks to make sure complex types are not dereferences
- *      - maybe once move semantics are implemeted they can be
- *  - many more tests
+ * - things to decide:
+ *      - need to define an ordering for global statements / definitions
+ *          - statements and definitions may need to be processed in order
+ *      - pointer math
+ *
+ * - add member functions for structs
  * 
  * - code maintenence:
  *      - add code underlining to error messages and better error messages

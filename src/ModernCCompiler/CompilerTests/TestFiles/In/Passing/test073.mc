@@ -1,6 +1,6 @@
 struct Test {
-	int x;
-	bool y;
+	int x,
+	bool y,
 }
 
 Test globalTest = {

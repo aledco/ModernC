@@ -272,18 +272,6 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitUnaryExpression([NotNull] ModernCParser.UnaryExpressionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="ModernCParser.tailedExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitTailedExpression([NotNull] ModernCParser.TailedExpressionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="ModernCParser.callExpressionTail"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitCallExpressionTail([NotNull] ModernCParser.CallExpressionTailContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.argumentList"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -295,12 +283,6 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitArrayExpressionTail([NotNull] ModernCParser.ArrayExpressionTailContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="ModernCParser.fieldAccessExpressionTail"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFieldAccessExpressionTail([NotNull] ModernCParser.FieldAccessExpressionTailContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.readExpression"/>.
 	/// </summary>

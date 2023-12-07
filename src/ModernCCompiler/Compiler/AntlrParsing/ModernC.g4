@@ -23,11 +23,12 @@ definition
     : structDefinition;
 
 structDefinition
-     : STRUCT userDefinedType '{' structFieldDefinition+ '}';
+     : STRUCT userDefinedType '{' (structFieldDefinition ',')* structFieldDefinition '}'
+     | STRUCT userDefinedType '{' (structFieldDefinition ',')+ '}';
 
 structFieldDefinition
-    : type id ';'
-    | type id '=' expression ';';
+    : type id
+    | type id '=' expression;
     
 type
     : VOID_TYPE
@@ -89,13 +90,13 @@ variableDefinitionAndAssignmentStatement
     : type id '=' expression;
 
 assignmentStatement
-    : expression ('='|'+='|'-='|'*='|'/='|'%=') expression;
+    : factor ('='|'+='|'-='|'*='|'/='|'%=') expression;
 
 incrementStatement
     : expression ('++'|'--');
 
 callStatement
-    : tailedExpression;
+    : expression;
 
 ifStatement
     : IF expression compoundStatement elifPart* elsePart?;
@@ -150,7 +151,6 @@ term
 
 factor
     : unaryExpression
-    | tailedExpression
     | readExpression
     | intLiteral
     | byteLiteral
@@ -158,26 +158,19 @@ factor
     | boolLiteral
     | complexLiteral
     | idExpression
+    | callExpressionFactor=factor '(' argumentList? ')'
+    | fieldAccessExpressionFactor=factor '.' id
+    | arrayIndexExpressionFactor=factor '[' expression ']'
     | '(' expression ')';
 
 unaryExpression
     : ('-'|'&'|'*'|NOT) factor;
-
-tailedExpression
-    : idExpression (callExpressionTail|arrayExpressionTail|fieldAccessExpressionTail)
-    | tailedExpression (callExpressionTail|arrayExpressionTail|fieldAccessExpressionTail);
-
-callExpressionTail
-    : '(' argumentList? ')';
-
+    
 argumentList
     : expression (',' expression)*;
 
 arrayExpressionTail
     : '[' expression ']';
-
-fieldAccessExpressionTail
-    : '.' id;
 
 readExpression
     : READ;

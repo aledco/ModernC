@@ -3,6 +3,21 @@
     public class PointerType : SemanticType
     {
         public SemanticType UnderlyingType { get; }
+
+        /// <summary>
+        /// Gets the concrete type this pointer points to. For example for the type int****, ConcreteType = int.
+        /// </summary>
+        public SemanticType ConcreteType {
+        get
+            {
+                return UnderlyingType switch
+                {
+                    PointerType p => p.ConcreteType,
+                    _ => UnderlyingType
+                };
+            }
+        }
+
         public PointerType(SemanticType underlyingType)
         {
             UnderlyingType = underlyingType;

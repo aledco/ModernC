@@ -66,11 +66,21 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 case VariableDefinitionStatement s:
                     type = s.Type.ToSemanticType();
+                    if (type is PointerType)
+                    {
+                        ErrorHandler.Throw("Pointers cannot be global", statement);
+                    }
+
                     context.Scope?.AddSymbol(s.Id, type);
                     VisitIdNode(s.Id, context);
                     break;
                 case VariableDefinitionAndAssignmentStatement s:
                     type = s.Type.ToSemanticType();
+                    if (type is PointerType)
+                    {
+                        ErrorHandler.Throw("Pointers cannot be global", statement);
+                    }
+
                     context.Scope?.AddSymbol(s.Id, type);
                     context.VariableAssignmentType = type;
                     VisitIdNode(s.Id, context);
@@ -136,6 +146,9 @@ namespace Compiler.TreeWalking.TypeCheck
                 case ArrayLiteralExpression e:
                     expression.Type = VisitArrayLiteralExpression(e, context);
                     break;
+                case IdExpression e:
+                    expression.Type = VisitIdExpression(e, context);
+                    break;
                 case IntLiteralExpression:
                     expression.Type = new IntType();
                     break;
@@ -199,6 +212,7 @@ namespace Compiler.TreeWalking.TypeCheck
             if (context.VariableAssignmentType is UserDefinedType userDefinedType)
             {
                 var (structType, definition) = SymbolTable.LookupTypeAndDefinition<StructType, StructDefinition>(userDefinedType, e.Span);
+                e.MapDefaultExpressionsFromDefinition(structType, definition);
                 foreach (var field in e.Fields)
                 {
                     var fieldDefinition = definition.Fields.Where(f => field.Id.Value == f.Id.Value).FirstOrDefault();
@@ -216,7 +230,7 @@ namespace Compiler.TreeWalking.TypeCheck
                     }
                 }
 
-                return e.MapDefaultExpressionsFromDefinition(structType, definition);
+                return structType;
             }
 
             ErrorHandler.Throw("Struct literal cannot be assigned to this type", e);
@@ -235,6 +249,12 @@ namespace Compiler.TreeWalking.TypeCheck
             }
 
             e.Type = new ArrayType(elementTypes.First(), elementTypes.Count);
+            return e.Type;
+        }
+
+        private static SemanticType? VisitIdExpression(IdExpression e, Context context)
+        {
+            e.Type = VisitIdNode(e.Id, context);
             return e.Type;
         }
 

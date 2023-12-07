@@ -1,19 +1,19 @@
 struct Test1 {
-	Test2 t2;
+	Test2 t2,
 }
 
 struct Test2 {
-	Test3 t3;
+	Test3 t3,
 }
 
 struct Test3 {
-	Test4 t4;
+	Test4 t4,
 }
 
 struct Test4 {
-	int x;
-	int y;
-	int z;
+	int x,
+	int y,
+	int z,
 }
 
 Test1 globalTest = { 
