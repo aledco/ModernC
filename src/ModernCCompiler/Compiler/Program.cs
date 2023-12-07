@@ -14,6 +14,7 @@ using VirtualMachine;
  *      - pointer math
  *
  * - add member functions for structs
+ *      - add failing tests
  * 
  * - code maintenence:
  *      - add code underlining to error messages and better error messages

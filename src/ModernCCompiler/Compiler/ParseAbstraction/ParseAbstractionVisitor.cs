@@ -476,8 +476,18 @@ namespace Compiler.ParseAbstraction
             else if (context.fieldAccessExpressionFactor != null)
             {
                 var factor = VisitFactor(context.fieldAccessExpressionFactor);
-                var field = VisitId(context.id());
+                var field = VisitId(context.id().First());
                 return new FieldAccessExpression(span, factor, field);
+            }
+            else if (context.fieldCallExpressionFactor != null)
+            {
+                var factor = VisitFactor(context.fieldCallExpressionFactor);
+                var field = VisitId(context.id().First());
+                var args = context.argumentList()?
+                    .expression()
+                    .Select(VisitExpression)
+                    .ToList();
+                return new FieldCallExpression(span, new FieldAccessExpression(span, factor, field), args ?? new List<Expression>());
             }
             else if (context.arrayIndexExpressionFactor != null)
             {

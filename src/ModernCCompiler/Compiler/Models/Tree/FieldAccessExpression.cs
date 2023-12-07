@@ -21,11 +21,9 @@ namespace Compiler.Models.Tree
         public void AutoDereference()
         {
             // add dereference expressions until the concrete type is recovered. for auto dereferencing.
-            var type = Left.Type;
-            while (type is PointerType pointerType)
+            for (var type = Left.Type; type is PointerType pointerType; type = pointerType.UnderlyingType)
             {
                 Left = new UnaryOperatorExpression(Span, UnaryOperator.Dereference, Left);
-                type = pointerType.UnderlyingType;
             }
         }
     }

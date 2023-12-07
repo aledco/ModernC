@@ -419,6 +419,7 @@ namespace Compiler.TreeWalking.TypeCheck
             expression.Type = expression switch
             {
                 BinaryOperatorExpression e => VisitBinaryOperatorExpression(e, context),
+                FieldCallExpression e => VisitFieldCallExpression(e, context),
                 CallExpression e => VisitCallExpression(e, context),
                 StructLiteralExpression e => VisitStructLiteralExpression(e, context),
                 ArrayIndexExpression e => VisitArrayIndexExpression(e, context),
@@ -500,6 +501,74 @@ namespace Compiler.TreeWalking.TypeCheck
             throw ErrorHandler.FailedToExit;
         }
 
+        private static SemanticType VisitFieldCallExpression(FieldCallExpression e, Context context)
+        {
+            e.Type = VisitExpression(e.FieldFunction, context);
+            if (e.Type is FunctionType functionType)
+            {
+                var argTypes = e.Arguments
+                    .Select(a => VisitExpression(a, context))
+                    .ToList();
+                if (argTypes.Count != functionType.Parameters.Count - 1)
+                {
+                    ErrorHandler.Throw("Function was called with an incorrect number of arguments.", e);
+                }
+
+                var firstParameterType = functionType.Parameters.First();
+                var dataType = e.FieldFunction.Left.Type!;
+                if (firstParameterType is PointerType parameterPointerType && parameterPointerType.UnderlyingType is UserDefinedType)
+                {
+                    if (!parameterPointerType.UnderlyingType.TypeEquals(dataType))
+                    {
+                        ErrorHandler.Throw("The first parameter of a field function call must be a pointer to the outer data structure", e);
+                    }
+                }
+                else
+                {
+                    ErrorHandler.Throw("The first parameter of a field function call must be a pointer to the outer data structure", e);
+                }
+
+
+                // auto reference the data expression
+                var dataExpression = e.FieldFunction.Left.Copy(e.Span);
+                if (dataType is UserDefinedType)
+                {
+                    dataExpression = new UnaryOperatorExpression(e.Span, UnaryOperator.AddressOf, dataExpression);
+                }
+                else
+                {
+                    if (dataType is not PointerType)
+                    {
+                        throw new Exception("Data type was not user defined type or pointer type");
+                    }
+
+                    while (dataType is PointerType pointerType && pointerType.UnderlyingType is not UserDefinedType)
+                    {
+                        dataExpression = new UnaryOperatorExpression(e.Span, UnaryOperator.Dereference, dataExpression);
+                        dataType = pointerType.UnderlyingType;
+                    }
+                }
+
+                e.Arguments.Insert(0, dataExpression);
+                argTypes = e.Arguments
+                    .Select(a => VisitExpression(a, context))
+                    .ToList();
+
+                for (var i = 0; i < argTypes.Count; i++)
+                {
+                    if (!argTypes[i].TypeEquals(functionType.Parameters[i]))
+                    {
+                        ErrorHandler.Throw($"Function was called with incorrect types.", e);
+                    }
+                }
+
+                return functionType.ReturnType;
+            }
+
+            ErrorHandler.Throw($"Field cannot be called like a function.", e);
+            throw ErrorHandler.FailedToExit;
+        }
+
         private static SemanticType VisitCallExpression(CallExpression e, Context context)
         {
             e.Type = VisitExpression(e.Function, context);
@@ -525,7 +594,7 @@ namespace Compiler.TreeWalking.TypeCheck
             }
 
             ErrorHandler.Throw($"Expression cannot be called like a function.", e);
-            throw new Exception("Error handler did not stop execution");
+            throw ErrorHandler.FailedToExit;
         }
         private static SemanticType VisitArrayIndexExpression(ArrayIndexExpression e, Context context)
         {
@@ -583,6 +652,13 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 case BinaryOperator.EqualTo:
                 case BinaryOperator.NotEqualTo:
+                    if (!leftType.TypeEquals(rightType))
+                    {
+                        ErrorHandler.Throw("Binary operand types must match", e);
+                    }
+
+                    e.Type = new BoolType();
+                    break;
                 case BinaryOperator.LessThan:
                 case BinaryOperator.LessThanEqualTo:
                 case BinaryOperator.GreaterThan:
