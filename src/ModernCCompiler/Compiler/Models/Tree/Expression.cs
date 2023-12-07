@@ -1,6 +1,4 @@
 ﻿using Compiler.Models.NameResolution.Types;
-using Compiler.Models.Operators;
-using System.Reflection;
 using System.Text.Json.Serialization;
 
 namespace Compiler.Models.Tree
@@ -17,6 +15,7 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(CallExpression))]
     [JsonDerivedType(typeof(ArrayIndexExpression))]
     [JsonDerivedType(typeof(FieldAccessExpression))]
+    [JsonDerivedType(typeof(FieldCallExpression))]
     public abstract class Expression : AbstractSyntaxTree
     {
         public SemanticType? Type { get; set; }
