@@ -1,7 +1,7 @@
 struct Test {
-	int x = 10;
-	bool y = true;
-	byte z = '!';
+	int x = 10,
+	bool y = true,
+	byte z = '!',
 }
 
 func main() -> int {

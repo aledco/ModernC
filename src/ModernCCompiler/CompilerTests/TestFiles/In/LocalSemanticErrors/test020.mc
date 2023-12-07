@@ -1,6 +1,6 @@
 struct Test {
-    int x;
-    Test innerTest;
+    int x,
+    Test innerTest,
 }
 
 func main() -> int {

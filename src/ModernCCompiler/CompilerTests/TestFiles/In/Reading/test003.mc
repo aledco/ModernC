@@ -1,6 +1,6 @@
 struct Test {
-	byte x;
-	int iter;
+	byte x,
+	int iter,
 }
 
 func main() -> int {

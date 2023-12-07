@@ -2,8 +2,8 @@ int xDefault = 10;
 byte yDefault = 'a';
 
 struct Test {
-    int x = xDefault;
-    byte y = yDefault;
+    int x = xDefault,
+    byte y = yDefault,
 }
 
 func main() -> int {

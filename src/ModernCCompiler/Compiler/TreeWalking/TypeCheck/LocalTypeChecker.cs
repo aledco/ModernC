@@ -90,13 +90,18 @@ namespace Compiler.TreeWalking.TypeCheck
                 throw new Exception("Function scope was null");
             }
 
-            context.Scope = functionDefinition.FunctionScope;
-            context.EnclosingFunction = functionDefinition;
-            if (functionDefinition.ReturnType.ToSemanticType() is not VoidType && !functionDefinition.Body.AllPathsReturn())
+            var returnType = functionDefinition.ReturnType.ToSemanticType();
+            if (returnType is PointerType)
+            {
+                ErrorHandler.Throw("Pointers cannot be returned from functions", functionDefinition);
+            }
+            else if (returnType is not VoidType && !functionDefinition.Body.AllPathsReturn())
             {
                 ErrorHandler.Throw("Not all code paths return", functionDefinition);
             }
 
+            context.Scope = functionDefinition.FunctionScope;
+            context.EnclosingFunction = functionDefinition;
             VisitCompoundStatement(functionDefinition.Body, context);
         }
 
@@ -240,6 +245,7 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 ErrorHandler.Throw("Complex types cannot be reassigned.");
             }
+            //else if (expressionType is PointerType pointerType && )
 
             switch (type)
             {
@@ -264,6 +270,11 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static void VisitCallStatement(CallStatement s, Context context)
         {
+            if (s.CallExpression is not CallExpression)
+            {
+                ErrorHandler.Throw("Expression is not a statement", s);
+            }
+
             s.CallExpression.IgnoreReturn = true;
             VisitExpression(s.CallExpression, context);
         }
@@ -450,6 +461,9 @@ namespace Compiler.TreeWalking.TypeCheck
                     }
 
                     return fieldType;
+                case PointerType p when p.ConcreteType is StructType t:
+                    e.AutoDereference();
+                    return VisitExpression(e, context);
                 default:
                     ErrorHandler.Throw("Field access expression is not valid for this type", e);
                     throw new Exception("ErrorHandler failed to exit application");
@@ -461,6 +475,7 @@ namespace Compiler.TreeWalking.TypeCheck
             if (context.VariableAssignmentType is UserDefinedType userDefinedType)
             {
                 var (structType, definition) = SymbolTable.LookupTypeAndDefinition<StructType, StructDefinition>(userDefinedType, e.Span);
+                e.MapDefaultExpressionsFromDefinition(structType, definition);
                 foreach (var field in e.Fields)
                 {
                     var fieldDefinition = definition.Fields.Where(f => field.Id.Value == f.Id.Value).FirstOrDefault();
@@ -478,7 +493,7 @@ namespace Compiler.TreeWalking.TypeCheck
                     }
                 }
 
-                return e.MapDefaultExpressionsFromDefinition(structType, definition);
+                return structType;
             }
             
             ErrorHandler.Throw("Struct literal cannot be assigned to this type", e);
@@ -534,19 +549,34 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             var leftType = VisitExpression(e.LeftOperand, context);
             var rightType = VisitExpression(e.RightOperand, context);
-            switch (leftType)
-            {
-                case IntegralType when rightType is IntegralType:
-                    break;
-                case RealType when rightType is RealType:
-                    break;
-                default:
-                    if (!leftType.TypeEquals(rightType))
-                    {
-                        ErrorHandler.Throw("Binary operands must have matching types.", e);
-                    }
 
-                    break;
+            bool NumericTypesMatch(SemanticType t1, SemanticType t2)
+            {
+                if (t1 is IntegralType && t2 is IntegralType)
+                {
+                    return true;
+                }
+                else if (t1 is RealType && t2 is RealType)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            bool PointerTypesMatch(SemanticType t1, SemanticType t2)
+            {
+                //if (t1 is PointerType && t2 is IntegralType) 
+                //{
+                //    return true;
+                //}
+                //else
+                //{
+                //    return false;
+                //}
+                return false; // TODO allow pointer math?
             }
 
             switch (e.Operator)
@@ -557,23 +587,35 @@ namespace Compiler.TreeWalking.TypeCheck
                 case BinaryOperator.LessThanEqualTo:
                 case BinaryOperator.GreaterThan:
                 case BinaryOperator.GreaterThanEqualTo:
+                    if (!NumericTypesMatch(leftType, rightType))
+                    {
+                        ErrorHandler.Throw("Operator is only valid for numeric types.", e);
+                    }
+
                     e.Type = new BoolType();
                     break;
                 case BinaryOperator.Plus:
                 case BinaryOperator.Minus:
+                    if (!NumericTypesMatch(leftType, rightType) && !PointerTypesMatch(leftType, rightType))
+                    {
+                        ErrorHandler.Throw("Operands do not have valid types.", e);
+                    }
+
+                    e.Type = leftType;
+                    break;
                 case BinaryOperator.Times:
                 case BinaryOperator.DividedBy:
                 case BinaryOperator.Modulo:
-                    if (leftType is not NumberType)
+                    if (!NumericTypesMatch(leftType, rightType))
                     {
-                        ErrorHandler.Throw("Operator is only valid for number types", e);
+                        ErrorHandler.Throw("Operator is only valid for numeric types.", e);
                     }
 
                     e.Type = leftType;
                     break;
                 case BinaryOperator.And:
                 case BinaryOperator.Or:
-                    if (leftType is not BoolType)
+                    if (leftType is not BoolType || rightType is not BoolType)
                     {
                         ErrorHandler.Throw("Operator is only valid for boolean types", e);
                     }
@@ -606,6 +648,21 @@ namespace Compiler.TreeWalking.TypeCheck
                     }
 
                     return e.Type;
+                case UnaryOperator.AddressOf:
+                    if (e.Type is FunctionType)
+                    {
+                        ErrorHandler.Throw("Cannot take the address of a function", e);
+                    }
+
+                    return new PointerType(e.Type);
+                case UnaryOperator.Dereference:
+                    if (e.Type is PointerType pointerType)
+                    {
+                        return pointerType.UnderlyingType;
+                    }
+
+                    ErrorHandler.Throw("Operator is only valid for pointer types");
+                    throw ErrorHandler.FailedToExit;
                 default:
                     throw new NotImplementedException();
             }

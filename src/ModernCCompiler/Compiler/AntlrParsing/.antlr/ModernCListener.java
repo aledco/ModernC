@@ -517,6 +517,16 @@ public interface ModernCListener extends ParseTreeListener {
 	 */
 	void exitIdExpression(ModernCParser.IdExpressionContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link ModernCParser#complexLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void enterComplexLiteral(ModernCParser.ComplexLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#complexLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void exitComplexLiteral(ModernCParser.ComplexLiteralContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link ModernCParser#arrayLiteral}.
 	 * @param ctx the parse tree
 	 */
@@ -536,6 +546,26 @@ public interface ModernCListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitExpressionList(ModernCParser.ExpressionListContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ModernCParser#structLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void enterStructLiteral(ModernCParser.StructLiteralContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#structLiteral}.
+	 * @param ctx the parse tree
+	 */
+	void exitStructLiteral(ModernCParser.StructLiteralContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link ModernCParser#structLiteralField}.
+	 * @param ctx the parse tree
+	 */
+	void enterStructLiteralField(ModernCParser.StructLiteralFieldContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link ModernCParser#structLiteralField}.
+	 * @param ctx the parse tree
+	 */
+	void exitStructLiteralField(ModernCParser.StructLiteralFieldContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link ModernCParser#id}.
 	 * @param ctx the parse tree

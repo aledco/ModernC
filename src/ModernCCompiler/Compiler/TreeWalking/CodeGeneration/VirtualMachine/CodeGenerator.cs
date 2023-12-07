@@ -1,4 +1,5 @@
-﻿using Compiler.ErrorHandling;
+﻿using Antlr4.Runtime.Tree.Xpath;
+using Compiler.ErrorHandling;
 using Compiler.Models;
 using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
@@ -150,6 +151,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     instructions.AddRange(ExpressionLValue(s.Expression));
                     instructions.AddRange(PrintStruct(s.Expression.Register, definition!, s.Span));
                     break;
+                case PointerType:
                 case FunctionType:
                     instructions.AddRange(ExpressionRValue(s.Expression));
                     instructions.Add(new PrintPointer(s.Expression.Register));
@@ -727,6 +729,11 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                         case RealType:
                             instructions.Add(new AddFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                             break;
+                        case PointerType:
+                            instructions.Add(new LoadImmediate(Registers.Temporary, e.LeftOperand.Type!.GetSizeInWords()));
+                            instructions.Add(new Multiply(e.RightOperand.Register, e.RightOperand.Register, Registers.Temporary));
+                            instructions.Add(new Add(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
                         default:
                             throw new Exception($"Invalid type: {e.Type}");
                     }
@@ -743,6 +750,12 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                         case RealType:
                             instructions.Add(new NegateFloat(e.RightOperand.Register, e.RightOperand.Register));
                             instructions.Add(new AddFloat(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
+                            break;
+                        case PointerType:
+                            instructions.Add(new LoadImmediate(Registers.Temporary, e.LeftOperand.Type!.GetSizeInWords()));
+                            instructions.Add(new Multiply(e.RightOperand.Register, e.RightOperand.Register, Registers.Temporary));
+                            instructions.Add(new Negate(e.RightOperand.Register, e.RightOperand.Register));
+                            instructions.Add(new Add(e.Register, e.LeftOperand.Register, e.RightOperand.Register));
                             break;
                         default:
                             throw new Exception($"Invalid type: {e.Type}");
@@ -832,6 +845,14 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     }
 
                     break;
+                case UnaryOperator.AddressOf:
+                    instructions.AddRange(ExpressionLValue(e.Operand));
+                    instructions.Add(new Move(e.Register, e.Operand.Register));
+                    break;
+                case UnaryOperator.Dereference:
+                    instructions.AddRange(ExpressionRValue(e.Operand));
+                    instructions.Add(new Load(e.Register, e.Operand.Register));
+                    break;
             }
 
             return instructions;
@@ -867,7 +888,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> ArrayIndexExpressionRVaule(ArrayIndexExpression e)
         {
-            var instructions = ArrayIndexExpressionLValue(e);
+            var instructions = ExpressionLValue(e);
             instructions.Add(new Load(e.Register, e.Register));
             return instructions;
         }
@@ -962,6 +983,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return expression switch
             {
                 IdExpression e => IdExpressionLValue(e),
+                UnaryOperatorExpression e => UnaryOperatorLValue(e),
                 ArrayIndexExpression e => ArrayIndexExpressionLValue(e),
                 FieldAccessExpression e => FieldAccessExpressionLValue(e),
                 Expression e => NoExpressionLValue(e),
@@ -988,6 +1010,24 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 new AddImmediate(e.Register, Registers.FramePointer, e.Id.Symbol.Offset)
             };
         }
+
+        private static List<IInstruction> UnaryOperatorLValue(UnaryOperatorExpression e)
+        {
+            switch (e.Operator)
+            {
+                case UnaryOperator.Minus:
+                case UnaryOperator.Not:
+                case UnaryOperator.AddressOf:
+                    return NoExpressionLValue(e);
+                case UnaryOperator.Dereference:
+                    var instructions = ExpressionRValue(e.Operand);
+                    instructions.Add(new Move(e.Register, e.Operand.Register));
+                    return instructions;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
 
         private static List<IInstruction> ArrayIndexExpressionLValue(ArrayIndexExpression e)
         {

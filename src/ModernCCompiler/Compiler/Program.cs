@@ -8,6 +8,13 @@ using VirtualMachine;
 
 /*
  * TODO:
+ * - things to decide:
+ *      - need to define an ordering for global statements / definitions
+ *          - statements and definitions may need to be processed in order
+ *      - pointer math
+ *
+ * - add member functions for structs
+ * 
  * - code maintenence:
  *      - add code underlining to error messages and better error messages
  *      - comment code

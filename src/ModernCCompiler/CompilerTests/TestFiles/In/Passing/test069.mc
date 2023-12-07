@@ -1,6 +1,6 @@
 struct Test {
-    int x = 0;
-    func(void) increment;
+    int x = 0,
+    func(void) increment,
 }
 
 func increment() -> void {

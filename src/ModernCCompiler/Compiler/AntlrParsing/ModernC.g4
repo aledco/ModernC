@@ -23,18 +23,20 @@ definition
     : structDefinition;
 
 structDefinition
-     : STRUCT userDefinedType '{' structFieldDefinition+ '}';
+     : STRUCT userDefinedType '{' (structFieldDefinition ',')* structFieldDefinition '}'
+     | STRUCT userDefinedType '{' (structFieldDefinition ',')+ '}';
 
 structFieldDefinition
-    : type id ';'
-    | type id '=' expression ';';
+    : type id
+    | type id '=' expression;
     
 type
     : VOID_TYPE
     | primitiveType
-    | type '[' intLiteral ']' // array type
     | functionType
-    | userDefinedType; // user-defined type
+    | userDefinedType
+    | type '[' intLiteral ']'
+    | type '*';
 
 primitiveType
     : INT_TYPE 
@@ -88,13 +90,13 @@ variableDefinitionAndAssignmentStatement
     : type id '=' expression;
 
 assignmentStatement
-    : expression ('='|'+='|'-='|'*='|'/='|'%=') expression;
+    : factor ('='|'+='|'-='|'*='|'/='|'%=') expression;
 
 incrementStatement
     : expression ('++'|'--');
 
 callStatement
-    : tailedExpression;
+    : expression;
 
 ifStatement
     : IF expression compoundStatement elifPart* elsePart?;
@@ -149,7 +151,6 @@ term
 
 factor
     : unaryExpression
-    | tailedExpression
     | readExpression
     | intLiteral
     | byteLiteral
@@ -157,26 +158,19 @@ factor
     | boolLiteral
     | complexLiteral
     | idExpression
+    | callExpressionFactor=factor '(' argumentList? ')'
+    | fieldAccessExpressionFactor=factor '.' id
+    | arrayIndexExpressionFactor=factor '[' expression ']'
     | '(' expression ')';
 
 unaryExpression
-    : ('-'|NOT) factor;
-
-tailedExpression
-    : idExpression (callExpressionTail|arrayExpressionTail|fieldAccessExpressionTail)
-    | tailedExpression (callExpressionTail|arrayExpressionTail|fieldAccessExpressionTail);
-
-callExpressionTail
-    : '(' argumentList? ')';
-
+    : ('-'|'&'|'*'|NOT) factor;
+    
 argumentList
     : expression (',' expression)*;
 
 arrayExpressionTail
     : '[' expression ']';
-
-fieldAccessExpressionTail
-    : '.' id;
 
 readExpression
     : READ;
@@ -219,41 +213,43 @@ id
  * Lexing rules
  */
 
+// operators
+OR                          : 'or';
+AND                         : 'and';
+NOT                         : 'not';
+
 // type keywords
-VOID_TYPE           : 'void';
-INT_TYPE            : 'int';
-BYTE_TYPE           : 'byte';
-FLOAT_TYPE          : 'float';
-BOOL_TYPE           : 'bool';
-FUNC                : 'func';
+VOID_TYPE                   : 'void';
+INT_TYPE                    : 'int';
+BYTE_TYPE                   : 'byte';
+FLOAT_TYPE                  : 'float';
+BOOL_TYPE                   : 'bool';
+FUNC                        : 'func';
 
 // other keywords
-PRINT               : 'print';
-PRINTLN             : 'println';
-READ                : 'read';
-IF                  : 'if';
-ELIF                : 'elif';
-ELSE                : 'else';
-WHILE               : 'while';
-DO                  : 'do';
-FOR                 : 'for';
-BREAK               : 'break';
-CONTINUE            : 'continue';
-RETURN              : 'return';
-OK                  : 'ok';
-EXIT                : 'exit';
-NOT                 : 'not';
-OR                  : 'or';
-AND                 : 'and';
-STRUCT              : 'struct';
+PRINT                        : 'print';
+PRINTLN                      : 'println';
+READ                         : 'read';
+IF                           : 'if';
+ELIF                         : 'elif';
+ELSE                         : 'else';
+WHILE                        : 'while';
+DO                           : 'do';
+FOR                          : 'for';
+BREAK                        : 'break';
+CONTINUE                     : 'continue';
+RETURN                       : 'return';
+OK                           : 'ok';
+EXIT                         : 'exit';
+STRUCT                       : 'struct';
 
-TRUE                : 'true';    
-FALSE               : 'false';
-FLOAT               : [0-9]* '.' [0-9]+;
-INT                 : [0-9]+;
-ID                  : [a-zA-Z_][a-zA-Z0-9_]*;
-ASCII_CHAR          : '\'' . '\'';
-ESCAPED_ASCII_CHAR  : '\'' '\\' . '\'';
-COMMENT             : '//' .*? '\n' -> skip;
-WHITESPACE          : (' '|'\t')+ -> skip ;
-NEWLINE             : ('\r'? '\n' | '\r')+ -> skip ;
+TRUE                         : 'true';    
+FALSE                        : 'false';
+FLOAT                        : [0-9]* '.' [0-9]+;
+INT                          : [0-9]+;
+ID                           : [a-zA-Z_][a-zA-Z0-9_]*;
+ASCII_CHAR                   : '\'' . '\'';
+ESCAPED_ASCII_CHAR           : '\'' '\\' . '\'';
+COMMENT                      : '//' .*? '\n' -> skip;
+WHITESPACE                   : (' '|'\t')+ -> skip ;
+NEWLINE                      : ('\r'? '\n' | '\r')+ -> skip ;
