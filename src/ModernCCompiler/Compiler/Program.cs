@@ -12,8 +12,7 @@ using VirtualMachine;
  *      - need to define an ordering for global statements / definitions
  *          - statements and definitions may need to be processed in order
  *      - pointer math
- *
- * - add member functions for structs
+ *      - semi colons or commas for structs?
  * 
  * - code maintenence:
  *      - add code underlining to error messages and better error messages
@@ -22,7 +21,6 @@ using VirtualMachine;
  *      - git CI
  * 
  * - structures to implement:
- *      - pointers (can't return normal pointers?)
  *      - type aliases
  *      - arrays
  *      - byte strings

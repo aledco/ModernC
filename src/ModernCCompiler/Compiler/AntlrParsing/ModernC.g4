@@ -160,6 +160,7 @@ factor
     | idExpression
     | callExpressionFactor=factor '(' argumentList? ')'
     | fieldAccessExpressionFactor=factor '.' id
+    | fieldCallExpressionFactor=factor '->' id * '(' argumentList? ')'
     | arrayIndexExpressionFactor=factor '[' expression ']'
     | '(' expression ')';
 
