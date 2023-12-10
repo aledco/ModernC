@@ -15,5 +15,17 @@ namespace Compiler.Models.Tree
         {
             return new PointerType(UnderlyingType.ToSemanticType());
         }
+
+        public TypeNode BaseType
+        {
+            get
+            {
+                return UnderlyingType switch
+                {
+                    PointerTypeNode p => p.BaseType,
+                    _ => UnderlyingType
+                };
+            }
+        }
     }
 }

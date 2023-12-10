@@ -13,6 +13,7 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(UserDefinedTypeNode))]
     [JsonDerivedType(typeof(StructTypeNode))]
     [JsonDerivedType(typeof(PointerTypeNode))]
+    [JsonDerivedType(typeof(ParameterizedArrayTypeNode))]
     public abstract class TypeNode : AbstractSyntaxTree
     {
         protected TypeNode(Span span) : base(span)

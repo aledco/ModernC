@@ -1,13 +1,11 @@
-﻿using System.Reflection.Metadata.Ecma335;
-
-namespace Compiler.Models.Tree
+﻿namespace Compiler.Models.Tree
 {
     public class ArrayLiteralExpression : ComplexLiteralExpression
     {
-        public IList<Expression> Elements { get; }
+        public IList<ArrayLiteralElement> Elements { get; }
         public int Offset { get; set; }
 
-        public ArrayLiteralExpression(Span span, IList<Expression> elements) : base(span)
+        public ArrayLiteralExpression(Span span, IList<ArrayLiteralElement> elements) : base(span)
         {
             Elements = elements;
         }

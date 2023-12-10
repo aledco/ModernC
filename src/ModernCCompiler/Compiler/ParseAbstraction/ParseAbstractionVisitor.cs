@@ -80,29 +80,10 @@ namespace Compiler.ParseAbstraction
             if (context.VOID_TYPE() != null)
             {
                 return new VoidTypeNode(span);
-            } 
+            }
             else if (context.primitiveType() != null)
             {
                 return VisitPrimitiveType(context.primitiveType());
-            }
-            else if (context.type() != null)
-            {
-                if (context.intLiteral() != null)
-                {
-                    var elementType = VisitType(context.type());
-                    var size = VisitIntLiteral(context.intLiteral());
-                    if (size.Value < 1)
-                    {
-                        ErrorHandler.Throw("Array size must be greater than 0", size);
-                    }
-
-                    return new ArrayTypeNode(span, elementType, size.Value);
-                }
-                else
-                {
-                    var underlyingType = VisitType(context.type());
-                    return new PointerTypeNode(span, underlyingType);
-                }
             }
             else if (context.functionType() != null)
             {
@@ -112,8 +93,32 @@ namespace Compiler.ParseAbstraction
             {
                 return VisitUserDefinedType(context.userDefinedType());
             }
+            else if (context.arrayDefinitionType != null)
+            {
+                var elementType = VisitType(context.arrayDefinitionType);
+                var size = VisitIntLiteral(context.intLiteral());
+                if (size.Value < 1)
+                {
+                    ErrorHandler.Throw("Array size must be greater than 0", size);
+                }
 
-            throw new NotImplementedException();
+                return new ArrayTypeNode(span, elementType, size.Value);
+            }
+            else if (context.arrayParameritizedType != null)
+            {
+                var elementType = VisitType(context.arrayParameritizedType);
+                var parameter = VisitId(context.id());
+                return new ParameterizedArrayTypeNode(span, elementType, parameter);
+            }
+            else if (context.pointerType != null)
+            {
+                var underlyingType = VisitType(context.pointerType);
+                return new PointerTypeNode(span, underlyingType);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public override PrimitiveTypeNode VisitPrimitiveType([NotNull] PrimitiveTypeContext context)
@@ -625,12 +630,11 @@ namespace Compiler.ParseAbstraction
 
         public override ArrayLiteralExpression VisitArrayLiteral([NotNull] ArrayLiteralContext context)
         {
-            throw new NotImplementedException();
-            //var span = GetSpanOfContext(context);
-            //var elements = context.expressionList().expression()
-            //    .Select(VisitExpression)
-            //    .ToList();
-            //return new ArrayLiteralExpression(span, elements);
+            var span = GetSpanOfContext(context);
+            var elements = context.expression()
+                .Select(e => new ArrayLiteralElement(span, VisitExpression(e)))
+                .ToList();
+            return new ArrayLiteralExpression(span, elements);
         }
 
         public override StructLiteralExpression VisitStructLiteral([NotNull] StructLiteralContext context)

@@ -35,8 +35,9 @@ type
     | primitiveType
     | functionType
     | userDefinedType
-    | type '[' intLiteral ']'
-    | type '*';
+    | arrayDefinitionType=type '[' intLiteral ']'
+    | arrayParameritizedType=type '[' id ']'
+    | pointerType=type '*';
 
 primitiveType
     : INT_TYPE 
@@ -196,10 +197,7 @@ complexLiteral
     | structLiteral;
 
 arrayLiteral
-    : '[' expressionList ']';
-
-expressionList
-    : expression (',' expression)*;
+    : '[' (expression ',')* expression? ']';
 
 structLiteral
     : '{' (structLiteralField ',')* structLiteralField? '}';

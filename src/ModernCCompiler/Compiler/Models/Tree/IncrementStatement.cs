@@ -6,6 +6,7 @@ namespace Compiler.Models.Tree
     {
         public Expression Left { get; }
         public IncrementOperator Operator { get; }
+        public string IncrementRegister { get; set; } = string.Empty;
 
         public IncrementStatement(Span span, Expression left, IncrementOperator op) : base(span)
         {

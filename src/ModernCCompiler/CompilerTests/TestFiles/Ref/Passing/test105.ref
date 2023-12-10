@@ -1,0 +1,17 @@
+[
+    Test {
+        x = 4,
+        y = a,
+        z = true,
+    },
+    Test {
+        x = 5,
+        y = b,
+        z = true,
+    },
+    Test {
+        x = 5,
+        y = a,
+        z = false,
+    },
+]

@@ -16,10 +16,10 @@ namespace Compiler.Models.Tree
         {
             return Left switch
             {
-                IdExpression e => e.Id.Symbol?.Type,
-                FieldAccessExpression e => e.Type,
-                UnaryOperatorExpression e => e.Type,
-                TailedExpression e => e.GetOperatingType(),
+                IdExpression e => e.Id.Symbol?.Type.BaseType,
+                FieldAccessExpression e => e.Type?.BaseType,
+                UnaryOperatorExpression e => e.Type?.BaseType,
+                TailedExpression e => e.GetOperatingType()?.BaseType,
                 _ => throw new NotImplementedException()
             };
         }
