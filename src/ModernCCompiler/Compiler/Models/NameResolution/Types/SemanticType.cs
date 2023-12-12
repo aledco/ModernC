@@ -1,4 +1,6 @@
-﻿namespace Compiler.Models.NameResolution.Types
+﻿using System.Text.Json.Serialization;
+
+namespace Compiler.Models.NameResolution.Types
 {
     public abstract class SemanticType
     {
@@ -35,5 +37,10 @@
                 }
             }
         }
+
+        [JsonIgnore]
+        public virtual SemanticType BaseType { get => this; }
+
+        public virtual bool IsParameterized { get => false; }
     }
 }

@@ -5,6 +5,7 @@ using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
+using System.ComponentModel.Design;
 using VirtualMachine;
 using VirtualMachine.Instructions;
 
@@ -122,11 +123,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> VisitPrintStatement(PrintStatement s)
         {
-            if (s.Expression is ComplexLiteralExpression)
-            {
-                ErrorHandler.Throw("Printing complex literals is not supported, store in a variable then print the variable", s);
-            }
-
             var instructions = new List<IInstruction>();
             switch (s.Expression.Type)
             {
@@ -147,9 +143,20 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     instructions.Add(new PrintBool(s.Expression.Register));
                     break;
                 case StructType t:
-                    var definition = SymbolTable.LookupDefinition(t) as StructDefinition;
                     instructions.AddRange(ExpressionLValue(s.Expression));
-                    instructions.AddRange(PrintStruct(s.Expression.Register, definition!, s.Span));
+                    instructions.AddRange(PrintStruct(s.Expression.Register, t, s.Span));
+                    break;
+                case ArrayType t when t.Length == null:
+                    instructions.AddRange(ExpressionLValue(s.Expression));
+                    instructions.Add(new PrintPointer(s.Expression.Register));
+                    break;
+                case ArrayType t when t.ElementType is ByteType:
+                    instructions.AddRange(ExpressionLValue(s.Expression));
+                    instructions.AddRange(PrintString(s.Expression.Register, t, s.Span));
+                    break;
+                case ArrayType t when t.Length != null:
+                    instructions.AddRange(ExpressionLValue(s.Expression));
+                    instructions.AddRange(PrintArray(s.Expression.Register, t, s.Span));
                     break;
                 case PointerType:
                 case FunctionType:
@@ -164,7 +171,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return instructions;
         }
 
-        private static IList<IInstruction> PrintSpaces(int spaces)
+        private static List<IInstruction> PrintSpaces(int spaces)
         {
             var instructions = new List<IInstruction>();
             for (int i = 0; i < spaces; i++)
@@ -176,10 +183,10 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return instructions;
         }
 
-        private static IList<IInstruction> PrintStruct(string lvalRegister, StructDefinition definition, Span span, int spaces = 0)
+        private static List<IInstruction> PrintStruct(string lvalRegister, StructType type, Span span, int spaces = 0)
         {
-
             var instructions = new List<IInstruction>();
+            var definition = (SymbolTable.LookupDefinition(type) as StructDefinition)!;
             foreach (var c in definition.Type.ToSemanticType().Value)
             {
                 instructions.Add(new LoadImmediate(Registers.Temporary, c));
@@ -228,9 +235,23 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                         instructions.Add(new PrintBool(Registers.Temporary));
                         break;
                     case StructType t:
-                        var fieldDefiniton = SymbolTable.LookupDefinition(t) as StructDefinition;
                         instructions.Add(new AddImmediate(lvalRegister, lvalRegister, field.Offset));
-                        instructions.AddRange(PrintStruct(lvalRegister, fieldDefiniton!, span, spaces + field.Id.Value.Length + 7));
+                        instructions.AddRange(PrintStruct(lvalRegister, t, span, spaces + field.Id.Value.Length + 7));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -field.Offset));
+                        break;
+                    case ArrayType t when t.Length == null:
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, field.Offset));
+                        instructions.Add(new PrintPointer(lvalRegister));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -field.Offset));
+                        break;
+                    case ArrayType t when t.ElementType is ByteType:
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, field.Offset));
+                        instructions.AddRange(PrintString(lvalRegister, t, span));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -field.Offset));
+                        break;
+                    case ArrayType t:
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, field.Offset));
+                        instructions.AddRange(PrintArray(lvalRegister, t, span, spaces + 4));
                         instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -field.Offset));
                         break;
                     case FunctionType:
@@ -253,6 +274,90 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             instructions.Add(new PrintByte(Registers.Temporary));
             return instructions;
         }
+
+        private static List<IInstruction> PrintArray(string lvalRegister, ArrayType type, Span span, int spaces = 0)
+        {
+            var instructions = new List<IInstruction>();
+            instructions.Add(new LoadImmediate(Registers.Temporary, '['));
+            instructions.Add(new PrintByte(Registers.Temporary));
+            instructions.Add(new LoadImmediate(Registers.Temporary, '\n'));
+            instructions.Add(new PrintByte(Registers.Temporary));
+
+            for (int i = 0; i < type.Length; i++)
+            {
+                instructions.AddRange(PrintSpaces(spaces + 4));
+                switch (type.ElementType)
+                {
+                    case IntType:
+                        instructions.Add(new Load(Registers.Temporary, lvalRegister, i));
+                        instructions.Add(new PrintInt(Registers.Temporary));
+                        break;
+                    case ByteType:
+                        instructions.Add(new Load(Registers.Temporary, lvalRegister, i));
+                        instructions.Add(new PrintByte(Registers.Temporary));
+                        break;
+                    case FloatType:
+                        instructions.Add(new Load(Registers.Temporary, lvalRegister, i));
+                        instructions.Add(new PrintFloat(Registers.Temporary));
+                        break;
+                    case BoolType:
+                        instructions.Add(new Load(Registers.Temporary, lvalRegister, i));
+                        instructions.Add(new PrintBool(Registers.Temporary));
+                        break;
+                    case StructType t:
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, i * t.GetSizeInWords()));
+                        instructions.AddRange(PrintStruct(lvalRegister, t, span, spaces + 4));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -(i * t.GetSizeInWords())));
+                        break;
+                    case ArrayType t when t.Length == null:
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, i * t.GetSizeInWords()));
+                        instructions.Add(new PrintPointer(lvalRegister));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -(i * t.GetSizeInWords())));
+                        break;
+                    case ArrayType t when t.ElementType is ByteType:
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, i * t.GetSizeInWords()));
+                        instructions.AddRange(PrintString(lvalRegister, t, span));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -(i * t.GetSizeInWords())));
+                        break;
+                    case ArrayType t:
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, i * t.GetSizeInWords()));
+                        instructions.AddRange(PrintArray(lvalRegister, t, span, spaces + 4));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -(i * t.GetSizeInWords())));
+                        break;
+                    case FunctionType:
+                        instructions.Add(new Load(Registers.Temporary, lvalRegister, i));
+                        instructions.Add(new PrintPointer(Registers.Temporary));
+                        break;
+                    default:
+                        ErrorHandler.Throw("Cannot print expression", span);
+                        break;
+                }
+
+                instructions.Add(new LoadImmediate(Registers.Temporary, ','));
+                instructions.Add(new PrintByte(Registers.Temporary));
+                instructions.Add(new LoadImmediate(Registers.Temporary, '\n'));
+                instructions.Add(new PrintByte(Registers.Temporary));
+            }
+
+            instructions.AddRange(PrintSpaces(spaces));
+            instructions.Add(new LoadImmediate(Registers.Temporary, ']'));
+            instructions.Add(new PrintByte(Registers.Temporary));
+            return instructions;
+        }
+
+
+        private static IEnumerable<IInstruction> PrintString(string lvalRegister, ArrayType type, Span _)
+        {
+            var instructions = new List<IInstruction>();
+            for (int i = 0; i < type.Length; i++)
+            {
+                instructions.Add(new Load(Registers.Temporary, lvalRegister, i));
+                instructions.Add(new PrintByte(Registers.Temporary)); 
+            }
+
+            return instructions;
+        }
+
 
         private static List<IInstruction> VisitPrintLineStatement(PrintLineStatement s)
         {
@@ -420,17 +525,17 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             switch (s.Left.Type)
             {
                 case IntegralType or BoolType:
-                    instructions.Add(new AddImmediate(Registers.Temporary, s.Left.Register, val));
+                    instructions.Add(new AddImmediate(s.IncrementRegister, s.Left.Register, val));
                     break;
                 case RealType:
-                    instructions.Add(new AddFloatImmediate(Registers.Temporary, s.Left.Register, val));
+                    instructions.Add(new AddFloatImmediate(s.IncrementRegister, s.Left.Register, val));
                     break;
                 default:
                     throw new Exception($"Invalid type: {s.Left.Type}");
             }
 
             instructions.AddRange(ExpressionLValue(s.Left));
-            instructions.Add(new Store(s.Left.Register, Registers.Temporary));
+            instructions.Add(new Store(s.Left.Register, s.IncrementRegister));
             return instructions;
         }
 
@@ -914,7 +1019,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             {
                 throw new Exception("Symbol was null");
             }
-
+            
             if (e.Id.Symbol.Type is FunctionType && e.Id.Symbol.IsDefinedGlobalFunction)
             {
                 if (e.Id.Symbol.EnclosingFunction == null)
@@ -935,11 +1040,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     new Load(e.Register, e.Register)
                 };
             }
-
-            //else if (e.Id.Symbol.Type is ArrayType)
-            //{
-            //    return ExpressionLValue(e);
-            //}
 
             return new List<IInstruction>
             {
@@ -1028,7 +1128,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             }
         }
 
-
         private static List<IInstruction> ArrayIndexExpressionLValue(ArrayIndexExpression e)
         {
             if (e.Array.Type == null || e.Index.Type == null)
@@ -1038,9 +1137,23 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
             var instructions = ExpressionLValue(e.Array);
             instructions.AddRange(ExpressionRValue(e.Index));
-            if (e.Index.Type.GetSizeInWords() > 1)
+            if (e.Array.Type is ArrayType arrayType && arrayType.ElementType.IsComplex)
             {
-                instructions.Add(new LoadImmediate(Registers.Temporary, e.Array.Type.GetSizeInWords()));
+                if (arrayType.ElementType is ArrayType elementArrayType && elementArrayType.Length == null)
+                {
+                    if (elementArrayType.LengthParameterSymbol == null)
+                    {
+                        throw new Exception("Array length and parameter symbol was null");
+                    }
+
+                    // TODO fix this for multidimensional parmeterization
+                    instructions.Add(new Load(Registers.Temporary, Registers.FramePointer, elementArrayType.LengthParameterSymbol.Offset));
+                }
+                else
+                {
+                    instructions.Add(new LoadImmediate(Registers.Temporary, arrayType.ElementType.GetSizeInWords()));
+                }
+                
                 instructions.Add(new Multiply(e.Index.Register, e.Index.Register, Registers.Temporary));
             }
             
@@ -1188,16 +1301,19 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> MakeArrayLiteral(ArrayLiteralExpression e)
         {
-            // TODO fix this once done with structs and arrays
             var instructions = new List<IInstruction>();
             for (var i = 0; i < e.Elements.Count; i++)
             {
                 var elem = e.Elements[i];
-                instructions.AddRange(ExpressionRValue(elem));
-                if (elem.Type != null && elem.Type is not ArrayType)
+                if (elem.Expression is ComplexLiteralExpression complexLiteral)
                 {
-                    var offset = e.Offset + (i * elem.Type.GetSizeInWords());
-                    instructions.Add(new Store(Registers.FramePointer, elem.Register, offset));
+                    instructions.Add(new AddImmediate(complexLiteral.Register, e.Register, elem.Offset));
+                    instructions.AddRange(MakeComplexLiteral(complexLiteral));
+                }
+                else
+                {
+                    instructions.AddRange(ExpressionRValue(elem.Expression));
+                    instructions.Add(new Store(e.Register, elem.Expression.Register, elem.Offset));
                 }
             }
 

@@ -8,11 +8,14 @@ using VirtualMachine;
 
 /*
  * TODO:
+ * 
  * - things to decide:
  *      - need to define an ordering for global statements / definitions
  *          - statements and definitions may need to be processed in order
  *      - pointer math
  *      - semi colons or commas for structs?
+ *      - void functions can leave return type out?
+ *      - complex literal expressions in global memory?
  * 
  * - code maintenence:
  *      - add code underlining to error messages and better error messages
@@ -20,10 +23,17 @@ using VirtualMachine;
  *      - make full program tests
  *      - git CI
  * 
+ * - get adding floats and ints working
+ *      - add IntToFloat instruction that converts an int to float representation
+ * 
+ * - arrays
+ *      - have a way to initialize an array with elements all of one value int[5] a = [0]
+ *      - range expression? int[3] a = 1..5;
+ *      - need array size parameters to be constant
+ *      - add operator to get the size of an array or string?
+ *      
  * - structures to implement:
  *      - type aliases
- *      - arrays
- *      - byte strings
  *      - char type and char strings
  *      - unions
  *      - enums
@@ -42,6 +52,7 @@ using VirtualMachine;
  *      - additional looping constructs
  *              - loop 10 { } loops 10 times
  *              - loop { } loops forever
+ *              - foreach loop for arrays, strings, and sepcial structs
  *      - disallow variable definitions without initialization?
  *              
  * - types to implement:
@@ -52,6 +63,7 @@ using VirtualMachine;
  *          - come up with better name
  *          
  * - others to implement:
+ *      - add a prelude that get's merged into the ast
  *      - move semantics (<- as operator / assignement)
  *      - type modifiers (const, static, dynamic, etc.)
  *      - variadic / keyword parameters

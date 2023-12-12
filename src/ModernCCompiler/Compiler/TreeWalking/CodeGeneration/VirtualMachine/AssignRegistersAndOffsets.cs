@@ -207,8 +207,10 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static int VisitIncrementStatement(IncrementStatement s, Context context, int offset)
         {
+            s.IncrementRegister = context.GetRegister();
             VisitExpression(s.Left, context, offset);
             context.DropRegister(s.Left.Register);
+            context.DropRegister(s.IncrementRegister);
             return 0;
         }
 
@@ -416,10 +418,14 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static int VisitArrayLiteralExpression(ArrayLiteralExpression e, Context context, int offset)
         {
             e.Offset = offset;
+            e.Register = context.GetRegister();
+            var localOffset = 0;
             foreach (var element in e.Elements)
             {
-                VisitExpression(element, context, offset);
-                context.DropRegister(element.Register);
+                element.Offset = localOffset;
+                VisitExpression(element.Expression, context, localOffset);
+                context.DropRegister(element.Expression.Register);
+                localOffset += element.Expression.Type!.GetSizeInWords();
             }
 
             return 0;

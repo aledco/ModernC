@@ -66,9 +66,17 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 case VariableDefinitionStatement s:
                     type = s.Type.ToSemanticType();
-                    if (type is PointerType)
+                    if (type.IsParameterized)
+                    {
+                        ErrorHandler.Throw("Type can only be used in function parameters");
+                    }
+                    else if (type is PointerType)
                     {
                         ErrorHandler.Throw("Pointers cannot be global", statement);
+                    }
+                    else if (type is ArrayType arrayType && !arrayType.Length.HasValue)
+                    {
+                        ErrorHandler.Throw("Arrays must be declared with a size", statement);
                     }
 
                     context.Scope?.AddSymbol(s.Id, type);
@@ -76,7 +84,11 @@ namespace Compiler.TreeWalking.TypeCheck
                     break;
                 case VariableDefinitionAndAssignmentStatement s:
                     type = s.Type.ToSemanticType();
-                    if (type is PointerType)
+                    if (type.IsParameterized)
+                    {
+                        ErrorHandler.Throw("Type can only be used in function parameters");
+                    }
+                    else if (type is PointerType)
                     {
                         ErrorHandler.Throw("Pointers cannot be global", statement);
                     }
@@ -85,9 +97,23 @@ namespace Compiler.TreeWalking.TypeCheck
                     context.VariableAssignmentType = type;
                     VisitIdNode(s.Id, context);
                     var expressionType = VisitExpression(s.Expression, context);
+                    if (type is ArrayType assignArrayType && !assignArrayType.Length.HasValue)
+                    {
+                        if (s.Expression is ComplexLiteralExpression && expressionType is ArrayType literalArrayType)
+                        {
+                            var typeNode = (s.Type as ArrayTypeNode)!;
+                            typeNode.Length = literalArrayType.Length;
+                            type = typeNode.ToSemanticType();
+                        }
+                        else
+                        {
+                            ErrorHandler.Throw("Arrays must be declared with a size", statement);
+                        }
+                    }
+
                     if (!type.TypeEquals(expressionType))
                     {
-                        ErrorHandler.Throw("Expression must be a matching type", s);
+                        ErrorHandler.Throw("Variable assignment must have matching types.", statement);
                     }
 
                     break;
@@ -113,6 +139,8 @@ namespace Compiler.TreeWalking.TypeCheck
                 .Select(p => VisitParameter(p, context))
                 .ToList();
 
+            ProcessParameterizedParameters(functionDefinition, context, parameterTypes);
+
             globalScope?.AddSymbol(functionDefinition.Id, new FunctionType(returnType, parameterTypes));
             context.Scope = globalScope;
             VisitIdNode(functionDefinition.Id, context);
@@ -123,6 +151,52 @@ namespace Compiler.TreeWalking.TypeCheck
 
             functionDefinition.Id.Symbol.IsDefinedGlobalFunction = true;
             functionDefinition.Id.Symbol.EnclosingFunction = functionDefinition;
+        }
+
+        private static void ProcessParameterizedParameters(FunctionDefinition functionDefinition, Context context, List<SemanticType> parameterTypes)
+        {
+            var previousCount = parameterTypes.Count;
+            for (int i = 0; i < previousCount; i++)
+            {
+                var type = parameterTypes[i];
+                if (type is not PointerType) continue;
+
+                var arrayParameter = functionDefinition.Parameters[i];
+                var arrayParameterType = arrayParameter.Type;
+                var loop = true;
+                while (loop)
+                {
+                    switch (type)
+                    {
+
+                        case PointerType pointerType when pointerType.BaseType is ArrayType arrayType && !arrayType.Length.HasValue
+                                                       && arrayParameterType is PointerTypeNode pointerTypeNode
+                                                       && pointerTypeNode.BaseType is ParameterizedArrayTypeNode arrayTypeNode:
+                            CreateLengthParameter(functionDefinition, context, parameterTypes, arrayTypeNode);
+                            type = arrayType;
+                            arrayParameterType = arrayTypeNode;
+                            break;
+                        //case ArrayType outerArrayType when outerArrayType.ElementType is ArrayType arrayType && !arrayType.Length.HasValue
+                        //                                && arrayParameterType is ParameterizedArrayTypeNode outerArrayTypeNode
+                        //                                && outerArrayTypeNode.ElementType is ParameterizedArrayTypeNode arrayTypeNode:
+                        //    CreateLengthParameter(functionDefinition, context, parameterTypes, arrayTypeNode);
+                        //    type = arrayType;
+                        //    arrayParameterType = arrayTypeNode;
+                        //    break;
+                        // TODO uncomment for multidimensional parmeterization
+                        default:
+                            loop = false;
+                            break;
+                    }
+                }
+            }
+
+            static void CreateLengthParameter(FunctionDefinition functionDefinition, Context context, List<SemanticType> parameterTypes, ParameterizedArrayTypeNode innerArrayTypeNode)
+            {
+                var newParameter = new Parameter(functionDefinition.Span, new IntTypeNode(functionDefinition.Span), innerArrayTypeNode.Parameter);
+                functionDefinition.Parameters.Add(newParameter);
+                parameterTypes.Add(VisitParameter(newParameter, context));
+            }
         }
 
         private static SemanticType VisitParameter(Parameter parameter, Context context)
@@ -209,7 +283,8 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static SemanticType VisitStructLiteralExpression(StructLiteralExpression e, Context context)
         {
-            if (context.VariableAssignmentType is UserDefinedType userDefinedType)
+            var variableAssignmentType = context.VariableAssignmentType;
+            if (variableAssignmentType?.BaseType is UserDefinedType userDefinedType)
             {
                 var (structType, definition) = SymbolTable.LookupTypeAndDefinition<StructType, StructDefinition>(userDefinedType, e.Span);
                 e.MapDefaultExpressionsFromDefinition(structType, definition);
@@ -222,6 +297,7 @@ namespace Compiler.TreeWalking.TypeCheck
                     }
 
                     var fieldDefinitionType = fieldDefinition!.Type.ToSemanticType();
+
                     context.VariableAssignmentType = fieldDefinitionType;
                     var type = VisitExpression(field.Expression, context);
                     if (!fieldDefinition!.Type.ToSemanticType().TypeEquals(type))
@@ -230,6 +306,7 @@ namespace Compiler.TreeWalking.TypeCheck
                     }
                 }
 
+                context.VariableAssignmentType = variableAssignmentType;
                 return structType;
             }
 
@@ -240,7 +317,7 @@ namespace Compiler.TreeWalking.TypeCheck
         private static SemanticType VisitArrayLiteralExpression(ArrayLiteralExpression e, Context context)
         {
             var elementTypes = e.Elements
-                .Select(e => VisitExpression(e, context))
+                .Select(e => VisitExpression(e.Expression, context))
                 .ToList();
 
             if (!elementTypes.TrueForAll(e => e.TypeEquals(elementTypes.First())))

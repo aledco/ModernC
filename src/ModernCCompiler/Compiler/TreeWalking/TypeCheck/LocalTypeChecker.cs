@@ -3,6 +3,7 @@ using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
+using System.Transactions;
 
 namespace Compiler.TreeWalking.TypeCheck
 {
@@ -16,7 +17,6 @@ namespace Compiler.TreeWalking.TypeCheck
             public Scope? Scope { get; set; }
             public FunctionDefinition? EnclosingFunction { get; set; }
             public Stack<LoopingStatement> EnclosingLoops { get; set; } = new();
-            public bool LValue { get; set; } = false;
             public FunctionDefinition? RValueFunction { get; set; }
 
             public SemanticType? VariableAssignmentType { get; set; }
@@ -65,20 +65,25 @@ namespace Compiler.TreeWalking.TypeCheck
 
             foreach (var field in structDefinition.Fields)
             {
-                context.VariableAssignmentType = field.Type.ToSemanticType();
                 VisitStructFieldDefinition(field, context);
             }
         }
 
         private static void VisitStructFieldDefinition(StructFieldDefinition field, Context context)
         {
-            var type = field.Type.ToSemanticType();
+            var type = field.Type.ToSemanticType();    
+            if (type is ArrayType arrayType && !arrayType.Length.HasValue)
+            {
+                ErrorHandler.Throw("Array length must be known in struct definition");
+            }
+
             if (field.DefaultExpression != null)
             {
+                context.VariableAssignmentType = type;
                 var expressionType = VisitExpression(field.DefaultExpression, context);
                 if (!type.TypeEquals(expressionType))
                 {
-                    ErrorHandler.Throw("Defaul expression type must match", field);
+                    ErrorHandler.Throw("Default expression type must match", field);
                 }
             }
         }
@@ -94,6 +99,10 @@ namespace Compiler.TreeWalking.TypeCheck
             if (returnType is PointerType)
             {
                 ErrorHandler.Throw("Pointers cannot be returned from functions", functionDefinition);
+            }
+            else if(returnType.IsComplex)
+            {
+                ErrorHandler.Throw("Complex types cannot be returned from functions", functionDefinition); // TODO remove once move semantics are implemented
             }
             else if (returnType is not VoidType && !functionDefinition.Body.AllPathsReturn())
             {
@@ -180,6 +189,11 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static void VisitPrintStatement(PrintStatement statement, Context context)
         {
+            if (statement.Expression is ComplexLiteralExpression)
+            {
+                ErrorHandler.Throw("Printing complex literals is not supported, store in a variable then print the variable", statement);
+            }
+
             VisitExpression(statement.Expression, context);
         }
 
@@ -192,6 +206,49 @@ namespace Compiler.TreeWalking.TypeCheck
         private static void VisitVariableDefinitionStatement(VariableDefinitionStatement statement, Context context)
         {
             var type = statement.Type.ToSemanticType();
+            if (type is ArrayType arrayType && !arrayType.Length.HasValue)
+            {
+                ErrorHandler.Throw("Arrays must be declared with a size", statement);
+            }
+
+            context.Scope?.AddSymbol(statement.Id, type);
+            VisitIdNode(statement.Id, context);
+        }
+
+        private static void VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement statement, Context context)
+        {
+            var type = statement.Type.ToSemanticType();
+            if (type.IsParameterized)
+            {
+                ErrorHandler.Throw("Parameterized type can only be used in function parameters");
+            }
+
+            context.VariableAssignmentType = type;
+            var expressionType = VisitExpression(statement.Expression, context);
+            if (expressionType.IsComplex && statement.Expression is not ComplexLiteralExpression)
+            {
+                ErrorHandler.Throw("Complex types cannot be reassigned.");
+            }
+            if (type is ArrayType assignArrayType && !assignArrayType.Length.HasValue)
+            {
+                if (statement.Expression is ComplexLiteralExpression && expressionType is ArrayType literalArrayType)
+                {
+                    var typeNode = (statement.Type as ArrayTypeNode)!;
+                    typeNode.Length = literalArrayType.Length;
+                    type = typeNode.ToSemanticType();
+                }
+                else
+                {
+                    ErrorHandler.Throw("Non array literals must be declared with a size", statement);
+                }
+            }
+            //else if (expressionType is PointerType pointerType && )
+
+            if (!type.TypeEquals(expressionType))
+            {
+                ErrorHandler.Throw("Variable assignment must have matching types.", statement);
+            }
+
             context.Scope?.AddSymbol(statement.Id, type);
             VisitIdNode(statement.Id, context);
         }
@@ -204,10 +261,7 @@ namespace Compiler.TreeWalking.TypeCheck
                 ErrorHandler.Throw("Complex types cannot be reassigned.");
             }
 
-            context.LValue = true;
             var leftType = VisitExpression(statement.Left, context);
-            context.LValue = false;
-
             switch (leftType)
             {
                 case RealType when rightType is NumberType:
@@ -226,46 +280,11 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static void VisitIncrementStatement(IncrementStatement s, Context context)
         {
-            context.LValue = true;
             var leftType = VisitExpression(s.Left, context);
-            context.LValue = false;
-
             if (leftType is not IntegralType)
             {
                 ErrorHandler.Throw("Increment statements cannot be used on non integral types", s);
             }
-        }
-
-        private static void VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement statement, Context context)
-        {
-            var type = statement.Type.ToSemanticType();
-            context.VariableAssignmentType = type;
-            var expressionType = VisitExpression(statement.Expression, context);
-            if (expressionType.IsComplex && statement.Expression is not ComplexLiteralExpression)
-            {
-                ErrorHandler.Throw("Complex types cannot be reassigned.");
-            }
-            //else if (expressionType is PointerType pointerType && )
-
-            switch (type)
-            {
-                case RealType when expressionType is NumberType:
-                    break;
-                case IntegralType when expressionType is IntegralType:
-                    break;
-                default:
-                    if (!type.TypeEquals(expressionType))
-                    {
-                        ErrorHandler.Throw("Variable assignment must have matching types.", statement);
-                    }
-
-                    break;
-            }
-
-            context.Scope?.AddSymbol(statement.Id, type);
-            context.LValue = true;
-            VisitIdNode(statement.Id, context);
-            context.LValue = false;
         }
 
         private static void VisitCallStatement(CallStatement s, Context context)
@@ -373,11 +392,6 @@ namespace Compiler.TreeWalking.TypeCheck
         {
             if (context.EnclosingFunction?.Id?.Symbol?.Type is FunctionType functionType)
             {
-                if (functionType.ReturnType is ArrayType)
-                {
-                    ErrorHandler.Throw("The compilier does not currently support returning arrays from functions", statement); // TODO remove once copy is implemented 
-                }
-
                 if (functionType.ReturnType is VoidType && statement.Expression != null)
                 {
                     ErrorHandler.Throw("Function has a return type of void and cannot return a value.", statement);
@@ -462,7 +476,7 @@ namespace Compiler.TreeWalking.TypeCheck
                     }
 
                     return fieldType;
-                case PointerType p when p.ConcreteType is StructType t:
+                case PointerType p when p.BaseType is StructType:
                     e.AutoDereference();
                     return VisitExpression(e, context);
                 default:
@@ -473,7 +487,8 @@ namespace Compiler.TreeWalking.TypeCheck
 
         private static SemanticType VisitStructLiteralExpression(StructLiteralExpression e, Context context)
         {
-            if (context.VariableAssignmentType is UserDefinedType userDefinedType)
+            var variableAssignmentType = context.VariableAssignmentType;
+            if (variableAssignmentType?.BaseType is UserDefinedType userDefinedType)
             {
                 var (structType, definition) = SymbolTable.LookupTypeAndDefinition<StructType, StructDefinition>(userDefinedType, e.Span);
                 e.MapDefaultExpressionsFromDefinition(structType, definition);
@@ -486,6 +501,7 @@ namespace Compiler.TreeWalking.TypeCheck
                     }
 
                     var fieldDefinitionType = fieldDefinition!.Type.ToSemanticType();
+
                     context.VariableAssignmentType = fieldDefinitionType;
                     var type = VisitExpression(field.Expression, context);
                     if (!fieldDefinition!.Type.ToSemanticType().TypeEquals(type))
@@ -494,6 +510,7 @@ namespace Compiler.TreeWalking.TypeCheck
                     }
                 }
 
+                context.VariableAssignmentType = variableAssignmentType;
                 return structType;
             }
             
@@ -509,11 +526,8 @@ namespace Compiler.TreeWalking.TypeCheck
                 var argTypes = e.Arguments
                     .Select(a => VisitExpression(a, context))
                     .ToList();
-                if (argTypes.Count != functionType.Parameters.Count - 1)
-                {
-                    ErrorHandler.Throw("Function was called with an incorrect number of arguments.", e);
-                }
 
+                // insert data structure if applicable
                 var firstParameterType = functionType.Parameters.First();
                 var dataType = e.FieldFunction.Left.Type!;
                 if (firstParameterType is PointerType parameterPointerType && parameterPointerType.UnderlyingType is UserDefinedType)
@@ -527,7 +541,6 @@ namespace Compiler.TreeWalking.TypeCheck
                 {
                     ErrorHandler.Throw("The first parameter of a field function call must be a pointer to the outer data structure", e);
                 }
-
 
                 // auto reference the data expression
                 var dataExpression = e.FieldFunction.Left.Copy(e.Span);
@@ -550,9 +563,13 @@ namespace Compiler.TreeWalking.TypeCheck
                 }
 
                 e.Arguments.Insert(0, dataExpression);
-                argTypes = e.Arguments
-                    .Select(a => VisitExpression(a, context))
-                    .ToList();
+                argTypes.Insert(0, VisitExpression(dataExpression, context));
+
+                ProcessParameterizedArguments(e, context, functionType, argTypes);
+                if (argTypes.Count != functionType.Parameters.Count)
+                {
+                    ErrorHandler.Throw("Function was called with an incorrect number of arguments.", e);
+                }
 
                 for (var i = 0; i < argTypes.Count; i++)
                 {
@@ -577,6 +594,7 @@ namespace Compiler.TreeWalking.TypeCheck
                 var argTypes = e.Arguments
                     .Select(a => VisitExpression(a, context))
                     .ToList();
+                ProcessParameterizedArguments(e, context, functionType, argTypes);
                 if (argTypes.Count != functionType.Parameters.Count)
                 {
                     ErrorHandler.Throw($"Function was called with an incorrect number of arguments.", e);
@@ -596,22 +614,105 @@ namespace Compiler.TreeWalking.TypeCheck
             ErrorHandler.Throw($"Expression cannot be called like a function.", e);
             throw ErrorHandler.FailedToExit;
         }
-        private static SemanticType VisitArrayIndexExpression(ArrayIndexExpression e, Context context)
+
+        private static void ProcessParameterizedArguments(CallExpression e, Context context, FunctionType functionType, List<SemanticType> argTypes)
         {
-            e.Type = VisitExpression(e.Array, context);
-            if (e.Type is ArrayType arrayType)
+            var previousCount = argTypes.Count;
+            for (int i = 0; i < previousCount; i++)
             {
-                var indexType = VisitExpression(e.Index, context);
-                if (indexType is not IntegralType)
+                var type = argTypes[i];
+                if (type is not PointerType) continue;
+
+                var parameterType = functionType.Parameters[i];
+                var loop = true;
+                while (loop)
                 {
-                    ErrorHandler.Throw("Index expression must be an integer type", e);
+                    switch (type)
+                    {
+                        case PointerType pointerType when pointerType.BaseType is ArrayType arrayType
+                                                       && parameterType is PointerType parameterPointerType
+                                                       && parameterPointerType.BaseType is ArrayType parameterArrayType:
+                            CheckArrayTypes(e, context, argTypes, arrayType, parameterArrayType);
+                            type = arrayType;
+                            parameterType = parameterArrayType;
+                            break;
+                        //case ArrayType outerArrayType when outerArrayType.ElementType is ArrayType arrayType
+                        //                                && parameterType is ArrayType parameterOuterArrayType
+                        //                                && parameterOuterArrayType.ElementType is ArrayType parameterArrayType:
+                        //    CheckArrayTypes(e, context, argTypes, arrayType, parameterArrayType);
+                        //    type = arrayType;
+                        //    parameterType = parameterArrayType;
+                        //    break;
+                        // TODO uncomment for multidimensional parmeterization
+                        default:
+                            loop = false;
+                            break;
+                    }
                 }
 
-                return arrayType.ElementType;
-            }
+                static void CheckArrayTypes(CallExpression e, Context context, List<SemanticType> argTypes, ArrayType arrayType, ArrayType parameterArrayType)
+                {
+                    if (!arrayType.Length.HasValue && parameterArrayType.Length.HasValue)
+                    {
+                        ErrorHandler.Throw("Cannot pass a paramiterized array as an array with known size", e);
+                    }
 
-            ErrorHandler.Throw("Expression cannot be indexed like an array", e);
-            throw new Exception("Error handler did not stop execution");
+                    if (!parameterArrayType.Length.HasValue)
+                    {
+                        if (!arrayType.Length.HasValue && arrayType.LengthParameterName == null)
+                        {
+                            ErrorHandler.Throw("Array length is not known", e);
+                        }
+
+                        else if (arrayType.Length.HasValue)
+                        {
+                            var newArgument = new IntLiteralExpression(e.Span, arrayType.Length.Value);
+                            e.Arguments.Add(newArgument!);
+                            argTypes.Add(VisitExpression(newArgument, context));
+                        }
+                        else if (arrayType.LengthParameterName != null)
+                        {
+                            var id = new IdNode(e.Span, arrayType.LengthParameterName);
+                            arrayType.LengthParameterSymbol = context.Scope?.LookupSymbol(id);
+
+                            var newArgument = new IdExpression(e.Span, id);
+                            e.Arguments.Add(newArgument!);
+                            argTypes.Add(VisitExpression(newArgument, context));
+                        }
+                    }
+                }
+            }
+        }
+
+        private static SemanticType VisitArrayIndexExpression(ArrayIndexExpression e, Context context)
+        {
+            var type = VisitExpression(e.Array, context);
+            switch (type)
+            {
+                case ArrayType t:
+                    if (t.Length == null && t.LengthParameterName == null)
+                    {
+                        ErrorHandler.Throw("Length of array is unkown", e);
+                    }
+                    else if(t.LengthParameterName != null && t.LengthParameterSymbol == null)
+                    {
+                        t.LengthParameterSymbol = context.Scope?.LookupSymbol(t.LengthParameterName, e.Span);
+                    }
+
+                    var indexType = VisitExpression(e.Index, context);
+                    if (indexType is not IntegralType)
+                    {
+                        ErrorHandler.Throw("Index expression must be an integer type", e);
+                    }
+
+                    return t.ElementType;
+                case PointerType p when p.BaseType is ArrayType:
+                    e.AutoDereference();
+                    return VisitExpression(e, context);
+                default:
+                    ErrorHandler.Throw("Expression cannot be indexed like an array", e);
+                    throw new Exception("Error handler did not stop execution");
+            }
         }
 
         private static SemanticType VisitBinaryOperatorExpression(BinaryOperatorExpression e, Context context)
@@ -753,7 +854,7 @@ namespace Compiler.TreeWalking.TypeCheck
         private static SemanticType VisitArrayLiteralExpression(ArrayLiteralExpression e, Context context)
         {
             var elementTypes = e.Elements
-                .Select(e => VisitExpression(e, context))
+                .Select(e => VisitExpression(e.Expression, context))
                 .ToList();
 
             if (!elementTypes.TrueForAll(e => e.TypeEquals(elementTypes.First())))

@@ -35,8 +35,9 @@ type
     | primitiveType
     | functionType
     | userDefinedType
-    | type '[' intLiteral ']'
-    | type '*';
+    | arrayDefinitionType=type '[' intLiteral? ']'
+    | arrayParameritizedType=type '[' id ']'
+    | pointerType=type '*';
 
 primitiveType
     : INT_TYPE 
@@ -193,13 +194,14 @@ idExpression
 
 complexLiteral
     : arrayLiteral
+    | stringLiteral
     | structLiteral;
 
 arrayLiteral
-    : '[' expressionList ']';
+    : '[' (expression ',')* expression? ']';
 
-expressionList
-    : expression (',' expression)*;
+stringLiteral
+    : STRING;
 
 structLiteral
     : '{' (structLiteralField ',')* structLiteralField? '}';
@@ -251,6 +253,7 @@ INT                          : [0-9]+;
 ID                           : [a-zA-Z_][a-zA-Z0-9_]*;
 ASCII_CHAR                   : '\'' . '\'';
 ESCAPED_ASCII_CHAR           : '\'' '\\' . '\'';
+STRING                       : '"' .*? '"';
 COMMENT                      : '//' .*? '\n' -> skip;
 WHITESPACE                   : (' '|'\t')+ -> skip ;
 NEWLINE                      : ('\r'? '\n' | '\r')+ -> skip ;

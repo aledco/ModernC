@@ -49,6 +49,21 @@ namespace Compiler.Models.NameResolution
             return _symbolTable[id.Value];
         }
 
+        public Symbol LookupSymbol(string name, Span? span = null)
+        {
+            if (!_symbolTable.ContainsKey(name))
+            {
+                if (_parent != null)
+                {
+                    return _parent.LookupSymbol(name);
+                }
+
+                ErrorHandler.Throw("Identifier is not defined", span);
+            }
+
+            return _symbolTable[name];
+        }
+
         public bool SymbolExists(string name)
         {
             if (!_symbolTable.ContainsKey(name))

@@ -332,11 +332,11 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitArrayLiteral([NotNull] ModernCParser.ArrayLiteralContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="ModernCParser.expressionList"/>.
+	/// Visit a parse tree produced by <see cref="ModernCParser.stringLiteral"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitExpressionList([NotNull] ModernCParser.ExpressionListContext context);
+	Result VisitStringLiteral([NotNull] ModernCParser.StringLiteralContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.structLiteral"/>.
 	/// </summary>

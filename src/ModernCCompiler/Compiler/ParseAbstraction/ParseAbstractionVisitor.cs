@@ -4,7 +4,6 @@ using Compiler.ErrorHandling;
 using Compiler.Models;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
-using System;
 using static ModernCParser;
 
 namespace Compiler.ParseAbstraction
@@ -80,29 +79,10 @@ namespace Compiler.ParseAbstraction
             if (context.VOID_TYPE() != null)
             {
                 return new VoidTypeNode(span);
-            } 
+            }
             else if (context.primitiveType() != null)
             {
                 return VisitPrimitiveType(context.primitiveType());
-            }
-            else if (context.type() != null)
-            {
-                if (context.intLiteral() != null)
-                {
-                    var elementType = VisitType(context.type());
-                    var size = VisitIntLiteral(context.intLiteral());
-                    if (size.Value < 1)
-                    {
-                        ErrorHandler.Throw("Array size must be greater than 0", size);
-                    }
-
-                    return new ArrayTypeNode(span, elementType, size.Value);
-                }
-                else
-                {
-                    var underlyingType = VisitType(context.type());
-                    return new PointerTypeNode(span, underlyingType);
-                }
             }
             else if (context.functionType() != null)
             {
@@ -112,8 +92,27 @@ namespace Compiler.ParseAbstraction
             {
                 return VisitUserDefinedType(context.userDefinedType());
             }
-
-            throw new NotImplementedException();
+            else if (context.arrayDefinitionType != null)
+            {
+                var elementType = VisitType(context.arrayDefinitionType);
+                var size = context.intLiteral() != null ? VisitIntLiteral(context.intLiteral()) : null;
+                return new ArrayTypeNode(span, elementType, size?.Value);
+            }
+            else if (context.arrayParameritizedType != null)
+            {
+                var elementType = VisitType(context.arrayParameritizedType);
+                var parameter = VisitId(context.id());
+                return new ParameterizedArrayTypeNode(span, elementType, parameter);
+            }
+            else if (context.pointerType != null)
+            {
+                var underlyingType = VisitType(context.pointerType);
+                return new PointerTypeNode(span, underlyingType);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public override PrimitiveTypeNode VisitPrimitiveType([NotNull] PrimitiveTypeContext context)
@@ -625,12 +624,51 @@ namespace Compiler.ParseAbstraction
 
         public override ArrayLiteralExpression VisitArrayLiteral([NotNull] ArrayLiteralContext context)
         {
-            throw new NotImplementedException();
-            //var span = GetSpanOfContext(context);
-            //var elements = context.expressionList().expression()
-            //    .Select(VisitExpression)
-            //    .ToList();
-            //return new ArrayLiteralExpression(span, elements);
+            var span = GetSpanOfContext(context);
+            var elements = context.expression()
+                .Select(e => new ArrayLiteralElement(span, VisitExpression(e)))
+                .ToList();
+            return new ArrayLiteralExpression(span, elements);
+        }
+
+        public override ArrayLiteralExpression VisitStringLiteral([NotNull] StringLiteralContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var elements = new List<ArrayLiteralElement>();
+
+            var escapedByte = string.Empty;
+            var text = context.STRING().GetText();
+            var stringText = text.Substring(1, text.Length - 2);
+            for (var i = 0; i < stringText.Length; i++)
+            {
+                var c = stringText[i];
+                if (escapedByte.Length == 1)
+                {
+                    escapedByte += c;
+                    var value = ParseEscapedByte(escapedByte);
+                    var element = new ArrayLiteralElement(span, new ByteLiteralExpression(span, value));
+                    elements.Add(element);
+                    escapedByte = string.Empty;
+                }
+                else if (c == '\\')
+                {
+                    escapedByte += c;
+                }
+                else
+                {
+                    if (!char.IsAscii(c))
+                    {
+                        throw new Exception($"Parse error: {c} is an invalid byte");
+                    }
+
+                    var value = Convert.ToByte(c);
+                    var element = new ArrayLiteralElement(span, new ByteLiteralExpression(span, value));
+                    elements.Add(element);
+                }
+            }
+
+            //elements.Add(new ArrayLiteralElement(span, new ByteLiteralExpression(span, 0)));
+            return new ArrayLiteralExpression(span, elements);
         }
 
         public override StructLiteralExpression VisitStructLiteral([NotNull] StructLiteralContext context)

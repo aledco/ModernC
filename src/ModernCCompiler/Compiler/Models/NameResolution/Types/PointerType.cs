@@ -5,14 +5,15 @@
         public SemanticType UnderlyingType { get; }
 
         /// <summary>
-        /// Gets the concrete type this pointer points to. For example for the type int****, ConcreteType = int.
+        /// Gets the base type this pointer points to. For example for the type int****, BaseType = int.
         /// </summary>
-        public SemanticType ConcreteType {
-        get
+        public override SemanticType BaseType 
+        {
+            get
             {
                 return UnderlyingType switch
                 {
-                    PointerType p => p.ConcreteType,
+                    PointerType p => p.BaseType,
                     _ => UnderlyingType
                 };
             }
