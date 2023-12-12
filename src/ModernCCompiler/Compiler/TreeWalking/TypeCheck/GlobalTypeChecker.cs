@@ -66,7 +66,7 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 case VariableDefinitionStatement s:
                     type = s.Type.ToSemanticType();
-                    if (type.IsFunctionParameterOnly)
+                    if (type.IsParameterized)
                     {
                         ErrorHandler.Throw("Type can only be used in function parameters");
                     }
@@ -74,13 +74,17 @@ namespace Compiler.TreeWalking.TypeCheck
                     {
                         ErrorHandler.Throw("Pointers cannot be global", statement);
                     }
+                    else if (type is ArrayType arrayType && !arrayType.Length.HasValue)
+                    {
+                        ErrorHandler.Throw("Arrays must be declared with a size", statement);
+                    }
 
                     context.Scope?.AddSymbol(s.Id, type);
                     VisitIdNode(s.Id, context);
                     break;
                 case VariableDefinitionAndAssignmentStatement s:
                     type = s.Type.ToSemanticType();
-                    if (type.IsFunctionParameterOnly)
+                    if (type.IsParameterized)
                     {
                         ErrorHandler.Throw("Type can only be used in function parameters");
                     }
@@ -93,9 +97,23 @@ namespace Compiler.TreeWalking.TypeCheck
                     context.VariableAssignmentType = type;
                     VisitIdNode(s.Id, context);
                     var expressionType = VisitExpression(s.Expression, context);
+                    if (type is ArrayType assignArrayType && !assignArrayType.Length.HasValue)
+                    {
+                        if (s.Expression is ComplexLiteralExpression && expressionType is ArrayType literalArrayType)
+                        {
+                            var typeNode = (s.Type as ArrayTypeNode)!;
+                            typeNode.Length = literalArrayType.Length;
+                            type = typeNode.ToSemanticType();
+                        }
+                        else
+                        {
+                            ErrorHandler.Throw("Arrays must be declared with a size", statement);
+                        }
+                    }
+
                     if (!type.TypeEquals(expressionType))
                     {
-                        ErrorHandler.Throw("Expression must be a matching type", s);
+                        ErrorHandler.Throw("Variable assignment must have matching types.", statement);
                     }
 
                     break;

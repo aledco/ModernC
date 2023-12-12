@@ -3,6 +3,7 @@ using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
+using System.Transactions;
 
 namespace Compiler.TreeWalking.TypeCheck
 {
@@ -71,9 +72,9 @@ namespace Compiler.TreeWalking.TypeCheck
         private static void VisitStructFieldDefinition(StructFieldDefinition field, Context context)
         {
             var type = field.Type.ToSemanticType();    
-            if (type.IsFunctionParameterOnly)
+            if (type is ArrayType arrayType && !arrayType.Length.HasValue)
             {
-                ErrorHandler.Throw("Type can only be used in function parameters");
+                ErrorHandler.Throw("Array length must be known in struct definition");
             }
 
             if (field.DefaultExpression != null)
@@ -205,9 +206,47 @@ namespace Compiler.TreeWalking.TypeCheck
         private static void VisitVariableDefinitionStatement(VariableDefinitionStatement statement, Context context)
         {
             var type = statement.Type.ToSemanticType();
-            if (type.IsFunctionParameterOnly)
+            if (type is ArrayType arrayType && !arrayType.Length.HasValue)
             {
-                ErrorHandler.Throw("Type can only be used in function parameters");
+                ErrorHandler.Throw("Arrays must be declared with a size", statement);
+            }
+
+            context.Scope?.AddSymbol(statement.Id, type);
+            VisitIdNode(statement.Id, context);
+        }
+
+        private static void VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement statement, Context context)
+        {
+            var type = statement.Type.ToSemanticType();
+            if (type.IsParameterized)
+            {
+                ErrorHandler.Throw("Parameterized type can only be used in function parameters");
+            }
+
+            context.VariableAssignmentType = type;
+            var expressionType = VisitExpression(statement.Expression, context);
+            if (expressionType.IsComplex && statement.Expression is not ComplexLiteralExpression)
+            {
+                ErrorHandler.Throw("Complex types cannot be reassigned.");
+            }
+            if (type is ArrayType assignArrayType && !assignArrayType.Length.HasValue)
+            {
+                if (statement.Expression is ComplexLiteralExpression && expressionType is ArrayType literalArrayType)
+                {
+                    var typeNode = (statement.Type as ArrayTypeNode)!;
+                    typeNode.Length = literalArrayType.Length;
+                    type = typeNode.ToSemanticType();
+                }
+                else
+                {
+                    ErrorHandler.Throw("Non array literals must be declared with a size", statement);
+                }
+            }
+            //else if (expressionType is PointerType pointerType && )
+
+            if (!type.TypeEquals(expressionType))
+            {
+                ErrorHandler.Throw("Variable assignment must have matching types.", statement);
             }
 
             context.Scope?.AddSymbol(statement.Id, type);
@@ -246,41 +285,6 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 ErrorHandler.Throw("Increment statements cannot be used on non integral types", s);
             }
-        }
-
-        private static void VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement statement, Context context)
-        {
-            var type = statement.Type.ToSemanticType();
-            if (type.IsFunctionParameterOnly)
-            {
-                ErrorHandler.Throw("Type can only be used in function parameters");
-            }
-
-            context.VariableAssignmentType = type;
-            var expressionType = VisitExpression(statement.Expression, context);
-            if (expressionType.IsComplex && statement.Expression is not ComplexLiteralExpression)
-            {
-                ErrorHandler.Throw("Complex types cannot be reassigned.");
-            }
-            //else if (expressionType is PointerType pointerType && )
-
-            switch (type)
-            {
-                case RealType when expressionType is NumberType:
-                    break;
-                case IntegralType when expressionType is IntegralType:
-                    break;
-                default:
-                    if (!type.TypeEquals(expressionType))
-                    {
-                        ErrorHandler.Throw("Variable assignment must have matching types.", statement);
-                    }
-
-                    break;
-            }
-
-            context.Scope?.AddSymbol(statement.Id, type);
-            VisitIdNode(statement.Id, context);
         }
 
         private static void VisitCallStatement(CallStatement s, Context context)

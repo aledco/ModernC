@@ -146,7 +146,15 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     instructions.AddRange(ExpressionLValue(s.Expression));
                     instructions.AddRange(PrintStruct(s.Expression.Register, t, s.Span));
                     break;
-                case ArrayType t:
+                case ArrayType t when t.Length == null:
+                    instructions.AddRange(ExpressionLValue(s.Expression));
+                    instructions.Add(new PrintPointer(s.Expression.Register));
+                    break;
+                case ArrayType t when t.ElementType is ByteType:
+                    instructions.AddRange(ExpressionLValue(s.Expression));
+                    instructions.AddRange(PrintString(s.Expression.Register, t, s.Span));
+                    break;
+                case ArrayType t when t.Length != null:
                     instructions.AddRange(ExpressionLValue(s.Expression));
                     instructions.AddRange(PrintArray(s.Expression.Register, t, s.Span));
                     break;
@@ -231,6 +239,16 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                         instructions.AddRange(PrintStruct(lvalRegister, t, span, spaces + field.Id.Value.Length + 7));
                         instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -field.Offset));
                         break;
+                    case ArrayType t when t.Length == null:
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, field.Offset));
+                        instructions.Add(new PrintPointer(lvalRegister));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -field.Offset));
+                        break;
+                    case ArrayType t when t.ElementType is ByteType:
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, field.Offset));
+                        instructions.AddRange(PrintString(lvalRegister, t, span));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -field.Offset));
+                        break;
                     case ArrayType t:
                         instructions.Add(new AddImmediate(lvalRegister, lvalRegister, field.Offset));
                         instructions.AddRange(PrintArray(lvalRegister, t, span, spaces + 4));
@@ -291,6 +309,16 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                         instructions.AddRange(PrintStruct(lvalRegister, t, span, spaces + 4));
                         instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -(i * t.GetSizeInWords())));
                         break;
+                    case ArrayType t when t.Length == null:
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, i * t.GetSizeInWords()));
+                        instructions.Add(new PrintPointer(lvalRegister));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -(i * t.GetSizeInWords())));
+                        break;
+                    case ArrayType t when t.ElementType is ByteType:
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, i * t.GetSizeInWords()));
+                        instructions.AddRange(PrintString(lvalRegister, t, span));
+                        instructions.Add(new AddImmediate(lvalRegister, lvalRegister, -(i * t.GetSizeInWords())));
+                        break;
                     case ArrayType t:
                         instructions.Add(new AddImmediate(lvalRegister, lvalRegister, i * t.GetSizeInWords()));
                         instructions.AddRange(PrintArray(lvalRegister, t, span, spaces + 4));
@@ -316,6 +344,20 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             instructions.Add(new PrintByte(Registers.Temporary));
             return instructions;
         }
+
+
+        private static IEnumerable<IInstruction> PrintString(string lvalRegister, ArrayType type, Span _)
+        {
+            var instructions = new List<IInstruction>();
+            for (int i = 0; i < type.Length; i++)
+            {
+                instructions.Add(new Load(Registers.Temporary, lvalRegister, i));
+                instructions.Add(new PrintByte(Registers.Temporary)); 
+            }
+
+            return instructions;
+        }
+
 
         private static List<IInstruction> VisitPrintLineStatement(PrintLineStatement s)
         {

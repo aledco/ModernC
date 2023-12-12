@@ -5,9 +5,9 @@ namespace Compiler.Models.Tree
     public class ArrayTypeNode : TypeNode
     {
         public TypeNode ElementType { get; }
-        public int Length { get; }
+        public int? Length { get; set; }
 
-        public ArrayTypeNode(Span span, TypeNode elementType, int length) : base(span)
+        public ArrayTypeNode(Span span, TypeNode elementType, int? length) : base(span)
         {
             ElementType = elementType;
             Length = length;

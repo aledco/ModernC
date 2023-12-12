@@ -1,0 +1,6 @@
+Test {
+    arrayOfStrs = [
+        string 1,
+        string 2,
+    ],
+}

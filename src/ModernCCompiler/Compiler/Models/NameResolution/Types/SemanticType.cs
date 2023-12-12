@@ -41,6 +41,6 @@ namespace Compiler.Models.NameResolution.Types
         [JsonIgnore]
         public virtual SemanticType BaseType { get => this; }
 
-        public virtual bool IsFunctionParameterOnly { get => false; }
+        public virtual bool IsParameterized { get => false; }
     }
 }

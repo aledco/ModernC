@@ -1,4 +1,5 @@
-﻿using Compiler.Models.Symbols;
+﻿using Compiler.ErrorHandling;
+using Compiler.Models.Symbols;
 
 namespace Compiler.Models.NameResolution.Types
 {
@@ -21,7 +22,7 @@ namespace Compiler.Models.NameResolution.Types
             }
         }
 
-        public override bool IsFunctionParameterOnly { get => Length == null; }
+        public override bool IsParameterized { get => Length == null && LengthParameterName != null; }
 
         public ArrayType(SemanticType elementType, int? length, string? parameterName = null) 
         { 
@@ -34,20 +35,20 @@ namespace Compiler.Models.NameResolution.Types
         {
             if (!Length.HasValue)
             {
-                throw new Exception("Length was null");
+                ErrorHandler.Throw("Array size must be known");
             }
 
-            return ElementType.GetSizeInBytes() * Length.Value;
+            return ElementType.GetSizeInBytes() * Length!.Value;
         }
 
         public override int GetSizeInWords()
         {
             if (!Length.HasValue)
             {
-                throw new Exception("Length was null");
+                ErrorHandler.Throw("Array size must be known");
             }
 
-            return ElementType.GetSizeInWords() * Length.Value;
+            return ElementType.GetSizeInWords() * Length!.Value;
         }
 
         public override bool TypeEquals(SemanticType other)

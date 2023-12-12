@@ -4,7 +4,6 @@ using Compiler.ErrorHandling;
 using Compiler.Models;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
-using System;
 using static ModernCParser;
 
 namespace Compiler.ParseAbstraction
@@ -96,13 +95,8 @@ namespace Compiler.ParseAbstraction
             else if (context.arrayDefinitionType != null)
             {
                 var elementType = VisitType(context.arrayDefinitionType);
-                var size = VisitIntLiteral(context.intLiteral());
-                if (size.Value < 1)
-                {
-                    ErrorHandler.Throw("Array size must be greater than 0", size);
-                }
-
-                return new ArrayTypeNode(span, elementType, size.Value);
+                var size = context.intLiteral() != null ? VisitIntLiteral(context.intLiteral()) : null;
+                return new ArrayTypeNode(span, elementType, size?.Value);
             }
             else if (context.arrayParameritizedType != null)
             {
@@ -634,6 +628,46 @@ namespace Compiler.ParseAbstraction
             var elements = context.expression()
                 .Select(e => new ArrayLiteralElement(span, VisitExpression(e)))
                 .ToList();
+            return new ArrayLiteralExpression(span, elements);
+        }
+
+        public override ArrayLiteralExpression VisitStringLiteral([NotNull] StringLiteralContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var elements = new List<ArrayLiteralElement>();
+
+            var escapedByte = string.Empty;
+            var text = context.STRING().GetText();
+            var stringText = text.Substring(1, text.Length - 2);
+            for (var i = 0; i < stringText.Length; i++)
+            {
+                var c = stringText[i];
+                if (escapedByte.Length == 1)
+                {
+                    escapedByte += c;
+                    var value = ParseEscapedByte(escapedByte);
+                    var element = new ArrayLiteralElement(span, new ByteLiteralExpression(span, value));
+                    elements.Add(element);
+                    escapedByte = string.Empty;
+                }
+                else if (c == '\\')
+                {
+                    escapedByte += c;
+                }
+                else
+                {
+                    if (!char.IsAscii(c))
+                    {
+                        throw new Exception($"Parse error: {c} is an invalid byte");
+                    }
+
+                    var value = Convert.ToByte(c);
+                    var element = new ArrayLiteralElement(span, new ByteLiteralExpression(span, value));
+                    elements.Add(element);
+                }
+            }
+
+            //elements.Add(new ArrayLiteralElement(span, new ByteLiteralExpression(span, 0)));
             return new ArrayLiteralExpression(span, elements);
         }
 
