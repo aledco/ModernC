@@ -33,7 +33,6 @@ using VirtualMachine;
  *      - add operator to get the size of an array or string?
  *      
  * - structures to implement:
- *      - type aliases
  *      - char type and char strings
  *      - unions
  *      - enums

@@ -62,9 +62,11 @@ public class GlobalTypeCheckTest
     [TestMethod]
     public void TestAllGlobalSemanticErrors()
     {
+        
         var testType = "GlobalSemanticErrors";
-        foreach (var (_, Contents) in TestFileManager.EnumerateTestInput(testType))
+        foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
+            Console.WriteLine(Id);
             var tree = Parser.Parse(Contents);
             try
             {

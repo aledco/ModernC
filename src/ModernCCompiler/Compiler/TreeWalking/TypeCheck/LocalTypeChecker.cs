@@ -51,6 +51,8 @@ namespace Compiler.TreeWalking.TypeCheck
                 case StructDefinition d:
                     VisitStructDefinition(d, context);
                     break;
+                case AliasDefinition:
+                    break;
                 default:
                     throw new NotImplementedException();
             }
@@ -233,9 +235,15 @@ namespace Compiler.TreeWalking.TypeCheck
             {
                 if (statement.Expression is ComplexLiteralExpression && expressionType is ArrayType literalArrayType)
                 {
-                    var typeNode = (statement.Type as ArrayTypeNode)!;
-                    typeNode.Length = literalArrayType.Length;
-                    type = typeNode.ToSemanticType();
+                    if (statement.Type is ArrayTypeNode typeNode)
+                    {
+                        typeNode.Length = literalArrayType.Length;
+                        type = typeNode.ToSemanticType();
+                    }
+                    else if (statement.Type is UserDefinedTypeNode)
+                    {
+                        assignArrayType.Length = literalArrayType.Length;
+                    }
                 }
                 else
                 {

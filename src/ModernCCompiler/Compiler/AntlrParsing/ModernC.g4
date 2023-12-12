@@ -20,7 +20,8 @@ parameter
     : type id;
 
 definition
-    : structDefinition;
+    : structDefinition
+    | aliasDefinition;
 
 structDefinition
      : STRUCT userDefinedType '{' (structFieldDefinition ',')* structFieldDefinition '}'
@@ -29,7 +30,10 @@ structDefinition
 structFieldDefinition
     : type id
     | type id '=' expression;
-    
+
+aliasDefinition
+    : ALIAS userDefinedType '=' type ';';
+
 type
     : VOID_TYPE
     | primitiveType
@@ -227,7 +231,6 @@ INT_TYPE                    : 'int';
 BYTE_TYPE                   : 'byte';
 FLOAT_TYPE                  : 'float';
 BOOL_TYPE                   : 'bool';
-FUNC                        : 'func';
 
 // other keywords
 PRINT                        : 'print';
@@ -245,6 +248,8 @@ RETURN                       : 'return';
 OK                           : 'ok';
 EXIT                         : 'exit';
 STRUCT                       : 'struct';
+FUNC                         : 'func';
+ALIAS                        : 'alias';
 
 TRUE                         : 'true';    
 FALSE                        : 'false';

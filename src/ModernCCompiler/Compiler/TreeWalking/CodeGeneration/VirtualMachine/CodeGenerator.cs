@@ -186,8 +186,8 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> PrintStruct(string lvalRegister, StructType type, Span span, int spaces = 0)
         {
             var instructions = new List<IInstruction>();
-            var definition = (SymbolTable.LookupDefinition(type) as StructDefinition)!;
-            foreach (var c in definition.Type.ToSemanticType().Value)
+            var (structType, definition) = SymbolTable.LookupTypeAndDefinition<StructType, StructDefinition>(type, span);
+            foreach (var c in structType.Value)
             {
                 instructions.Add(new LoadImmediate(Registers.Temporary, c));
                 instructions.Add(new PrintByte(Registers.Temporary));
