@@ -18,7 +18,7 @@ namespace Compiler.Models.Tree
             return IsCircular(Type.ToSemanticType());
         }
 
-        public bool IsCircular(UserDefinedType typeToCheck)
+        public bool IsCircular(SemanticType typeToCheck)
         {
             foreach (var field in Fields)
             {

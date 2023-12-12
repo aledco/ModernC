@@ -79,6 +79,8 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 case StructDefinition d:
                     VisitStructDefinition(d, context);
                     break;
+                case AliasDefinition:
+                    break;
                 default:
                     throw new NotImplementedException();
             }

@@ -7,7 +7,7 @@ namespace Compiler.Models.NameResolution
 {
     public static class SymbolTable
     {
-        private static readonly Dictionary<string, (UserDefinedType Type, Definition Definition)> _typeTable = new();
+        private static readonly Dictionary<string, (SemanticType Type, Definition? Definition)> _typeTable = new();
         public static Scope GlobalScope { get; set; } = new Scope();
 
         public static void AddType(UserDefinedTypeNode typeNode, Definition definition)
@@ -29,7 +29,30 @@ namespace Compiler.Models.NameResolution
             _typeTable[typeNode.Id.Value] = (typeNode.ToSemanticType(), definition);
         }
 
-        public static UserDefinedType LookupType(UserDefinedTypeNode typeNode)
+        public static void AddType(UserDefinedTypeNode typeNode, SemanticType aliasedType)
+        {
+            if (GlobalScope == null)
+            {
+                throw new Exception("GlobalScope was null");
+            }
+
+            if (TypeExists(typeNode.Id.Value))
+            {
+                ErrorHandler.Throw("Type is already defined", typeNode);
+            }
+            else if (GlobalScope.SymbolExists(typeNode.Id.Value))
+            {
+                ErrorHandler.Throw("Identifier cannot be redefined as type", typeNode);
+            }
+            else if (aliasedType is UserDefinedType userDefinedType && !TypeExists(userDefinedType.Value))
+            {
+                ErrorHandler.Throw("Type is not defined", typeNode);
+            }
+
+            _typeTable[typeNode.Id.Value] = (aliasedType, null);
+        }
+
+        public static SemanticType LookupType(UserDefinedTypeNode typeNode)
         {
             if (!_typeTable.ContainsKey(typeNode.Id.Value))
             {
@@ -39,7 +62,7 @@ namespace Compiler.Models.NameResolution
             return _typeTable[typeNode.Id.Value].Type;
         }
 
-        public static bool TryLookupType(UserDefinedTypeNode typeNode, out UserDefinedType type)
+        public static bool TryLookupType(UserDefinedTypeNode typeNode, out SemanticType type)
         {
             if (!_typeTable.ContainsKey(typeNode.Id.Value))
             {
@@ -58,7 +81,13 @@ namespace Compiler.Models.NameResolution
                 ErrorHandler.Throw("Type is not defined", typeNode);
             }
 
-            return _typeTable[typeNode.Id.Value].Definition;
+            var definition = _typeTable[typeNode.Id.Value].Definition;
+            if (definition == null)
+            {
+                throw new Exception("Type does not have a definition");
+            }
+
+            return definition;
         }
 
         public static bool TryLookupTypeAndDefinition<T, D>(UserDefinedTypeNode typeNode, out T type, out D definition)
@@ -81,16 +110,11 @@ namespace Compiler.Models.NameResolution
             return false;
         }
 
-        public static UserDefinedType LookupType(UserDefinedType type, Span? span = null)
+        public static SemanticType LookupType(UserDefinedType type, Span? span = null)
         {
             if (!_typeTable.ContainsKey(type.Value))
             {
-                if (span != null)
-                {
-                    ErrorHandler.Throw($"Type {type.Value} is not defined", span);
-                }
-
-                ErrorHandler.Throw($"Type {type.Value} is not defined");
+                ErrorHandler.Throw($"Type {type.Value} is not defined", span);
                 throw ErrorHandler.FailedToExit;
             }
 
@@ -101,16 +125,16 @@ namespace Compiler.Models.NameResolution
         {
             if (!_typeTable.ContainsKey(type.Value))
             {
-                if (span != null)
-                {
-                    ErrorHandler.Throw($"Type {type.Value} is not defined", span);
-                }
-
-                ErrorHandler.Throw($"Type {type.Value} is not defined");
+                ErrorHandler.Throw($"Type {type.Value} is not defined", span);
                 throw ErrorHandler.FailedToExit;
             }
+            var definition = _typeTable[type.Value].Definition;
+            if (definition == null)
+            {
+                throw new Exception("Type does not have a definition");
+            }
 
-            return _typeTable[type.Value].Definition;
+            return definition;
         }
 
         public static (T Type, D Definition) LookupTypeAndDefinition<T, D>(UserDefinedType type, Span? span = null) 

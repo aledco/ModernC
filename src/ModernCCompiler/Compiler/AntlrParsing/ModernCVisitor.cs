@@ -80,6 +80,12 @@ public interface IModernCVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStructFieldDefinition([NotNull] ModernCParser.StructFieldDefinitionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="ModernCParser.aliasDefinition"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAliasDefinition([NotNull] ModernCParser.AliasDefinitionContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="ModernCParser.type"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

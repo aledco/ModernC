@@ -6,7 +6,7 @@ namespace Compiler.Models.NameResolution.Types
     public class ArrayType : SemanticType
     {
         public SemanticType ElementType { get; }
-        public int? Length { get; }
+        public int? Length { get; set; }
         public string? LengthParameterName { get; }
         public Symbol? LengthParameterSymbol { get; set; }
 

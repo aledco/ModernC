@@ -191,6 +191,14 @@ namespace Compiler.ParseAbstraction
             return new StructDefinition(span, structType, fields);
         }
 
+        public override AliasDefinition VisitAliasDefinition([NotNull] AliasDefinitionContext context)
+        {
+            var span = GetSpanOfContext(context);
+            var userDefinedType = VisitUserDefinedType(context.userDefinedType());
+            var aliasedType = VisitType(context.type());
+            return new AliasDefinition(span, userDefinedType, aliasedType);
+        }
+
         public override CompoundStatement VisitCompoundStatement([NotNull] CompoundStatementContext context)
         {
             var span = GetSpanOfContext(context);

@@ -496,30 +496,6 @@ public class ModernCBaseListener implements ModernCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterTailedExpression(ModernCParser.TailedExpressionContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitTailedExpression(ModernCParser.TailedExpressionContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterCallExpressionTail(ModernCParser.CallExpressionTailContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitCallExpressionTail(ModernCParser.CallExpressionTailContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterArgumentList(ModernCParser.ArgumentListContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -539,18 +515,6 @@ public class ModernCBaseListener implements ModernCListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitArrayExpressionTail(ModernCParser.ArrayExpressionTailContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterFieldAccessExpressionTail(ModernCParser.FieldAccessExpressionTailContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitFieldAccessExpressionTail(ModernCParser.FieldAccessExpressionTailContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -652,13 +616,13 @@ public class ModernCBaseListener implements ModernCListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterExpressionList(ModernCParser.ExpressionListContext ctx) { }
+	@Override public void enterStringLiteral(ModernCParser.StringLiteralContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitExpressionList(ModernCParser.ExpressionListContext ctx) { }
+	@Override public void exitStringLiteral(ModernCParser.StringLiteralContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
