@@ -1,4 +1,7 @@
-﻿namespace Compiler.Models.Tree
+﻿using Compiler.Models.Context;
+using Compiler.Models.NameResolution.Types;
+
+namespace Compiler.Models.Tree
 {
     public class StructFieldDefinition : AbstractSyntaxTree
     {
@@ -23,6 +26,11 @@
             }
 
             return new StructLiteralField(span, new IdNode(span, Id.Value), DefaultExpression.Copy(span));
+        }
+
+        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        {
+            throw new NotImplementedException();
         }
     }
 }

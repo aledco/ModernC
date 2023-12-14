@@ -1,4 +1,7 @@
-﻿namespace Compiler.Models.Tree
+﻿using Compiler.Models.Context;
+using Compiler.Models.NameResolution.Types;
+
+namespace Compiler.Models.Tree
 {
     public class IdExpression : Expression
     {
@@ -12,6 +15,12 @@
         public override Expression Copy(Span span)
         {
             return new IdExpression(span, Id);
+        }
+
+        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        {
+            Type = Id.GlobalTypeCheck(context);
+            return Type;
         }
     }
 }

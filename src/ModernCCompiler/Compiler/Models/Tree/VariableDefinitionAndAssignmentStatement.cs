@@ -1,4 +1,7 @@
-﻿using Compiler.Models.Operators;
+﻿using Compiler.ErrorHandling;
+using Compiler.Models.Context;
+using Compiler.Models.NameResolution.Types;
+using Compiler.Models.Operators;
 
 namespace Compiler.Models.Tree
 {
@@ -19,6 +22,50 @@ namespace Compiler.Models.Tree
         public override bool AllPathsReturn()
         {
             return false;
+        }
+
+        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        {
+            var type = Type.ToSemanticType();
+            if (type.IsParameterized)
+            {
+                ErrorHandler.Throw("Type can only be used in function parameters");
+            }
+            else if (type is PointerType)
+            {
+                ErrorHandler.Throw("Pointers cannot be global", this);
+            }
+
+            context.Scope?.AddSymbol(Id, type);
+            context.VariableAssignmentType = type;
+            Id.GlobalTypeCheck(context);
+            var expressionType = Expression.GlobalTypeCheck(context);
+            if (type is ArrayType assignArrayType && !assignArrayType.Length.HasValue)
+            {
+                if (Expression is ComplexLiteralExpression && expressionType is ArrayType literalArrayType)
+                {
+                    if (Type is ArrayTypeNode typeNode)
+                    {
+                        typeNode.Length = literalArrayType.Length;
+                        type = typeNode.ToSemanticType();
+                    }
+                    else if (Type is UserDefinedTypeNode)
+                    {
+                        assignArrayType.Length = literalArrayType.Length;
+                    }
+                }
+                else
+                {
+                    ErrorHandler.Throw("Arrays must be declared with a size", this);
+                }
+            }
+
+            if (!type.TypeEquals(expressionType))
+            {
+                ErrorHandler.Throw("Variable assignment must have matching types.", this);
+            }
+
+            return type;
         }
     }
 }

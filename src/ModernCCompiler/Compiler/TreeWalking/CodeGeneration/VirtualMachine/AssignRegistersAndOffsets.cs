@@ -114,7 +114,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
             offset = 3; // to allow space for frame/stack pointer and return address
             function.Size = VisitCompoundStatement(function.Body, context, offset);
-            function.RegisterPool = context.GetRegisterPool();
+            function.RegisterPool.AddRange(context.GetRegisterPool());
         }
 
         private static void VisitParameter(Parameter parameter, Context _, int offset)

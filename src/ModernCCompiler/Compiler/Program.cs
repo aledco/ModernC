@@ -16,6 +16,7 @@ using VirtualMachine;
  *      - semi colons or commas for structs?
  *      - void functions can leave return type out?
  *      - complex literal expressions in global memory?
+ *      - add auto dereferencing when passing in a complex type to a function?
  * 
  * - code maintenence:
  *      - add code underlining to error messages and better error messages

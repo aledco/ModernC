@@ -1,4 +1,5 @@
-﻿using Compiler.Models.NameResolution;
+﻿using Compiler.Models.Context;
+using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 
 namespace Compiler.Models.Tree
@@ -42,6 +43,12 @@ namespace Compiler.Models.Tree
             }
 
             return false;
+        }
+
+        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        {
+            SymbolTable.AddType(Type, this);
+            return Type.ToSemanticType();
         }
     }
 }

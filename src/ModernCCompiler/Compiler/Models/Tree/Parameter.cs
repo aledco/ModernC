@@ -1,4 +1,7 @@
-﻿namespace Compiler.Models.Tree
+﻿using Compiler.Models.Context;
+using Compiler.Models.NameResolution.Types;
+
+namespace Compiler.Models.Tree
 {
     public class Parameter : AbstractSyntaxTree
     {
@@ -9,6 +12,14 @@
         {
             this.Type = type;
             this.Id = id;
+        }
+
+        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        {
+            var type = Type.ToSemanticType();
+            context.Scope!.AddSymbol(Id, type);
+            Id.GlobalTypeCheck(context);
+            return type;
         }
     }
 }

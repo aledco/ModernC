@@ -1,4 +1,5 @@
 ﻿using Compiler.ErrorHandling;
+using Compiler.Models.Context;
 using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 
@@ -48,9 +49,44 @@ namespace Compiler.Models.Tree
 
         public override Expression Copy(Span span)
         {
-            var structLiteral = new StructLiteralExpression(span, Fields);
-            structLiteral.StructDefinition = StructDefinition;
-            return structLiteral;
+            return new StructLiteralExpression(span, Fields)
+            {
+                StructDefinition = StructDefinition
+            };
+        }
+
+        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        {
+            var variableAssignmentType = context.VariableAssignmentType;
+            if (variableAssignmentType?.BaseType is UserDefinedType userDefinedType)
+            {
+                var (structType, definition) = SymbolTable.LookupTypeAndDefinition<StructType, StructDefinition>(userDefinedType, Span);
+                MapDefaultExpressionsFromDefinition(structType, definition);
+                foreach (var field in Fields)
+                {
+                    var fieldDefinition = definition.Fields.Where(f => field.Id.Value == f.Id.Value).FirstOrDefault();
+                    if (fieldDefinition == null)
+                    {
+                        ErrorHandler.Throw("Struct does not have a definition for this field", this);
+                    }
+
+                    var fieldDefinitionType = fieldDefinition!.Type.ToSemanticType();
+
+                    context.VariableAssignmentType = fieldDefinitionType;
+                    var type = field.Expression.GlobalTypeCheck(context);
+                    if (!fieldDefinition!.Type.ToSemanticType().TypeEquals(type))
+                    {
+                        ErrorHandler.Throw("Type does not match field definition", this);
+                    }
+                }
+
+                context.VariableAssignmentType = variableAssignmentType;
+                Type = structType;
+                return Type;
+            }
+
+            ErrorHandler.Throw("Struct literal cannot be assigned to this type", this);
+            throw ErrorHandler.FailedToExit;
         }
     }
 }

@@ -18,14 +18,30 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(FieldCallExpression))]
     public abstract class Expression : AbstractSyntaxTree
     {
-        public SemanticType? Type { get; set; }
+        /// <summary>
+        /// Gets or sets the type of the expression.
+        /// </summary>
+        public SemanticType? Type { get; set; } // TODO make protexted set
+
+        /// <summary>
+        /// Gets or sets the register used for code generation.
+        /// </summary>
         public string Register { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of an <see cref="Expression"/>.
+        /// </summary>
+        /// <param name="span">The span of the node.</param>
         protected Expression(Span span) : base(span)
         {
             Register = string.Empty;
         }
 
+        /// <summary>
+        /// Copies the expression.
+        /// </summary>
+        /// <param name="span">The span of the new expression.</param>
+        /// <returns>The copied expression.</returns>
         public abstract Expression Copy(Span span);
     }
 }

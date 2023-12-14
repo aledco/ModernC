@@ -20,6 +20,10 @@ namespace Compiler.Models.Tree
     [JsonDerivedType(typeof(CompoundStatement))]
     public abstract class Statement : AbstractSyntaxTree
     {
+        /// <summary>
+        /// Initializes a new instance of a <see cref="Statement"/>.
+        /// </summary>
+        /// <param name="span">The span of the node.</param>
         protected Statement(Span span) : base(span)
         {
         }

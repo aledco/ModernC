@@ -1,4 +1,6 @@
-﻿using Compiler.Models.NameResolution;
+﻿using Compiler.Models.Context;
+using Compiler.Models.NameResolution;
+using Compiler.Models.NameResolution.Types;
 
 namespace Compiler.Models.Tree
 {
@@ -19,6 +21,27 @@ namespace Compiler.Models.Tree
             GlobalStatements = statements;
             Definitions = definitions;
             FunctionDefinitions = functionDefinitions;
+        }
+
+        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        {
+            GlobalScope = context.Scope;
+            foreach (var definition in Definitions)
+            {
+                definition.GlobalTypeCheck(context);
+            }
+
+            foreach (var statement in GlobalStatements)
+            {
+                statement.GlobalTypeCheck(context);
+            }
+
+            foreach (var functionDefinition in FunctionDefinitions)
+            {
+                functionDefinition.GlobalTypeCheck(context);
+            }
+
+            return SemanticType.NoType;
         }
     }
 }

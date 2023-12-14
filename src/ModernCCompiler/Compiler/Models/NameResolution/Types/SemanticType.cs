@@ -42,5 +42,7 @@ namespace Compiler.Models.NameResolution.Types
         public virtual SemanticType BaseType { get => this; }
 
         public virtual bool IsParameterized { get => false; }
+
+        public static SemanticType NoType { get; } = new NoType();
     }
 }
