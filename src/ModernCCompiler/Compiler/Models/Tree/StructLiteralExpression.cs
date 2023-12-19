@@ -1,22 +1,45 @@
-﻿using Compiler.ErrorHandling;
-using Compiler.Models.Context;
+﻿using Compiler.Context;
+using Compiler.ErrorHandling;
 using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 
 namespace Compiler.Models.Tree
 {
+    /// <summary>
+    /// The struct literal expression.
+    /// </summary>
     public class StructLiteralExpression : ComplexLiteralExpression
     {
+        /// <summary>
+        /// Gets the struct literal fields.
+        /// </summary>
         public IList<StructLiteralField> Fields { get; }
+
+        /// <summary>
+        /// Gets or sets the struct defintion.
+        /// </summary>
         public StructDefinition? StructDefinition { get; private set; }
+        
+        /// <summary>
+        /// Gets or sets the offset for code generation.
+        /// </summary>
         public int Offset { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of a <see cref="StructLiteralExpression"/>.
+        /// </summary>
+        /// <param name="span">The span of the node.</param>
+        /// <param name="fields">The fields.</param>
         public StructLiteralExpression(Span span, IList<StructLiteralField> fields) : base(span)
         {
             Fields = fields;
         }
 
-        public void MapDefaultExpressionsFromDefinition(StructType type, StructDefinition definition)
+        /// <summary>
+        /// Maps defaults expressions from the definition to the literal.
+        /// </summary>
+        /// <param name="definition">The struct definition.</param>
+        public void MapDefaultExpressionsFromDefinition(StructDefinition definition)
         {
             
             StructDefinition = definition;
@@ -38,6 +61,9 @@ namespace Compiler.Models.Tree
             }
         }
 
+        /// <summary>
+        /// Maps offsets from the definiton.
+        /// </summary>
         public void MapOffsetsFromDefinition()
         {
             foreach (var fieldDefinition in StructDefinition!.Fields)
@@ -55,13 +81,28 @@ namespace Compiler.Models.Tree
             };
         }
 
-        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        public override SemanticType CheckGlobalSemantics(GlobalSemanticCheckContext context)
         {
-            var variableAssignmentType = context.VariableAssignmentType;
-            if (variableAssignmentType?.BaseType is UserDefinedType userDefinedType)
+            return CheckSemantics(context);
+        }
+
+        public override SemanticType CheckLocalSemantics(LocalSemanticCheckContext context)
+        {
+            return CheckSemantics(context);
+        }
+
+        /// <summary>
+        /// Checks the semantics of the struct literal.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <returns>The type.</returns>
+        private SemanticType CheckSemantics(SemanticCheckContext context)
+        {
+            var assignmentLeftHandSideType = context.AssignmentLeftHandSideType;
+            if (assignmentLeftHandSideType?.BaseType is UserDefinedType userDefinedType)
             {
                 var (structType, definition) = SymbolTable.LookupTypeAndDefinition<StructType, StructDefinition>(userDefinedType, Span);
-                MapDefaultExpressionsFromDefinition(structType, definition);
+                MapDefaultExpressionsFromDefinition(definition);
                 foreach (var field in Fields)
                 {
                     var fieldDefinition = definition.Fields.Where(f => field.Id.Value == f.Id.Value).FirstOrDefault();
@@ -71,16 +112,15 @@ namespace Compiler.Models.Tree
                     }
 
                     var fieldDefinitionType = fieldDefinition!.Type.ToSemanticType();
-
-                    context.VariableAssignmentType = fieldDefinitionType;
-                    var type = field.Expression.GlobalTypeCheck(context);
+                    context.AssignmentLeftHandSideType = fieldDefinitionType;
+                    var type = field.Expression.CheckSemanticsInferred(context);
                     if (!fieldDefinition!.Type.ToSemanticType().TypeEquals(type))
                     {
                         ErrorHandler.Throw("Type does not match field definition", this);
                     }
                 }
 
-                context.VariableAssignmentType = variableAssignmentType;
+                context.AssignmentLeftHandSideType = assignmentLeftHandSideType;
                 Type = structType;
                 return Type;
             }

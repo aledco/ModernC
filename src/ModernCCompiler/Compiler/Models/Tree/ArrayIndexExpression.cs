@@ -1,10 +1,13 @@
-﻿using Compiler.ErrorHandling;
-using Compiler.Models.Context;
+﻿using Compiler.Context;
+using Compiler.ErrorHandling;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Operators;
 
 namespace Compiler.Models.Tree
 {
+    /// <summary>
+    /// The array index expression.
+    /// </summary>
     public class ArrayIndexExpression : TailedExpression
     {
         /// <summary>
@@ -48,10 +51,40 @@ namespace Compiler.Models.Tree
             return new ArrayIndexExpression(span, Array, Index);
         }
 
-        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        public override SemanticType CheckGlobalSemantics(GlobalSemanticCheckContext context)
         {
-            ErrorHandler.Throw("Expression cannot be made globally", this);
-            throw ErrorHandler.FailedToExit;
+            return GlobalSemanticCheckContext.ExpressionNotValidGlobaly(this);
+        }
+
+        public override SemanticType CheckLocalSemantics(LocalSemanticCheckContext context)
+        {
+            var type = Array.CheckLocalSemantics(context);
+            switch (type)
+            {
+                case ArrayType t:
+                    if (t.Length == null && t.LengthParameterName == null)
+                    {
+                        ErrorHandler.Throw("Length of array is unkown", this);
+                    }
+                    else if (t.LengthParameterName != null && t.LengthParameterSymbol == null)
+                    {
+                        t.LengthParameterSymbol = context.Scope?.LookupSymbol(t.LengthParameterName, Span);
+                    }
+
+                    var indexType = Index.CheckLocalSemantics(context);
+                    if (indexType is not IntegralType)
+                    {
+                        ErrorHandler.Throw("Index expression must be an integer type", this);
+                    }
+                    
+                    return Type = t.ElementType;
+                case PointerType p when p.BaseType is ArrayType:
+                    AutoDereference();
+                    return CheckLocalSemantics(context);
+                default:
+                    ErrorHandler.Throw("Expression cannot be indexed like an array", this);
+                    throw new Exception("Error handler did not stop execution");
+            }
         }
     }
 }

@@ -1,8 +1,3 @@
-using Compiler;
-using Compiler.ErrorHandling;
-using Compiler.ParseAbstraction;
-using System.Text.Json;
-
 namespace CompilerTests;
 
 /// <summary>
@@ -32,10 +27,10 @@ public class ParserTest
     public void TestAllPassing()
     {
         var testType = "Passing";
-        foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
+        foreach (var (id, contents) in TestFileManager.EnumerateTestInput(testType))
         {
-            Console.WriteLine(Id);
-            var tree = Parser.Parse(Contents);
+            Console.WriteLine(id);
+            var tree = Parser.Parse(contents);
             Assert.IsNotNull(tree);
 
             var options = new JsonSerializerOptions
@@ -43,7 +38,7 @@ public class ParserTest
                 WriteIndented = true
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
-            TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+            TestFileManager.WriteTestOutput(_component, testType, id, treeJson);
 
             GlobalManager.Clear();
         }
@@ -56,9 +51,9 @@ public class ParserTest
     public void TestAllSemanticErrors()
     {
         var testType = "GlobalSemanticErrors";
-        foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
+        foreach (var (id, contents) in TestFileManager.EnumerateTestInput(testType))
         {
-            var tree = Parser.Parse(Contents);
+            var tree = Parser.Parse(contents);
             Assert.IsNotNull(tree);
 
             var options = new JsonSerializerOptions
@@ -66,15 +61,15 @@ public class ParserTest
                 WriteIndented = true
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
-            TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+            TestFileManager.WriteTestOutput(_component, testType, id, treeJson);
 
             GlobalManager.Clear();
         }
 
         testType = "LocalSemanticErrors";
-        foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
+        foreach (var (id, contents) in TestFileManager.EnumerateTestInput(testType))
         {
-            var tree = Parser.Parse(Contents);
+            var tree = Parser.Parse(contents);
             Assert.IsNotNull(tree);
 
             var options = new JsonSerializerOptions
@@ -82,7 +77,7 @@ public class ParserTest
                 WriteIndented = true
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
-            TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+            TestFileManager.WriteTestOutput(_component, testType, id, treeJson);
 
             GlobalManager.Clear();
         }

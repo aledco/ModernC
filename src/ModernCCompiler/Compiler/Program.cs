@@ -1,9 +1,8 @@
-﻿using Compiler.Config;
+﻿using Compiler.CodeGeneration.VirtualMachine;
+using Compiler.Config;
 using Compiler.ErrorHandling;
 using Compiler.Input;
 using Compiler.ParseAbstraction;
-using Compiler.TreeWalking.CodeGeneration.VirtualMachine;
-using Compiler.TreeWalking.TypeCheck;
 using VirtualMachine;
 
 /*
@@ -20,7 +19,6 @@ using VirtualMachine;
  * 
  * - code maintenence:
  *      - add code underlining to error messages and better error messages
- *      - comment code
  *      - make full program tests
  *      - git CI
  * 
@@ -87,7 +85,7 @@ using VirtualMachine;
  */
 namespace Compiler
 {
-    public class Program
+    public sealed class Program
     {
         /// <summary>
         /// Entry point of the compiler.
@@ -123,9 +121,7 @@ namespace Compiler
                 try
                 {
                     var input = reader.Read(out var compile, out printException);
-                    var tree = Parser.Parse(input);
-                    GlobalTypeChecker.Walk(tree);
-                    LocalTypeChecker.Walk(tree);
+                    var tree = Parser.Parse(input).CheckSemantics();
                     var instructions = CodeGenerator.Walk(tree);
                     if (compile)
                     {
@@ -159,9 +155,7 @@ namespace Compiler
         {
             var reader = new FileReader(Configuration.FileName);
             var input = reader.Read();
-            var tree = Parser.Parse(input);
-            GlobalTypeChecker.Walk(tree);
-            LocalTypeChecker.Walk(tree);
+            var tree = Parser.Parse(input).CheckSemantics();
             var instructions = CodeGenerator.Walk(tree);
             var asm = Machine.ToCode(instructions);
             File.WriteAllText(Configuration.OutputFileName, asm);
@@ -174,9 +168,7 @@ namespace Compiler
         {
             var reader = new FileReader(Configuration.FileName);
             var input = reader.Read();
-            var tree = Parser.Parse(input);
-            GlobalTypeChecker.Walk(tree);
-            LocalTypeChecker.Walk(tree);
+            var tree = Parser.Parse(input).CheckSemantics();
             var instructions = CodeGenerator.Walk(tree);
             Machine.Run(instructions, Console.In, Console.Out);
         }

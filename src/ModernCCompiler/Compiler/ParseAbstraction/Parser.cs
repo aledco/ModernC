@@ -11,7 +11,7 @@ namespace Compiler.ParseAbstraction
         /// </summary>
         /// <param name="input">The input.</param>
         /// <returns>The abstract syntax tree.</returns>
-        /// <exception cref="Exception">Parse error.</exception>
+        /// <exception cref="Exception"></exception>
         public static ProgramRoot Parse(string input)
         {
             // Lex

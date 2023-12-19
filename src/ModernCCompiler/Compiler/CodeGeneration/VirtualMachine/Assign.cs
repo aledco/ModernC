@@ -1,62 +1,25 @@
-﻿using Compiler.ErrorHandling;
+﻿using Compiler.Context.VirtualMachine;
+using Compiler.ErrorHandling;
 using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Tree;
+using System.Diagnostics;
 
-namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
+namespace Compiler.CodeGeneration.VirtualMachine
 {
     /// <summary>
     /// Assigns registers and offsets to nodes in preperation for code generation.
     /// </summary>
-    public static class AssignRegistersAndOffsets
+    public static class Assign
     {
-        private class Context
-        {
-            private readonly HashSet<int> _regsInUse = new();
-            private readonly HashSet<int> _regPool = new();
-
-            public string GetRegister()
-            {
-                int reg = 1;
-                while (_regsInUse.Contains(reg))
-                {
-                    reg++;
-                }
-
-                _regsInUse.Add(reg);
-                _regPool.Add(reg);
-                return $"r{reg}";
-            }
-
-            public void DropRegister(string register)
-            {
-                var r = int.Parse(register.Replace("r", ""));
-                _regsInUse.Remove(r);
-            }
-
-            public void Clear()
-            {
-                _regsInUse.Clear();
-            }
-
-
-            public List<string> GetRegisterPool()
-            {
-                return _regPool
-                    .OrderBy(x => x)
-                    .Select(x => $"r{x}")
-                    .ToList();
-            }
-        }
-
         public static void Walk(ProgramRoot program)
         {
             VisitProgramRoot(program);
         }
 
-        private static void VisitProgramRoot(ProgramRoot program) 
+        private static void VisitProgramRoot(ProgramRoot program)
         {
-            var context = new Context();
+            var context = new AssignContext();
             foreach (var definition in program.Definitions)
             {
                 VisitDefinition(definition, context);
@@ -72,7 +35,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             }
         }
 
-        private static void VisitDefinition(Definition definition, Context context)
+        private static void VisitDefinition(Definition definition, AssignContext context)
         {
             switch (definition)
             {
@@ -86,7 +49,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             }
         }
 
-        private static void VisitStructDefinition(StructDefinition structDefinition, Context context)
+        private static void VisitStructDefinition(StructDefinition structDefinition, AssignContext context)
         {
             var offset = 0;
             foreach (var field in structDefinition.Fields)
@@ -104,7 +67,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static void VisitFunctionDefinition(FunctionDefinition function)
         {
-            var context = new Context();
+            var context = new AssignContext();
             int offset = -2; // to allow space for return value
             foreach (var parameter in function.Parameters)
             {
@@ -117,19 +80,14 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             function.RegisterPool.AddRange(context.GetRegisterPool());
         }
 
-        private static void VisitParameter(Parameter parameter, Context _, int offset)
+        private static void VisitParameter(Parameter parameter, AssignContext _, int offset)
         {
-            if (parameter.Id.Symbol != null)
-            {
-                parameter.Id.Symbol.Offset = offset;
-            }
-            else
-            {
-                throw new Exception("Parameter symbol was null");
-            }
+            Debug.Assert(parameter.Id.Symbol != null);
+
+            parameter.Id.Symbol.Offset = offset;
         }
 
-        private static int VisitCompoundStatement(CompoundStatement compoundStatement, Context context, int offset)
+        private static int VisitCompoundStatement(CompoundStatement compoundStatement, AssignContext context, int offset)
         {
             var size = 0;
             foreach (var statement in compoundStatement.Statements)
@@ -151,7 +109,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return size;
         }
 
-        private static int VisitStatement(Statement statement, Context context, int offset)
+        private static int VisitStatement(Statement statement, AssignContext context, int offset)
         {
             return statement switch
             {
@@ -174,31 +132,28 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             };
         }
 
-        private static int VisitPrintStatement(PrintStatement s, Context context, int offset)
+        private static int VisitPrintStatement(PrintStatement s, AssignContext context, int offset)
         {
             VisitExpression(s.Expression, context, offset);
             return 0;
         }
 
-        private static int VisitPrintLineStatement(PrintLineStatement s, Context context, int offset)
+        private static int VisitPrintLineStatement(PrintLineStatement s, AssignContext context, int offset)
         {
             VisitPrintStatement(s.PrintExpression, context, offset);
             VisitPrintStatement(s.PrintLine, context, offset);
             return 0;
         }
 
-        private static int VisitVariableDefinitionStatement(VariableDefinitionStatement s, Context _, int offset)
+        private static int VisitVariableDefinitionStatement(VariableDefinitionStatement s, AssignContext _, int offset)
         {
-            if (s.Id.Symbol != null)
-            {
-                s.Id.Symbol.Offset = offset;
-                return s.Id.Symbol.Type.GetSizeInWords();
-            }
+            Debug.Assert(s.Id.Symbol != null);
 
-            throw new Exception("Symbol was null");
+            s.Id.Symbol.Offset = offset;
+            return s.Id.Symbol.Type.GetSizeInWords();
         }
 
-        private static int VisitAssignmentStatement(AssignmentStatement s, Context context, int offset)
+        private static int VisitAssignmentStatement(AssignmentStatement s, AssignContext context, int offset)
         {
             VisitExpression(s.Right, context, offset);
             VisitExpression(s.Left, context, offset);
@@ -207,7 +162,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return 0;
         }
 
-        private static int VisitIncrementStatement(IncrementStatement s, Context context, int offset)
+        private static int VisitIncrementStatement(IncrementStatement s, AssignContext context, int offset)
         {
             s.IncrementRegister = context.GetRegister();
             VisitExpression(s.Left, context, offset);
@@ -216,27 +171,24 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return 0;
         }
 
-        private static int VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement s, Context context, int offset)
+        private static int VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement s, AssignContext context, int offset)
         {
-            if (s.Id.Symbol != null)
-            {
-                VisitExpression(s.Expression, context, offset);
-                context.DropRegister(s.Expression.Register);
-                s.Id.Symbol.Offset = offset;
-                return s.Id.Symbol.Type.GetSizeInWords();
-            }
+            Debug.Assert(s.Id.Symbol != null);
 
-            throw new Exception("Symbol was null");
+            VisitExpression(s.Expression, context, offset);
+            context.DropRegister(s.Expression.Register);
+            s.Id.Symbol.Offset = offset;
+            return s.Id.Symbol.Type.GetSizeInWords();
         }
 
-        private static int VisitCallStatement(CallStatement s, Context context, int offset)
+        private static int VisitCallStatement(CallStatement s, AssignContext context, int offset)
         {
             VisitExpression(s.CallExpression, context, offset);
             context.DropRegister(s.CallExpression.Register);
             return 0;
         }
 
-        private static int VisitIfStatement(IfStatement s, Context context, int offset)
+        private static int VisitIfStatement(IfStatement s, AssignContext context, int offset)
         {
             var sizes = new List<int>();
             VisitExpression(s.IfExpression, context, offset);
@@ -258,14 +210,14 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return sizes.Max();
         }
 
-        private static int VisitWhileStatement(WhileStatement s, Context context, int offset)
+        private static int VisitWhileStatement(WhileStatement s, AssignContext context, int offset)
         {
             VisitExpression(s.Expression, context, offset);
             context.DropRegister(s.Expression.Register);
             return VisitCompoundStatement(s.Body, context, offset);
         }
 
-        private static int VisitDoWhileStatement(DoWhileStatement s, Context context, int offset)
+        private static int VisitDoWhileStatement(DoWhileStatement s, AssignContext context, int offset)
         {
             var size = VisitCompoundStatement(s.Body, context, offset);
             VisitExpression(s.Expression, context, offset);
@@ -274,7 +226,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         }
 
 
-        private static int VisitForStatement(ForStatement s, Context context, int offset)
+        private static int VisitForStatement(ForStatement s, AssignContext context, int offset)
         {
             var size = 0;
             if (s.InitialStatement is VariableDefinitionStatement or VariableDefinitionAndAssignmentStatement)
@@ -288,7 +240,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 VisitStatement(s.InitialStatement, context, offset);
             }
 
-            
+
             VisitExpression(s.Expression, context, offset);
             context.DropRegister(s.Expression.Register);
             if (s.UpdateStatement is VariableDefinitionStatement or VariableDefinitionAndAssignmentStatement)
@@ -306,7 +258,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return size;
         }
 
-        private static int VisitReturnStatement(ReturnStatement s, Context context, int offset)
+        private static int VisitReturnStatement(ReturnStatement s, AssignContext context, int offset)
         {
             if (s.Expression != null)
             {
@@ -317,14 +269,14 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return 0;
         }
 
-        private static int VisitExitStatement(ExitStatement s, Context context, int offset)
+        private static int VisitExitStatement(ExitStatement s, AssignContext context, int offset)
         {
             VisitExpression(s.Expression, context, offset);
             context.DropRegister(s.Expression.Register);
             return 0;
         }
 
-        private static int VisitExpression(Expression expression, Context context, int offset)
+        private static int VisitExpression(Expression expression, AssignContext context, int offset)
         {
             return expression switch
             {
@@ -340,24 +292,24 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             };
         }
 
-        private static int VisitBinaryOperatorExpression(BinaryOperatorExpression e, Context context, int offset)
+        private static int VisitBinaryOperatorExpression(BinaryOperatorExpression e, AssignContext context, int offset)
         {
             VisitExpression(e.LeftOperand, context, offset);
             VisitExpression(e.RightOperand, context, offset);
             e.Register = e.LeftOperand.Register;
             context.DropRegister(e.RightOperand.Register);
-            
+
             return 0;
         }
 
-        private static int VisitUnaryOperatorExpression(UnaryOperatorExpression e, Context context, int offset)
+        private static int VisitUnaryOperatorExpression(UnaryOperatorExpression e, AssignContext context, int offset)
         {
             VisitExpression(e.Operand, context, offset);
             e.Register = e.Operand.Register;
             return 0;
         }
 
-        private static int VisitCallExpression(CallExpression e, Context context, int offset)
+        private static int VisitCallExpression(CallExpression e, AssignContext context, int offset)
         {
             VisitExpression(e.Function, context, offset);
             foreach (var arg in e.Arguments)
@@ -370,7 +322,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return 0;
         }
 
-        private static int VisitArrayIndexExpression(ArrayIndexExpression e, Context context, int offset)
+        private static int VisitArrayIndexExpression(ArrayIndexExpression e, AssignContext context, int offset)
         {
             VisitExpression(e.Array, context, offset);
             VisitExpression(e.Index, context, offset);
@@ -379,7 +331,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return 0;
         }
 
-        private static int VisitFieldAccessExpression(FieldAccessExpression e, Context context, int offset)
+        private static int VisitFieldAccessExpression(FieldAccessExpression e, AssignContext context, int offset)
         {
             var operatingType = e.GetOperatingType();
             if (operatingType is UserDefinedType userDefinedType)
@@ -403,7 +355,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             throw new Exception("Operating type was not a user defined type");
         }
 
-        private static int VisitStructLiteralExpression(StructLiteralExpression e, Context context, int offset)
+        private static int VisitStructLiteralExpression(StructLiteralExpression e, AssignContext context, int offset)
         {
             e.Register = context.GetRegister();
             e.MapOffsetsFromDefinition();
@@ -412,12 +364,12 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 VisitExpression(field.Expression, context, offset);
                 context.DropRegister(field.Expression.Register);
             }
-            
+
             context.DropRegister(e.Register);
             return 0;
         }
 
-        private static int VisitArrayLiteralExpression(ArrayLiteralExpression e, Context context, int offset)
+        private static int VisitArrayLiteralExpression(ArrayLiteralExpression e, AssignContext context, int offset)
         {
             e.Offset = offset;
             e.Register = context.GetRegister();
@@ -433,7 +385,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             return 0;
         }
 
-        private static int VisitAtomicExpression(Expression e, Context context, int _)
+        private static int VisitAtomicExpression(Expression e, AssignContext context, int _)
         {
             e.Register = context.GetRegister();
             return 0;

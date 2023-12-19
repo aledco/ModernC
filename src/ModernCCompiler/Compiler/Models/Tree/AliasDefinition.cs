@@ -1,9 +1,12 @@
-﻿using Compiler.Models.Context;
+﻿using Compiler.Context;
 using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 
 namespace Compiler.Models.Tree
 {
+    /// <summary>
+    /// The type alias definition.
+    /// </summary>
     public class AliasDefinition : Definition
     {
         /// <summary>
@@ -22,11 +25,16 @@ namespace Compiler.Models.Tree
             AliasedType = aliasedType;
         }
 
-        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        public override SemanticType CheckGlobalSemantics(GlobalSemanticCheckContext context)
         {
             var aliasedType = AliasedType.ToSemanticType();
             SymbolTable.AddType(Type, aliasedType);
             return aliasedType;
+        }
+
+        public override SemanticType CheckLocalSemantics(LocalSemanticCheckContext context)
+        {
+            return AliasedType.ToSemanticType();
         }
     }
 }

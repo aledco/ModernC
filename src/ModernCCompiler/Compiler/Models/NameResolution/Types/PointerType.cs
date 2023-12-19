@@ -1,12 +1,15 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
+    /// <summary>
+    /// The pointer ty[e.
+    /// </summary>
     public class PointerType : SemanticType
     {
+        /// <summary>
+        /// Gets the underlying type.
+        /// </summary>
         public SemanticType UnderlyingType { get; }
 
-        /// <summary>
-        /// Gets the base type this pointer points to. For example for the type int****, BaseType = int.
-        /// </summary>
         public override SemanticType BaseType 
         {
             get
@@ -19,6 +22,10 @@
             }
         }
 
+        /// <summary>
+        /// Instantiates a new instance of a <see cref="PointerType"/>.
+        /// </summary>
+        /// <param name="underlyingType">The underlying type.</param>
         public PointerType(SemanticType underlyingType)
         {
             UnderlyingType = underlyingType;

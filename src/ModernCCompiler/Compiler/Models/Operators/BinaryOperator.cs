@@ -1,5 +1,8 @@
 ﻿namespace Compiler.Models.Operators
 {
+    /// <summary>
+    /// The binary operator.
+    /// </summary>
     public enum BinaryOperator
     {
         EqualTo,

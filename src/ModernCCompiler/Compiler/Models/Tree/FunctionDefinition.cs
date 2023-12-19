@@ -1,10 +1,15 @@
-﻿using Compiler.Models.Context;
+﻿using Compiler.Context;
+using Compiler.ErrorHandling;
 using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Compiler.Models.Tree
 {
+    /// <summary>
+    /// The function definition.
+    /// </summary>
     public class FunctionDefinition : AbstractSyntaxTree
     {
         /// <summary>
@@ -54,7 +59,20 @@ namespace Compiler.Models.Tree
         [JsonIgnore]
         public string ReturnLabel { get => $"{Id.Symbol!.Name}_return"; }
 
-        public FunctionDefinition(Span span, IdNode id, IList<Parameter> parameters, TypeNode returnType, CompoundStatement body) : base(span)
+        /// <summary>
+        /// Initializes a new instance of a <see cref="FunctionDefinition"/>.
+        /// </summary>
+        /// <param name="span">The span of the node.</param>
+        /// <param name="id">The identifier.</param>
+        /// <param name="parameters">The parameters.</param>
+        /// <param name="returnType">The return type.</param>
+        /// <param name="body">The function body.</param>
+        public FunctionDefinition(
+            Span span,
+            IdNode id,
+            IList<Parameter> parameters,
+            TypeNode returnType,
+            CompoundStatement body) : base(span)
         {
             ReturnType = returnType;
             Id = id;
@@ -63,22 +81,46 @@ namespace Compiler.Models.Tree
             RegisterPool = new List<string>();
         }
 
-        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        public override SemanticType CheckGlobalSemantics(GlobalSemanticCheckContext context)
         {
             var outerScope = context.Scope;
             context.Scope = FunctionScope = new Scope(outerScope);
             var returnType = ReturnType.ToSemanticType();
             var parameterTypes = Parameters
-                .Select(p => p.GlobalTypeCheck(context))
+                .Select(p => p.CheckGlobalSemantics(context))
                 .ToList();
             ProcessParameterizedTypes(context, parameterTypes);
             var type = new FunctionType(returnType, parameterTypes);
-            outerScope?.AddSymbol(Id, type);
+            outerScope.AddSymbol(Id, type);
             context.Scope = outerScope;
-            Id.GlobalTypeCheck(context);
+            Id.CheckGlobalSemantics(context);
             Id.Symbol!.IsDefinedGlobalFunction = true;
             Id.Symbol!.EnclosingFunction = this;
-            return type;
+            return SemanticType.NoType;
+        }
+
+        public override SemanticType CheckLocalSemantics(LocalSemanticCheckContext context)
+        {
+            Debug.Assert(FunctionScope != null);
+
+            var returnType = ReturnType.ToSemanticType();
+            if (returnType is PointerType)
+            {
+                ErrorHandler.Throw("Pointers cannot be returned from functions", this);
+            }
+            else if (returnType.IsComplex)
+            {
+                ErrorHandler.Throw("Complex types cannot be returned from functions", this);
+            }
+            else if (returnType is not VoidType && !Body.AllPathsReturn())
+            {
+                ErrorHandler.Throw("Not all code paths return", this);
+            }
+
+            context.Scope = FunctionScope;
+            context.EnclosingFunction = this;
+            Body.CheckLocalSemantics(context);
+            return SemanticType.NoType;
         }
 
         /// <summary>
@@ -86,7 +128,7 @@ namespace Compiler.Models.Tree
         /// </summary>
         /// <param name="context">The context.</param>
         /// <param name="parameterTypes">The parameter types.</param>
-        private void ProcessParameterizedTypes(GlobalTypeCheckContext context, List<SemanticType> parameterTypes)
+        private void ProcessParameterizedTypes(GlobalSemanticCheckContext context, List<SemanticType> parameterTypes)
         {
             var previousCount = parameterTypes.Count;
             for (int i = 0; i < previousCount; i++)
@@ -101,11 +143,12 @@ namespace Compiler.Models.Tree
                 {
                     switch (type)
                     {
-
                         case PointerType pointerType when pointerType.BaseType is ArrayType arrayType && !arrayType.Length.HasValue
                                                        && arrayParameterType is PointerTypeNode pointerTypeNode
                                                        && pointerTypeNode.BaseType is ParameterizedArrayTypeNode arrayTypeNode:
-                            CreateLengthParameter(context, parameterTypes, arrayTypeNode);
+                            var newParameter = new Parameter(Span, new IntTypeNode(Span), arrayTypeNode.Parameter);
+                            Parameters.Add(newParameter);
+                            parameterTypes.Add(newParameter.CheckGlobalSemantics(context));
                             type = arrayType;
                             arrayParameterType = arrayTypeNode;
                             break;
@@ -122,13 +165,6 @@ namespace Compiler.Models.Tree
                             break;
                     }
                 }
-            }
-
-            void CreateLengthParameter(GlobalTypeCheckContext context, List<SemanticType> parameterTypes, ParameterizedArrayTypeNode innerArrayTypeNode)
-            {
-                var newParameter = new Parameter(Span, new IntTypeNode(Span), innerArrayTypeNode.Parameter);
-                Parameters.Add(newParameter);
-                parameterTypes.Add(newParameter.GlobalTypeCheck(context));
             }
         }
     }

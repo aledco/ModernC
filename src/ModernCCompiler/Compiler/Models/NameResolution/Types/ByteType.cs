@@ -1,5 +1,8 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
+    /// <summary>
+    /// The byte type.
+    /// </summary>
     public class ByteType : IntegralType
     {
         public override int GetSizeInBytes()

@@ -1,10 +1,13 @@
-﻿using Compiler.ErrorHandling;
-using Compiler.Models.Context;
+﻿using Compiler.Context;
+using Compiler.ErrorHandling;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Operators;
 
 namespace Compiler.Models.Tree
 {
+    /// <summary>
+    /// The assignment statement.
+    /// </summary>
     public class AssignmentStatement : Statement
     {
         /// <summary>
@@ -41,10 +44,26 @@ namespace Compiler.Models.Tree
             return false;
         }
 
-        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        public override SemanticType CheckGlobalSemantics(GlobalSemanticCheckContext context)
         {
-            ErrorHandler.Throw("Assignment cannot be made globally", this);
-            throw ErrorHandler.FailedToExit;
+            return GlobalSemanticCheckContext.StatementNotValidGlobally(this);
+        }
+
+        public override SemanticType CheckLocalSemantics(LocalSemanticCheckContext context)
+        {
+            var rightType = Right.CheckLocalSemantics(context);
+            if (rightType.IsComplex)
+            {
+                ErrorHandler.Throw("Complex types cannot be reassigned.");
+            }
+
+            var leftType = Left.CheckLocalSemantics(context);
+            if (!leftType.TypeEquals(rightType))
+            {
+                ErrorHandler.Throw("Variable assignment must have matching types.", this);
+            }
+
+            return SemanticType.NoType;
         }
     }
 }

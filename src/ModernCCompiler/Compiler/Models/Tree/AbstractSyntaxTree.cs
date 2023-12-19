@@ -1,8 +1,11 @@
-﻿using Compiler.Models.Context;
+﻿using Compiler.Context;
 using Compiler.Models.NameResolution.Types;
 
 namespace Compiler.Models.Tree
 {
+    /// <summary>
+    /// The base abstract syntax tree node.
+    /// </summary>
     public abstract class AbstractSyntaxTree
     {
         /// <summary>
@@ -26,10 +29,33 @@ namespace Compiler.Models.Tree
         }
 
         /// <summary>
+        /// Checks semantics by inferrring the semantic to check from the context passed in.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <returns>The type.</returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public SemanticType CheckSemanticsInferred(SemanticCheckContext context)
+        {
+            return context switch
+            {
+                GlobalSemanticCheckContext c => CheckGlobalSemantics(c),
+                LocalSemanticCheckContext c => CheckLocalSemantics(c),
+                _ => throw new InvalidOperationException()
+            };
+        }
+
+        /// <summary>
         /// Performs the global type check on an AST node.
         /// </summary>
         /// <param name="context">The context.</param>
         /// <returns>The type of the node.</returns>
-        public abstract SemanticType GlobalTypeCheck(GlobalTypeCheckContext context);
+        public abstract SemanticType CheckGlobalSemantics(GlobalSemanticCheckContext context);
+
+        /// <summary>
+        /// Performs the local type check on an AST node.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <returns>The type of the node.</returns>
+        public abstract SemanticType CheckLocalSemantics(LocalSemanticCheckContext context);
     }
 }

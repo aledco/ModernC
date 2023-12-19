@@ -2,6 +2,9 @@
 
 namespace Compiler.Models.Tree
 {
+    /// <summary>
+    /// The statement base class.
+    /// </summary>
     [JsonDerivedType(typeof(PrintStatement))]
     [JsonDerivedType(typeof(PrintLineStatement))]
     [JsonDerivedType(typeof(VariableDefinitionStatement))]

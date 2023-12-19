@@ -3,6 +3,9 @@ using System.Text.Json.Serialization;
 
 namespace Compiler.Models.Tree
 {
+    /// <summary>
+    /// The expression base class.
+    /// </summary>
     [JsonDerivedType(typeof(BinaryOperatorExpression))]
     [JsonDerivedType(typeof(UnaryOperatorExpression))]
     [JsonDerivedType(typeof(StructLiteralExpression))]

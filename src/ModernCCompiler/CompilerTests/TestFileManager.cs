@@ -1,9 +1,15 @@
 ﻿namespace CompilerTests
 {
-    internal static class TestFileManager
+    /// <summary>
+    /// The test file manager.
+    /// </summary>
+    public static class TestFileManager
     {
         private static readonly string _projectPath;
         
+        /// <summary>
+        /// Initializes the <see cref="TestFileManager"/>.
+        /// </summary>
         static TestFileManager()
         {
             string startupPath = AppDomain.CurrentDomain.BaseDirectory;
@@ -12,31 +18,33 @@
             _projectPath = String.Join(Path.DirectorySeparatorChar.ToString(), pathItems.Take(pathItems.Length - pos - 1));
         }
 
+        /// <summary>
+        /// Gets the test directory.
+        /// </summary>
+        /// <returns>The path to the test directory.</returns>
+        /// <exception cref="Exception"></exception>
         public static string GetTestDir()
         {
-            var baseDir = _projectPath;
-            if (baseDir == null)
-            {
-                throw new Exception("Base test directory is null");
-            }
-
+            var baseDir = _projectPath ?? throw new Exception("Base test directory is null");
             return Path.Combine(baseDir, "TestFiles");
         }
 
+        /// <summary>
+        /// Gets the test input directory.
+        /// </summary>
+        /// <param name="testType">The test type.</param>
+        /// <returns>The path.</returns>
         public static string GetTestInputDir(string testType)
         {
             var testDir = GetTestDir();
             return Path.Combine(testDir, "In", testType);
         }
-
-        public static string ReadTestInput(string testType, string id)
-        {
-            var testInputDir = GetTestInputDir(testType);
-            var filePath = Path.Combine(testInputDir, $"test{id}.mc");
-            return File.ReadAllText(filePath);
-        }
-
-
+        
+        /// <summary>
+        /// Enumerates the test input.
+        /// </summary>
+        /// <param name="testType">The test type.</param>
+        /// <returns>An enumerable of id, content pairs.</returns>
         public static IEnumerable<(string Id, string Contents)> EnumerateTestInput(string testType)
         {
             var inputDir = GetTestInputDir(testType);
@@ -47,6 +55,25 @@
             }
         }
 
+        /// <summary>
+        /// Enumerats the full tests.
+        /// </summary>
+        /// <returns>An enumerable of id, path pairs.</returns>
+        public static IEnumerable<(string Id, string Path)> EnumerateFullTests()
+        {
+            var inputDir = GetTestInputDir("Full");
+            foreach (var testDir in Directory.EnumerateDirectories(inputDir))
+            {
+                yield return (testDir.Split(Path.DirectorySeparatorChar).Last().Replace("test", ""), testDir);
+            }
+        }
+
+        /// <summary>
+        /// Gets the test output dir.
+        /// </summary>
+        /// <param name="testType">The test type.</param>
+        /// <param name="component">The component.</param>
+        /// <returns></returns>
         public static string GetTestOutputDir(string testType, string component)
         {
             var testDir = GetTestDir();
@@ -71,6 +98,13 @@
             return componentDir;
         }
 
+        /// <summary>
+        /// Writes the test output.
+        /// </summary>
+        /// <param name="testType">The test type.</param>
+        /// <param name="component">The component.</param>
+        /// <param name="id">The id.</param>
+        /// <param name="output">The output.</param>
         public static void WriteTestOutput(string testType, string component, string id, string output)
         {
             var testOutputDir = GetTestOutputDir(testType, component);
@@ -78,12 +112,23 @@
             File.WriteAllText(filePath, output);
         }
 
+        /// <summary>
+        /// Gets the test reference dir.
+        /// </summary>
+        /// <param name="testType">The test type.</param>
+        /// <returns>The path.</returns>
         public static string GetTestReferenceDir(string testType)
         {
             var testDir = GetTestDir();
             return Path.Combine(testDir, "Ref", testType);
         }
 
+        /// <summary>
+        /// Gets the test reference.
+        /// </summary>
+        /// <param name="testType">The test type.</param>
+        /// <param name="id">The id.</param>
+        /// <returns>The test reference.</returns>
         public static string? GetTestReference(string testType, string id)
         {
             var refDir = GetTestReferenceDir(testType);
@@ -96,6 +141,12 @@
             return null;
         }
 
+        /// <summary>
+        /// Gets the test input stream.
+        /// </summary>
+        /// <param name="testType">The test type.</param>
+        /// <param name="id">The id.</param>
+        /// <returns>The test input stream.</returns>
         public static StringReader GetTestInputStream(string testType, string id)
         {
             var inputDir = GetTestInputDir(testType);
@@ -103,6 +154,11 @@
             return new StringReader(NormalizeText(File.ReadAllText(inFile)));
         }
 
+        /// <summary>
+        /// Normalizes text.
+        /// </summary>
+        /// <param name="output">The output.</param>
+        /// <returns>The normalized output.</returns>
         public static string NormalizeText(string output)
         {
             return output

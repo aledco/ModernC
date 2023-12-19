@@ -1,9 +1,19 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
+    /// <summary>
+    /// The user defined type.
+    /// </summary>
     public class UserDefinedType : SemanticType
     {
+        /// <summary>
+        /// Gets the value.
+        /// </summary>
         public string Value { get; }
 
+        /// <summary>
+        /// Instantiates a new instance of an <see cref="UserDefinedType"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
         public UserDefinedType(string value) 
         { 
             Value = value;

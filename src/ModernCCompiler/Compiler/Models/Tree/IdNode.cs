@@ -1,9 +1,12 @@
-﻿using Compiler.Models.Context;
+﻿using Compiler.Context;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Symbols;
 
 namespace Compiler.Models.Tree
 {
+    /// <summary>
+    /// The id node.
+    /// </summary>
     public class IdNode : AbstractSyntaxTree
     {
         /// <summary>
@@ -14,7 +17,7 @@ namespace Compiler.Models.Tree
         /// <summary>
         /// Gets or sets the symbol of the identifier.
         /// </summary>
-        public Symbol? Symbol { get; private set; }
+        public Symbol? Symbol { get; set; }
 
         /// <summary>
         /// Initializes a new instance of an <see cref="IdNode"/>.
@@ -26,9 +29,24 @@ namespace Compiler.Models.Tree
             Value = value;
         }
 
-        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        public override SemanticType CheckGlobalSemantics(GlobalSemanticCheckContext context)
         {
-            Symbol = context.Scope!.LookupSymbol(this);
+            return CheckSemantics(context);
+        }
+
+        public override SemanticType CheckLocalSemantics(LocalSemanticCheckContext context)
+        {
+            return CheckSemantics(context);
+        }
+
+        /// <summary>
+        /// Checks the semantics of the id node.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <returns>The type.</returns>
+        private SemanticType CheckSemantics(SemanticCheckContext context)
+        {
+            Symbol = context.Scope.LookupSymbol(this);
             return Symbol.Type;
         }
     }

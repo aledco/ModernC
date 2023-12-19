@@ -1,5 +1,4 @@
-﻿using Compiler.Models.Context;
-using Compiler.Models.NameResolution.Types;
+﻿using Compiler.Models.NameResolution.Types;
 
 namespace Compiler.Models.Tree
 {
@@ -32,9 +31,9 @@ namespace Compiler.Models.Tree
             return new ArrayType(ElementType.ToSemanticType(), Length);
         }
 
-        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        public override SemanticType ToSemanticTypeSafe()
         {
-            throw new NotImplementedException();
+            return new ArrayType(ElementType.ToSemanticTypeSafe(), Length);
         }
     }
 }

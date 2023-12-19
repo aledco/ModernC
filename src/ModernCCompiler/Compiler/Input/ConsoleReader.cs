@@ -2,6 +2,9 @@
 
 namespace Compiler.Input
 {
+    /// <summary>
+    /// The console reader.
+    /// </summary>
     public class ConsoleReader
     {
         private readonly char _eof = Convert.ToChar(4);

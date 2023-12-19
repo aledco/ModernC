@@ -1,8 +1,11 @@
-﻿using Compiler.Models.Context;
+﻿using Compiler.Context;
 using Compiler.Models.NameResolution.Types;
 
 namespace Compiler.Models.Tree
 {
+    /// <summary>
+    /// The array literal element.
+    /// </summary>
     public class ArrayLiteralElement : AbstractSyntaxTree
     {
         /// <summary>
@@ -25,10 +28,14 @@ namespace Compiler.Models.Tree
             Expression = expression;
         }
 
-        public override SemanticType GlobalTypeCheck(GlobalTypeCheckContext context)
+        public override SemanticType CheckGlobalSemantics(GlobalSemanticCheckContext context)
         {
-            Expression.GlobalTypeCheck(context);
-            return Expression.Type!;
+            return Expression.CheckGlobalSemantics(context);
+        }
+
+        public override SemanticType CheckLocalSemantics(LocalSemanticCheckContext context)
+        {
+            return Expression.CheckLocalSemantics(context);
         }
     }
 }

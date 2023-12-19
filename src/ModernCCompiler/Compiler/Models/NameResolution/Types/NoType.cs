@@ -1,5 +1,8 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
+    /// <summary>
+    /// The absence of a semantic type.
+    /// </summary>
     public class NoType : SemanticType
     {
         public override int GetSizeInBytes()

@@ -32,7 +32,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="TestFiles\In\Full\test001\" />
     <Folder Include="TestFiles\In\Reading\" />
+    <Folder Include="TestFiles\Ref\Full\" />
     <Folder Include="TestFiles\Ref\Reading\" />
   </ItemGroup>
 
