@@ -3,11 +3,29 @@ using Compiler.Models.Symbols;
 
 namespace Compiler.Models.NameResolution.Types
 {
+    /// <summary>
+    /// The array type.
+    /// </summary>
     public class ArrayType : SemanticType
     {
+        /// <summary>
+        /// Gets the element type.
+        /// </summary>
         public SemanticType ElementType { get; }
+
+        /// <summary>
+        /// Gets or sets the length.
+        /// </summary>
         public int? Length { get; set; }
+
+        /// <summary>
+        /// Gets the length parameter name.
+        /// </summary>
         public string? LengthParameterName { get; }
+
+        /// <summary>
+        /// Gets or sets the length parameter symbol.
+        /// </summary>
         public Symbol? LengthParameterSymbol { get; set; }
 
         public override SemanticType BaseType
@@ -24,6 +42,12 @@ namespace Compiler.Models.NameResolution.Types
 
         public override bool IsParameterized { get => Length == null && LengthParameterName != null; }
 
+        /// <summary>
+        /// Instantiates a new instance of an <see cref="ArrayType"/>.
+        /// </summary>
+        /// <param name="elementType">The element type.</param>
+        /// <param name="length">The length.</param>
+        /// <param name="parameterName">The parameter name.</param>
         public ArrayType(SemanticType elementType, int? length, string? parameterName = null) 
         { 
             ElementType = elementType;

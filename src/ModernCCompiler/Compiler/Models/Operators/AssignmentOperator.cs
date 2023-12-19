@@ -1,5 +1,8 @@
 ﻿namespace Compiler.Models.Operators
 {
+    /// <summary>
+    /// The assignment operator.
+    /// </summary>
     public enum AssignmentOperator
     {
         Equals,

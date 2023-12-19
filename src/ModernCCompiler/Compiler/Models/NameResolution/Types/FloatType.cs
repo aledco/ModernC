@@ -1,5 +1,8 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
+    /// <summary>
+    /// The float type.
+    /// </summary>
     public class FloatType : RealType
     {
         public override int GetSizeInBytes()

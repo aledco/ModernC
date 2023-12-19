@@ -1,9 +1,4 @@
-using Compiler;
-using Compiler.ErrorHandling;
 using Compiler.Models.Tree;
-using Compiler.ParseAbstraction;
-using Compiler.TreeWalking.TypeCheck;
-using System.Text.Json;
 
 namespace CompilerTests;
 
@@ -34,11 +29,11 @@ public class LocalTypeCheckTest
     public void TestAllPassing()
     {
         var testType = "Passing";
-        foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
+        foreach (var (id, contents) in TestFileManager.EnumerateTestInput(testType))
         {
-            var tree = Parser.Parse(Contents);
-            GlobalTypeChecker.Walk(tree);
-            LocalTypeChecker.Walk(tree);
+            var tree = Parser.Parse(contents);
+            tree.CheckGlobalSemantics();
+            tree.CheckLocalSemantics();
             foreach (var functionDefinition in tree.FunctionDefinitions)
             {
                 TestCompoundStatement(functionDefinition.Body);
@@ -49,7 +44,7 @@ public class LocalTypeCheckTest
                 WriteIndented = true
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
-            TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+            TestFileManager.WriteTestOutput(_component, testType, id, treeJson);
 
             GlobalManager.Clear();
         }
@@ -62,14 +57,14 @@ public class LocalTypeCheckTest
     public void TestAllLocalSemanticErrors()
     {
         var testType = "LocalSemanticErrors";
-        foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
+        foreach (var (id, contents) in TestFileManager.EnumerateTestInput(testType))
         {
-            Console.WriteLine(Id);
-            var tree = Parser.Parse(Contents);
-            GlobalTypeChecker.Walk(tree);
+            Console.WriteLine(id);
+            var tree = Parser.Parse(contents);
+            tree.CheckGlobalSemantics();
             try
             {
-                LocalTypeChecker.Walk(tree);
+                tree.CheckLocalSemantics();
                 Assert.Fail();
             }
             catch
@@ -82,7 +77,7 @@ public class LocalTypeCheckTest
                 WriteIndented = true
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
-            TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+            TestFileManager.WriteTestOutput(_component, testType, id, treeJson);
 
             GlobalManager.Clear();
         }

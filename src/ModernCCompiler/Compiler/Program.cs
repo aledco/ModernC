@@ -1,13 +1,18 @@
-﻿using Compiler.Config;
+﻿using Compiler.CodeGeneration.VirtualMachine;
+using Compiler.Config;
 using Compiler.ErrorHandling;
 using Compiler.Input;
 using Compiler.ParseAbstraction;
-using Compiler.TreeWalking.CodeGeneration.VirtualMachine;
-using Compiler.TreeWalking.TypeCheck;
 using VirtualMachine;
 
 /*
  * TODO:
+ * 
+ * - write prelude
+ * - write ast merging to merge prelude in parse abstraction
+ * - add file inclusion with import statements
+ * - compile to x86-64
+ * 
  * 
  * - things to decide:
  *      - need to define an ordering for global statements / definitions
@@ -16,10 +21,10 @@ using VirtualMachine;
  *      - semi colons or commas for structs?
  *      - void functions can leave return type out?
  *      - complex literal expressions in global memory?
+ *      - add auto dereferencing when passing in a complex type to a function?
  * 
  * - code maintenence:
  *      - add code underlining to error messages and better error messages
- *      - comment code
  *      - make full program tests
  *      - git CI
  * 
@@ -86,7 +91,7 @@ using VirtualMachine;
  */
 namespace Compiler
 {
-    public class Program
+    public sealed class Program
     {
         /// <summary>
         /// Entry point of the compiler.
@@ -122,9 +127,7 @@ namespace Compiler
                 try
                 {
                     var input = reader.Read(out var compile, out printException);
-                    var tree = Parser.Parse(input);
-                    GlobalTypeChecker.Walk(tree);
-                    LocalTypeChecker.Walk(tree);
+                    var tree = Parser.Parse(input).CheckSemantics();
                     var instructions = CodeGenerator.Walk(tree);
                     if (compile)
                     {
@@ -158,9 +161,7 @@ namespace Compiler
         {
             var reader = new FileReader(Configuration.FileName);
             var input = reader.Read();
-            var tree = Parser.Parse(input);
-            GlobalTypeChecker.Walk(tree);
-            LocalTypeChecker.Walk(tree);
+            var tree = Parser.Parse(input).CheckSemantics();
             var instructions = CodeGenerator.Walk(tree);
             var asm = Machine.ToCode(instructions);
             File.WriteAllText(Configuration.OutputFileName, asm);
@@ -173,9 +174,7 @@ namespace Compiler
         {
             var reader = new FileReader(Configuration.FileName);
             var input = reader.Read();
-            var tree = Parser.Parse(input);
-            GlobalTypeChecker.Walk(tree);
-            LocalTypeChecker.Walk(tree);
+            var tree = Parser.Parse(input).CheckSemantics();
             var instructions = CodeGenerator.Walk(tree);
             Machine.Run(instructions, Console.In, Console.Out);
         }

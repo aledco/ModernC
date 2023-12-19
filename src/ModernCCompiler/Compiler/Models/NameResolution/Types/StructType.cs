@@ -1,9 +1,20 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
+    /// <summary>
+    /// The struct type.
+    /// </summary>
     public class StructType : UserDefinedType
     {
-        public IList<(SemanticType Type, string Value)> FieldTypes;
+        /// <summary>
+        /// Gets the field types.
+        /// </summary>
+        public IList<(SemanticType Type, string Value)> FieldTypes { get; }
 
+        /// <summary>
+        /// Instantiates a new instance of a <see cref="StructType"/>.
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <param name="fieldTypes">The field types.</param>
         public StructType(string value, IList<(SemanticType Type, string Value)> fieldTypes) : base(value)
         {
             FieldTypes = fieldTypes;

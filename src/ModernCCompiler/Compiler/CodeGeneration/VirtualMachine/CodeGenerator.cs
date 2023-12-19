@@ -1,15 +1,14 @@
-﻿using Antlr4.Runtime.Tree.Xpath;
-using Compiler.ErrorHandling;
+﻿using Compiler.ErrorHandling;
 using Compiler.Models;
 using Compiler.Models.NameResolution;
 using Compiler.Models.NameResolution.Types;
 using Compiler.Models.Operators;
 using Compiler.Models.Tree;
-using System.ComponentModel.Design;
+using System.Diagnostics;
 using VirtualMachine;
 using VirtualMachine.Instructions;
 
-namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
+namespace Compiler.CodeGeneration.VirtualMachine
 {
     /// <summary>
     /// Generates code for the virtual machine.
@@ -25,7 +24,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         public static List<IInstruction> Walk(ProgramRoot program)
         {
-            AssignRegistersAndOffsets.Walk(program);
+            Assign.Walk(program);
             return VisitProgramRoot(program);
         }
 
@@ -167,7 +166,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     ErrorHandler.Throw("Cannot print expression", s);
                     break;
             }
-            
+
             return instructions;
         }
 
@@ -199,7 +198,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             instructions.Add(new PrintByte(Registers.Temporary));
             instructions.Add(new LoadImmediate(Registers.Temporary, '\n'));
             instructions.Add(new PrintByte(Registers.Temporary));
-
             foreach (var field in definition.Fields)
             {
                 instructions.AddRange(PrintSpaces(spaces + 4));
@@ -215,7 +213,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 instructions.Add(new PrintByte(Registers.Temporary));
                 instructions.Add(new LoadImmediate(Registers.Temporary, ' '));
                 instructions.Add(new PrintByte(Registers.Temporary));
-
                 switch (field.Type.ToSemanticType())
                 {
                     case IntType:
@@ -277,11 +274,13 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> PrintArray(string lvalRegister, ArrayType type, Span span, int spaces = 0)
         {
-            var instructions = new List<IInstruction>();
-            instructions.Add(new LoadImmediate(Registers.Temporary, '['));
-            instructions.Add(new PrintByte(Registers.Temporary));
-            instructions.Add(new LoadImmediate(Registers.Temporary, '\n'));
-            instructions.Add(new PrintByte(Registers.Temporary));
+            var instructions = new List<IInstruction>
+            {
+                new LoadImmediate(Registers.Temporary, '['),
+                new PrintByte(Registers.Temporary),
+                new LoadImmediate(Registers.Temporary, '\n'),
+                new PrintByte(Registers.Temporary)
+            };
 
             for (int i = 0; i < type.Length; i++)
             {
@@ -352,7 +351,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             for (int i = 0; i < type.Length; i++)
             {
                 instructions.Add(new Load(Registers.Temporary, lvalRegister, i));
-                instructions.Add(new PrintByte(Registers.Temporary)); 
+                instructions.Add(new PrintByte(Registers.Temporary));
             }
 
             return instructions;
@@ -368,16 +367,13 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> VisitVariableDefinitionStatement(VariableDefinitionStatement s)
         {
-            if (s.Id.Symbol == null)
-            {
-                throw new Exception("Symbol was null");
-            }
+            Debug.Assert(s.Id.Symbol != null);
 
             var instructions = new List<IInstruction>();
             if (s.Type is UserDefinedTypeNode userDefinedTypeNode)
             {
                 var definition = SymbolTable.LookupDefinition(userDefinedTypeNode);
-                switch (definition) 
+                switch (definition)
                 {
                     case StructDefinition d:
                         if (s.Id.Symbol.IsGlobal)
@@ -436,7 +432,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                         default:
                             throw new Exception($"Invalid type: {s.Left.Type}");
                     }
-                   
+
                     instructions.AddRange(ExpressionLValue(s.Left));
                     break;
                 case AssignmentOperator.MinusEquals:
@@ -541,10 +537,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> VisitVariableDefinitionAndAssignmentStatement(VariableDefinitionAndAssignmentStatement s)
         {
-            if (s.Id.Symbol == null)
-            {
-                throw new Exception("Symbol was null");
-            }
+            Debug.Assert(s.Id.Symbol != null);
 
             var instructions = new List<IInstruction>();
             if (s.Expression is ComplexLiteralExpression complexLiteral)
@@ -575,7 +568,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                     instructions.Add(new Store(Registers.FramePointer, s.Expression.Register, s.Id.Symbol.Offset));
                 }
             }
-            
+
             return instructions;
         }
 
@@ -590,7 +583,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             var labelId = GetNextLabelId();
             var exitLabel = $"if_exit_{labelId}";
 
-            if (s.ElifExpressions.Count > 0 || s.ElseBody != null) 
+            if (s.ElifExpressions.Count > 0 || s.ElseBody != null)
             {
                 string nextLabel(int n) => $"elif_{n}_{labelId}";
 
@@ -629,7 +622,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             s.LabelId = GetNextLabelId();
             var topLabel = s.GetLoopLabel();
             var exitLabel = s.GetExitLabel();
-
             instructions.Add(new Label(topLabel));
             instructions.AddRange(Flow(s.Expression, exitLabel, false));
             instructions.AddRange(VisitCompoundStatement(s.Body));
@@ -644,7 +636,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             s.LabelId = GetNextLabelId();
             var topLabel = s.GetLoopLabel();
             var exitLabel = s.GetExitLabel();
-
             instructions.Add(new Label(topLabel));
             instructions.AddRange(VisitCompoundStatement(s.Body));
             instructions.AddRange(Flow(s.Expression, exitLabel, false));
@@ -659,7 +650,6 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             s.LabelId = GetNextLabelId();
             var topLabel = s.GetLoopLabel();
             var exitLabel = s.GetExitLabel();
-
             instructions.AddRange(VisitStatement(s.InitialStatement));
             instructions.Add(new Label(topLabel));
             instructions.AddRange(Flow(s.Expression, exitLabel, false));
@@ -672,10 +662,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> VisitBreakStatement(BreakStatement s)
         {
-            if (s.EnclosingLoop == null)
-            {
-                throw new Exception("EnclosingLoop was null");
-            }
+            Debug.Assert(s.EnclosingLoop != null);
 
             return new List<IInstruction>()
             {
@@ -685,11 +672,8 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> VisitContinueStatement(ContinueStatement s)
         {
-            if (s.EnclosingLoop == null)
-            {
-                throw new Exception("EnclosingLoop was null");
-            }
-            
+            Debug.Assert(s.EnclosingLoop != null);
+
             if (s.EnclosingLoop is ForStatement forLoop)
             {
                 var instructions = VisitStatement(forLoop.UpdateStatement);
@@ -705,10 +689,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> VisitReturnStatement(ReturnStatement s)
         {
-            if (s.EnclosingFunction == null)
-            {
-                throw new Exception("EnclosingFunction was null");
-            }
+            Debug.Assert(s.EnclosingFunction != null);
 
             var instructions = new List<IInstruction>();
             if (s.Expression != null)
@@ -724,7 +705,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> VisitExitStatement(ExitStatement s)
         {
             var instructions = ExpressionRValue(s.Expression);
-            instructions.Add(new Jump(ProgramRoot.ExitLabel)); // TODO return error code to OS when running
+            instructions.Add(new Jump(ProgramRoot.ExitLabel));
             return instructions;
         }
 
@@ -750,7 +731,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> BinaryOperatorExpressionRValue(BinaryOperatorExpression e)
         {
             var instructions = new List<IInstruction>();
-            switch (e.Operator) 
+            switch (e.Operator)
             {
                 case BinaryOperator.EqualTo:
                     instructions.AddRange(ExpressionRValue(e.LeftOperand));
@@ -988,7 +969,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 return instructions;
             }
 
-            throw new Exception("Function did not have function type");     
+            throw new Exception("Function did not have function type");
         }
 
         private static List<IInstruction> ArrayIndexExpressionRVaule(ArrayIndexExpression e)
@@ -1015,17 +996,11 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> IdExpressionRValue(IdExpression e)
         {
-            if (e.Id.Symbol == null)
-            {
-                throw new Exception("Symbol was null");
-            }
-            
+            Debug.Assert(e.Id.Symbol != null);
+
             if (e.Id.Symbol.Type is FunctionType && e.Id.Symbol.IsDefinedGlobalFunction)
             {
-                if (e.Id.Symbol.EnclosingFunction == null)
-                {
-                    throw new Exception("EnclosingFunction was null");
-                }
+                Debug.Assert(e.Id.Symbol.EnclosingFunction != null);
 
                 return new List<IInstruction>
                 {
@@ -1092,10 +1067,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> IdExpressionLValue(IdExpression e)
         {
-            if (e.Id.Symbol == null)
-            {
-                throw new Exception("Symbol was null");
-            }
+            Debug.Assert(e.Id.Symbol != null);
 
             if (e.Id.Symbol.IsGlobal)
             {
@@ -1130,10 +1102,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
 
         private static List<IInstruction> ArrayIndexExpressionLValue(ArrayIndexExpression e)
         {
-            if (e.Array.Type == null || e.Index.Type == null)
-            {
-                throw new Exception("Type was null");
-            }
+            Debug.Assert(e.Array.Type != null && e.Index.Type != null);
 
             var instructions = ExpressionLValue(e.Array);
             instructions.AddRange(ExpressionRValue(e.Index));
@@ -1141,10 +1110,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
             {
                 if (arrayType.ElementType is ArrayType elementArrayType && elementArrayType.Length == null)
                 {
-                    if (elementArrayType.LengthParameterSymbol == null)
-                    {
-                        throw new Exception("Array length and parameter symbol was null");
-                    }
+                    Debug.Assert(elementArrayType.LengthParameterSymbol != null);
 
                     // TODO fix this for multidimensional parmeterization
                     instructions.Add(new Load(Registers.Temporary, Registers.FramePointer, elementArrayType.LengthParameterSymbol.Offset));
@@ -1153,10 +1119,10 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
                 {
                     instructions.Add(new LoadImmediate(Registers.Temporary, arrayType.ElementType.GetSizeInWords()));
                 }
-                
+
                 instructions.Add(new Multiply(e.Index.Register, e.Index.Register, Registers.Temporary));
             }
-            
+
             instructions.Add(new Add(e.Register, e.Array.Register, e.Index.Register));
             return instructions;
         }
@@ -1171,7 +1137,7 @@ namespace Compiler.TreeWalking.CodeGeneration.VirtualMachine
         private static List<IInstruction> NoExpressionLValue(Expression e)
         {
             ErrorHandler.Throw("Expression does not have an l-value.", e);
-            throw new Exception("Error handler did not stop execution");
+            throw ErrorHandler.FailedToExit;
         }
 
         private static List<IInstruction> Flow(Expression expression, string label, bool condition)

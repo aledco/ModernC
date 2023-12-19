@@ -1,5 +1,8 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
+    /// <summary>
+    /// The bool type.
+    /// </summary>
     public class BoolType : SemanticType
     {
         public override int GetSizeInBytes()

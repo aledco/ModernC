@@ -1,9 +1,3 @@
-using Compiler;
-using Compiler.ErrorHandling;
-using Compiler.ParseAbstraction;
-using Compiler.TreeWalking.TypeCheck;
-using System.Text.Json;
-
 namespace CompilerTests;
 
 /// <summary>
@@ -36,7 +30,7 @@ public class GlobalTypeCheckTest
         foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
         {
             var tree = Parser.Parse(Contents);
-            GlobalTypeChecker.Walk(tree);
+            tree.CheckGlobalSemantics();
             Assert.IsNotNull(tree.GlobalScope);
             foreach (var functionDefinition in tree.FunctionDefinitions)
             {
@@ -64,13 +58,13 @@ public class GlobalTypeCheckTest
     {
         
         var testType = "GlobalSemanticErrors";
-        foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
+        foreach (var (id, contents) in TestFileManager.EnumerateTestInput(testType))
         {
-            Console.WriteLine(Id);
-            var tree = Parser.Parse(Contents);
+            Console.WriteLine(id);
+            var tree = Parser.Parse(contents);
             try
             {
-                GlobalTypeChecker.Walk(tree);
+                tree.CheckGlobalSemantics();
                 Assert.Fail();
             }
             catch
@@ -89,10 +83,10 @@ public class GlobalTypeCheckTest
     public void TestAllLocalSemanticErrors()
     {
         var testType = "LocalSemanticErrors";
-        foreach (var (Id, Contents) in TestFileManager.EnumerateTestInput(testType))
+        foreach (var (id, contents) in TestFileManager.EnumerateTestInput(testType))
         {
-            var tree = Parser.Parse(Contents);
-            GlobalTypeChecker.Walk(tree);
+            var tree = Parser.Parse(contents);
+            tree.CheckGlobalSemantics();
             Assert.IsNotNull(tree.GlobalScope);
             foreach (var functionDefinition in tree.FunctionDefinitions)
             {
@@ -104,7 +98,7 @@ public class GlobalTypeCheckTest
                 WriteIndented = true
             };
             var treeJson = JsonSerializer.Serialize(tree, options: options);
-            TestFileManager.WriteTestOutput(_component, testType, Id, treeJson);
+            TestFileManager.WriteTestOutput(_component, testType, id, treeJson);
 
             GlobalManager.Clear();
         }

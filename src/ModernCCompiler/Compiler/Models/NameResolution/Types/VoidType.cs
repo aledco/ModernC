@@ -1,5 +1,8 @@
 ﻿namespace Compiler.Models.NameResolution.Types
 {
+    /// <summary>
+    /// The void type.
+    /// </summary>
     public class VoidType : SemanticType
     {
         public override int GetSizeInBytes()
