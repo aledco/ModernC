@@ -8,6 +8,12 @@ using VirtualMachine;
 /*
  * TODO:
  * 
+ * - write prelude
+ * - write ast merging to merge prelude in parse abstraction
+ * - add file inclusion with import statements
+ * - compile to x86-64
+ * 
+ * 
  * - things to decide:
  *      - need to define an ordering for global statements / definitions
  *          - statements and definitions may need to be processed in order
